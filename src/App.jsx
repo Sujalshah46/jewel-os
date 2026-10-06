@@ -20,6 +20,7 @@ import BackupRestoreModule from './components/modules/BackupRestoreModule';
 import InvoiceViewModal from './components/modules/InvoiceViewModal';
 import EstimateModal from './components/modules/EstimateModal';
 import AdminPanel from './components/admin/AdminPanel';
+import ErrorBoundary from './components/common/ErrorBoundary';
 import { Lock, ShieldAlert } from 'lucide-react';
 
 function MainApp() {
@@ -185,8 +186,10 @@ function MainApp() {
 
 export default function App() {
   return (
-    <JewelleryProvider>
-      <MainApp />
-    </JewelleryProvider>
+    <ErrorBoundary>
+      <JewelleryProvider>
+        <MainApp />
+      </JewelleryProvider>
+    </ErrorBoundary>
   );
 }

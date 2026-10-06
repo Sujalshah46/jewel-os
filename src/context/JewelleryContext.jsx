@@ -178,10 +178,18 @@ export function JewelleryProvider({ children }) {
   const [previewInvoice, setPreviewInvoice] = useState(null);
   const [previewEstimate, setPreviewEstimate] = useState(null);
 
-  // Active Context Objects
-  const activeFirm = firms.find(f => f.id === activeFirmId) || firms[0];
-  const activeClient = clients.find(c => c.id === activeClientId) || clients[0];
-  const activeBranch = branches.find(b => b.id === activeBranchId) || branches[0];
+  // Active Context Objects with robust null-safety fallbacks
+  const activeFirm = (Array.isArray(firms) && firms.length > 0)
+    ? (firms.find(f => f.id === activeFirmId) || firms[0])
+    : INITIAL_FIRMS[0];
+
+  const activeClient = (Array.isArray(clients) && clients.length > 0)
+    ? (clients.find(c => c.id === activeClientId) || clients[0])
+    : INITIAL_CLIENTS[0];
+
+  const activeBranch = (Array.isArray(branches) && branches.length > 0)
+    ? (branches.find(b => b.id === activeBranchId) || branches[0])
+    : INITIAL_BRANCHES[0];
 
   // Save to localStorage when critical state changes
   useEffect(() => {
