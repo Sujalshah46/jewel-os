@@ -345,18 +345,58 @@ export function JewelleryProvider({ children }) {
     downloadAnchor.remove();
   };
 
-  // Import JSON database
+  // Import JSON database with schema validation (SEC-06)
   const importDatabaseJson = (jsonObj) => {
-    if (jsonObj.firms) setFirms(jsonObj.firms);
-    if (jsonObj.dailyRates) setDailyRates(jsonObj.dailyRates);
-    if (jsonObj.stock) setStock(jsonObj.stock);
-    if (jsonObj.customers) setCustomers(jsonObj.customers);
-    if (jsonObj.karigars) setKarigars(jsonObj.karigars);
-    if (jsonObj.invoices) setInvoices(jsonObj.invoices);
-    if (jsonObj.udhaarList) setUdhaarList(jsonObj.udhaarList);
-    if (jsonObj.schemes) setSchemes(jsonObj.schemes);
-    if (jsonObj.expenses) setExpenses(jsonObj.expenses);
-    if (jsonObj.dailyDiary) setDailyDiary(jsonObj.dailyDiary);
+    if (!jsonObj || typeof jsonObj !== 'object' || Array.isArray(jsonObj)) {
+      throw new Error('Invalid backup file: Root structure must be a JSON object.');
+    }
+
+    const validCollections = ['firms', 'dailyRates', 'stock', 'customers', 'karigars', 'invoices', 'udhaarList', 'schemes', 'expenses', 'dailyDiary'];
+    const hasAtLeastOne = validCollections.some(key => Array.isArray(jsonObj[key]));
+    if (!hasAtLeastOne) {
+      throw new Error('Invalid backup schema: No valid Jewellery OS collections found in backup.');
+    }
+
+    if (jsonObj.firms) {
+      if (!Array.isArray(jsonObj.firms)) throw new Error('Schema error: "firms" must be an array.');
+      setFirms(jsonObj.firms);
+    }
+    if (jsonObj.dailyRates) {
+      if (!Array.isArray(jsonObj.dailyRates)) throw new Error('Schema error: "dailyRates" must be an array.');
+      setDailyRates(jsonObj.dailyRates);
+    }
+    if (jsonObj.stock) {
+      if (!Array.isArray(jsonObj.stock)) throw new Error('Schema error: "stock" must be an array.');
+      setStock(jsonObj.stock);
+    }
+    if (jsonObj.customers) {
+      if (!Array.isArray(jsonObj.customers)) throw new Error('Schema error: "customers" must be an array.');
+      setCustomers(jsonObj.customers);
+    }
+    if (jsonObj.karigars) {
+      if (!Array.isArray(jsonObj.karigars)) throw new Error('Schema error: "karigars" must be an array.');
+      setKarigars(jsonObj.karigars);
+    }
+    if (jsonObj.invoices) {
+      if (!Array.isArray(jsonObj.invoices)) throw new Error('Schema error: "invoices" must be an array.');
+      setInvoices(jsonObj.invoices);
+    }
+    if (jsonObj.udhaarList) {
+      if (!Array.isArray(jsonObj.udhaarList)) throw new Error('Schema error: "udhaarList" must be an array.');
+      setUdhaarList(jsonObj.udhaarList);
+    }
+    if (jsonObj.schemes) {
+      if (!Array.isArray(jsonObj.schemes)) throw new Error('Schema error: "schemes" must be an array.');
+      setSchemes(jsonObj.schemes);
+    }
+    if (jsonObj.expenses) {
+      if (!Array.isArray(jsonObj.expenses)) throw new Error('Schema error: "expenses" must be an array.');
+      setExpenses(jsonObj.expenses);
+    }
+    if (jsonObj.dailyDiary) {
+      if (!Array.isArray(jsonObj.dailyDiary)) throw new Error('Schema error: "dailyDiary" must be an array.');
+      setDailyDiary(jsonObj.dailyDiary);
+    }
   };
 
   // Aggregate Dashboard Analytics

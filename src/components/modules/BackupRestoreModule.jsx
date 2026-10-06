@@ -25,7 +25,7 @@ export default function BackupRestoreModule() {
         importDatabaseJson(json);
         alert('Database successfully restored from JSON backup file!');
       } catch (err) {
-        alert('Invalid JSON file format.');
+        alert('Backup Restore Failed: ' + (err.message || 'Invalid JSON file format.'));
       }
     };
     reader.readAsText(file);
