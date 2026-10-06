@@ -114,10 +114,11 @@ export default function UdhaarLoanModule() {
           </p>
         </div>
 
-        <div className="flex items-center space-x-2">
+        <div className="no-print flex items-center space-x-2">
           <button
+            type="button"
             onClick={() => setShowGirviModal(true)}
-            className="flex items-center space-x-1.5 bg-gradient-to-r from-amber-500 to-amber-600 hover:from-amber-400 text-slate-950 font-bold px-4 py-2 rounded-xl text-xs md:text-sm shadow-lg shadow-amber-500/20 transition-all hover:scale-[1.02]"
+            className="flex items-center space-x-1.5 bg-gradient-to-r from-amber-500 to-amber-600 hover:from-amber-400 text-slate-950 font-bold px-4 py-2 rounded-xl text-xs md:text-sm shadow-lg shadow-amber-500/20 transition-all hover:scale-[1.02] cursor-pointer"
           >
             <Coins className="w-4 h-4" />
             <span>+ BOOK GIRVI GOLD LOAN</span>
@@ -126,9 +127,10 @@ export default function UdhaarLoanModule() {
       </div>
 
       {/* Tabs */}
-      <div className="flex items-center space-x-1 overflow-x-auto no-scrollbar border-b border-slate-800 pb-1">
+      <div className="no-print flex items-center space-x-1 overflow-x-auto no-scrollbar border-b border-slate-800 pb-1">
         {tabs.map(tab => (
           <button
+            type="button"
             key={tab.id}
             onClick={() => setActiveTab(tab.id)}
             className={`px-3.5 py-1.5 rounded-lg text-xs font-bold whitespace-nowrap transition-all ${
@@ -179,7 +181,7 @@ export default function UdhaarLoanModule() {
       </div>
 
       {/* Search & Actions Bar */}
-      <div className="bg-slate-900 border border-slate-800 rounded-2xl p-4 shadow-xl flex flex-wrap items-center justify-between gap-3">
+      <div className="no-print bg-slate-900 border border-slate-800 rounded-2xl p-4 shadow-xl flex flex-wrap items-center justify-between gap-3">
         <div className="relative min-w-[240px] flex-1">
           <input
             type="text"
@@ -196,8 +198,9 @@ export default function UdhaarLoanModule() {
             Records: <strong className="text-slate-200">{filteredList.length}</strong>
           </span>
           <button
+            type="button"
             onClick={() => window.print()}
-            className="flex items-center space-x-1.5 bg-slate-800 hover:bg-slate-700 text-slate-300 border border-slate-700 px-3 py-2 rounded-xl text-xs font-bold transition-colors"
+            className="flex items-center space-x-1.5 bg-slate-800 hover:bg-slate-700 text-slate-300 border border-slate-700 px-3 py-2 rounded-xl text-xs font-bold transition-colors cursor-pointer"
           >
             <Printer className="w-3.5 h-3.5" />
             <span>Print Ledger</span>

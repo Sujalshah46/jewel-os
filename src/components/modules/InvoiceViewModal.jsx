@@ -108,7 +108,9 @@ export default function InvoiceViewModal() {
         </div>
 
         {/* Printable Invoice Sheet (Faithful replica of Online Munim Audit 10:40 Krishna Jewellers Tax Invoice) */}
-        <div className="p-6 overflow-y-auto bg-white text-slate-950 rounded-b-2xl font-sans text-xs">
+        <div className={`p-6 overflow-y-auto bg-white text-slate-950 rounded-b-2xl font-sans text-xs ${
+          printFormat === 'A4' ? 'print-format-a4' : printFormat === 'A5' ? 'print-format-a5' : 'print-format-thermal'
+        }`}>
           <div className="border border-slate-300 p-5 rounded-lg space-y-4">
             {/* Top Slogan & BIS Hallmark Header */}
             <div className="text-center border-b border-slate-300 pb-3">
@@ -177,13 +179,13 @@ export default function InvoiceViewModal() {
                       <td className="py-2 px-2 border-r border-slate-300 font-bold text-slate-900">{item.itemCode}</td>
                       <td className="py-2 px-2 border-r border-slate-300 font-sans">{item.description}</td>
                       <td className="py-2 px-2 border-r border-slate-300">{item.hsn || '7113'}</td>
-                      <td className="py-2 px-2 border-r border-slate-300">{item.purity || '92%'}</td>
+                      <td className="py-2 px-2 border-r border-slate-300">{item.purityKarat || item.purity || '92%'}</td>
                       <td className="py-2 px-2 border-r border-slate-300 text-right">{item.grossWeight?.toFixed(3)} GM</td>
                       <td className="py-2 px-2 border-r border-slate-300 text-right font-bold">{item.netWeight?.toFixed(3)} GM</td>
-                      <td className="py-2 px-2 border-r border-slate-300 text-right">₹{item.rate?.toLocaleString('en-IN') || '72,000'}</td>
-                      <td className="py-2 px-2 border-r border-slate-300 text-right">₹{item.labour || '700'}</td>
+                      <td className="py-2 px-2 border-r border-slate-300 text-right">₹{Math.round(item.ratePer10Gm || item.rate || (item.ratePerGram ? item.ratePerGram * 10 : 72000)).toLocaleString('en-IN')}</td>
+                      <td className="py-2 px-2 border-r border-slate-300 text-right">₹{Math.round(item.totalMakingCharges || item.labour || item.makingChargeValue || 0).toLocaleString('en-IN')}</td>
                       <td className="py-2 px-2 text-right font-bold text-slate-900">
-                        ₹{(item.finalAmount || item.amount || 62978.80).toLocaleString('en-IN', { minimumFractionDigits: 2 })}
+                        ₹{(item.finalValue || item.finalAmount || item.amount || 0).toLocaleString('en-IN', { minimumFractionDigits: 2 })}
                       </td>
                     </tr>
                   ))}

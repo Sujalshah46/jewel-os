@@ -59,7 +59,7 @@ export default function RightSidebar() {
 
   return (
     <>
-      <aside className="fixed right-0 top-36 z-30 hidden xl:flex flex-col items-center bg-[#0c1222]/95 border-l border-y border-amber-500/25 rounded-l-2xl py-2 px-1 shadow-2xl backdrop-blur-md">
+      <aside className="no-print fixed right-0 top-36 z-30 hidden xl:flex flex-col items-center bg-[#0c1222]/95 border-l border-y border-amber-500/25 rounded-l-2xl py-2 px-1 shadow-2xl backdrop-blur-md">
         <div className="flex flex-col space-y-1">
           {shortcuts.map((item, idx) => {
             const Icon = item.icon;

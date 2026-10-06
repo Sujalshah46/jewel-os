@@ -97,7 +97,7 @@ export default function AppShell({ sidebarCollapsed, setSidebarCollapsed, mobile
   return (
     <>
       {/* 1. Global Compact Top Header */}
-      <header className="sticky top-0 z-40 bg-[#0B0F19]/95 backdrop-blur-md border-b border-amber-500/20 shadow-xl">
+      <header className="no-print sticky top-0 z-40 bg-[#0B0F19]/95 backdrop-blur-md border-b border-amber-500/20 shadow-xl">
         {/* Compact Rate & Ticker Strip with Expand Toggle */}
         <div className="bg-slate-950/80 border-b border-slate-800/80 px-3 md:px-5 py-1.5 text-xs text-slate-300 flex items-center justify-between gap-2 overflow-x-auto">
           <div className="flex items-center space-x-3 whitespace-nowrap min-w-max">
@@ -448,7 +448,7 @@ export function DesktopSidebar({ collapsed, activeModule, setActiveModule, onOpe
 
   return (
     <aside
-      className={`hidden lg:flex flex-col bg-slate-950 border-r border-slate-800/90 transition-all duration-200 z-30 ${
+      className={`no-print hidden lg:flex flex-col bg-slate-950 border-r border-slate-800/90 transition-all duration-200 z-30 ${
         collapsed ? 'w-16' : 'w-64'
       }`}
     >

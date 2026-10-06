@@ -60,12 +60,21 @@
 
 /* Print Styles */
 @media print {
-  body {
+  html, body {
     background: white !important;
     color: black !important;
+    margin: 0 !important;
+    padding: 0 !important;
+    height: auto !important;
+    overflow: visible !important;
   }
 
-  .no-print {
+  /* Hide app navigation and headers when printing */
+  .no-print,
+  header,
+  aside,
+  footer,
+  nav {
     display: none !important;
   }
 
@@ -73,8 +82,62 @@
     display: block !important;
   }
 
+  /* Modal print normalization: remove fixed overlay background and positioning */
+  .fixed.inset-0.z-50 {
+    position: static !important;
+    background: transparent !important;
+    padding: 0 !important;
+    margin: 0 !important;
+    display: block !important;
+    overflow: visible !important;
+    width: 100% !important;
+    max-width: 100% !important;
+    height: auto !important;
+  }
+
+  .fixed.inset-0.z-50 > div {
+    max-height: none !important;
+    height: auto !important;
+    border: none !important;
+    box-shadow: none !important;
+    background: white !important;
+    color: black !important;
+    width: 100% !important;
+    max-width: 100% !important;
+    margin: 0 !important;
+    padding: 0 !important;
+    overflow: visible !important;
+  }
+
+  /* Format specific print profiles */
+  .print-format-a4 {
+    width: 100% !important;
+    max-width: 210mm !important;
+    margin: 0 auto !important;
+  }
+
+  .print-format-a5 {
+    width: 100% !important;
+    max-width: 148mm !important;
+    margin: 0 auto !important;
+    font-size: 11px !important;
+  }
+
+  .print-format-thermal {
+    width: 76mm !important;
+    max-width: 76mm !important;
+    margin: 0 !important;
+    padding: 2mm !important;
+    font-size: 10px !important;
+  }
+
+  .print-format-thermal * {
+    font-size: 10px !important;
+  }
+
   @page {
-    margin: 10mm;
+    margin: 8mm;
     size: auto;
   }
 }
+

@@ -117,10 +117,11 @@ export default function AccountsReportsModule() {
           </p>
         </div>
 
-        <div className="flex items-center space-x-2">
+        <div className="no-print flex items-center space-x-2">
           <button
+            type="button"
             onClick={() => window.print()}
-            className="flex items-center space-x-1 bg-amber-500 hover:bg-amber-400 text-slate-950 font-bold px-3.5 py-1.5 rounded-xl text-xs shadow transition-colors"
+            className="flex items-center space-x-1 bg-amber-500 hover:bg-amber-400 text-slate-950 font-bold px-3.5 py-1.5 rounded-xl text-xs shadow transition-colors cursor-pointer"
           >
             <Printer className="w-4 h-4" />
             <span>PRINT REPORT</span>
@@ -129,9 +130,10 @@ export default function AccountsReportsModule() {
       </div>
 
       {/* Tabs */}
-      <div className="flex items-center space-x-1 overflow-x-auto no-scrollbar border-b border-slate-800 pb-1">
+      <div className="no-print flex items-center space-x-1 overflow-x-auto no-scrollbar border-b border-slate-800 pb-1">
         {reportTabs.map(tab => (
           <button
+            type="button"
             key={tab}
             onClick={() => setActiveReportTab(tab)}
             className={`px-3 py-1.5 rounded-lg text-xs font-bold whitespace-nowrap transition-all ${

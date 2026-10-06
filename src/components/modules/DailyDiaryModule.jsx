@@ -79,8 +79,9 @@ export default function DailyDiaryModule() {
           </div>
 
           <button
+            type="button"
             onClick={() => window.print()}
-            className="flex items-center space-x-1.5 bg-gradient-to-r from-amber-500 to-amber-600 hover:from-amber-400 text-slate-950 font-bold px-4 py-2 rounded-xl text-xs md:text-sm shadow transition-colors"
+            className="no-print flex items-center space-x-1.5 bg-gradient-to-r from-amber-500 to-amber-600 hover:from-amber-400 text-slate-950 font-bold px-4 py-2 rounded-xl text-xs md:text-sm shadow transition-colors cursor-pointer"
           >
             <Printer className="w-4 h-4" />
             <span>PRINT DAY BOOK</span>

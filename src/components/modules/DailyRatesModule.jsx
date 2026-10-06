@@ -125,11 +125,12 @@ export default function DailyRatesModule() {
           </p>
         </div>
 
-        <div className="flex items-center space-x-2">
+        <div className="no-print flex items-center space-x-2">
           {/* LED Rates Board Button */}
           <button
+            type="button"
             onClick={() => setShowLedModal(true)}
-            className="flex items-center space-x-1.5 bg-gradient-to-r from-amber-500 to-amber-600 hover:from-amber-400 text-slate-950 font-bold px-3.5 py-1.5 rounded-lg text-xs shadow-lg shadow-amber-500/20 transition-all"
+            className="flex items-center space-x-1.5 bg-gradient-to-r from-amber-500 to-amber-600 hover:from-amber-400 text-slate-950 font-bold px-3.5 py-1.5 rounded-lg text-xs shadow-lg shadow-amber-500/20 transition-all cursor-pointer"
           >
             <Tv className="w-3.5 h-3.5" />
             <span>LED RATES DISPLAY</span>
@@ -137,9 +138,10 @@ export default function DailyRatesModule() {
 
           {/* Update MCX Button */}
           <button
+            type="button"
             onClick={handleSyncMcx}
             disabled={mcxSyncing}
-            className="flex items-center space-x-1.5 bg-slate-800 hover:bg-slate-700 text-amber-300 border border-amber-500/40 px-3 py-1.5 rounded-lg text-xs font-bold transition-colors"
+            className="flex items-center space-x-1.5 bg-slate-800 hover:bg-slate-700 text-amber-300 border border-amber-500/40 px-3 py-1.5 rounded-lg text-xs font-bold transition-colors cursor-pointer"
           >
             <RefreshCw className={`w-3.5 h-3.5 ${mcxSyncing ? 'animate-spin' : ''}`} />
             <span>{mcxSyncing ? 'SYNCING MCX...' : 'UPDATE MCX DAILY RATES'}</span>
@@ -148,9 +150,10 @@ export default function DailyRatesModule() {
       </div>
 
       {/* Master Tabs */}
-      <div className="flex items-center space-x-1 overflow-x-auto no-scrollbar border-b border-slate-800 pb-1">
+      <div className="no-print flex items-center space-x-1 overflow-x-auto no-scrollbar border-b border-slate-800 pb-1">
         {tabs.map(tab => (
           <button
+            type="button"
             key={tab}
             onClick={() => setActiveTab(tab)}
             className={`px-3 py-1.5 rounded-lg text-xs font-bold whitespace-nowrap transition-all ${
@@ -168,7 +171,7 @@ export default function DailyRatesModule() {
       {activeTab === 'DAILY RATES' && (
         <div className="space-y-6">
           {/* Quick 24K Base Setter & Fast Multiplier */}
-          <div className="bg-gradient-to-r from-slate-900 via-amber-950/40 to-slate-900 border border-amber-500/30 rounded-2xl p-4 shadow-xl flex flex-wrap items-center justify-between gap-4">
+          <div className="no-print bg-gradient-to-r from-slate-900 via-amber-950/40 to-slate-900 border border-amber-500/30 rounded-2xl p-4 shadow-xl flex flex-wrap items-center justify-between gap-4">
             <div className="flex items-center space-x-3">
               <div className="p-2.5 bg-amber-500/20 rounded-xl text-amber-300 border border-amber-500/40">
                 <TrendingUp className="w-6 h-6" />
@@ -192,6 +195,7 @@ export default function DailyRatesModule() {
               </div>
 
               <button
+                type="button"
                 onClick={resetDefaultRates}
                 className="text-xs text-amber-400 hover:underline font-semibold"
               >
@@ -211,7 +215,7 @@ export default function DailyRatesModule() {
               </div>
 
               {/* Action Toolbar: Copy, Csv, Excel, Pdf, Print, Delete All */}
-              <div className="flex flex-wrap items-center gap-2">
+              <div className="no-print flex flex-wrap items-center gap-2">
                 <div className="flex items-center space-x-1 bg-slate-950 border border-slate-800 rounded-lg p-1 text-[11px] text-slate-300">
                   <button
                     type="button"

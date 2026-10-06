@@ -17,7 +17,7 @@ export default function EstimateModal() {
   return (
     <div className="fixed inset-0 z-50 bg-black/85 backdrop-blur-sm flex items-center justify-center p-4">
       <div className="bg-slate-900 border border-amber-500/40 rounded-2xl max-w-lg w-full shadow-2xl p-6 text-slate-100 space-y-4">
-        <div className="flex items-center justify-between pb-3 border-b border-slate-800">
+        <div className="no-print flex items-center justify-between pb-3 border-b border-slate-800">
           <div className="flex items-center space-x-2">
             <FileText className="w-5 h-5 text-amber-400" />
             <h3 className="font-serif font-bold text-base text-amber-300 uppercase tracking-wider">
@@ -76,7 +76,7 @@ export default function EstimateModal() {
           </p>
         </div>
 
-        <div className="flex items-center justify-end space-x-3 pt-2">
+        <div className="no-print flex items-center justify-end space-x-3 pt-2">
           <button
             type="button"
             onClick={() => setPreviewEstimate(null)}

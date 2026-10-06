@@ -273,9 +273,10 @@ export default function StockModule() {
           </p>
         </div>
 
-        <div className="flex items-center space-x-2">
+        <div className="no-print flex items-center space-x-2">
           <div className="bg-slate-900 border border-slate-700 p-0.5 rounded-xl flex">
             <button
+              type="button"
               onClick={() => setStockMode('RETAIL STOCK')}
               className={`px-3 py-1.5 text-xs font-bold rounded-lg transition-all ${
                 stockMode === 'RETAIL STOCK' ? 'bg-amber-500 text-slate-950' : 'text-slate-400 hover:text-white'
@@ -284,6 +285,7 @@ export default function StockModule() {
               RETAIL STOCK
             </button>
             <button
+              type="button"
               onClick={() => setStockMode('WHOLESALE STOCK')}
               className={`px-3 py-1.5 text-xs font-bold rounded-lg transition-all ${
                 stockMode === 'WHOLESALE STOCK' ? 'bg-amber-500 text-slate-950' : 'text-slate-400 hover:text-white'
@@ -294,6 +296,7 @@ export default function StockModule() {
           </div>
 
           <button
+            type="button"
             onClick={handleOpenAddStockModal}
             className="flex items-center space-x-1.5 bg-gradient-to-r from-amber-500 to-amber-600 hover:from-amber-400 text-slate-950 font-bold px-4 py-2 rounded-xl text-xs md:text-sm shadow-lg shadow-amber-500/20 transition-all hover:scale-[1.02]"
           >
@@ -304,9 +307,10 @@ export default function StockModule() {
       </div>
 
       {/* Tabs */}
-      <div className="flex items-center space-x-1 overflow-x-auto no-scrollbar border-b border-slate-800 pb-1">
+      <div className="no-print flex items-center space-x-1 overflow-x-auto no-scrollbar border-b border-slate-800 pb-1">
         {stockTabs.map(tab => (
           <button
+            type="button"
             key={tab}
             onClick={() => setActiveStockTab(tab)}
             className={`px-3.5 py-1.5 rounded-lg text-xs font-bold whitespace-nowrap transition-all ${
@@ -360,22 +364,24 @@ export default function StockModule() {
         </div>
 
         {/* Action Toolbar & Results Count */}
-        <div className="flex items-center space-x-2 text-xs">
+        <div className="no-print flex items-center space-x-2 text-xs">
           <span className="text-slate-400 font-mono hidden sm:inline">
             Showing <strong className="text-slate-200">{filteredStock.length}</strong> of {stock.length} items
           </span>
 
           <button
+            type="button"
             onClick={handleExportExcel}
-            className="flex items-center space-x-1.5 bg-slate-800 hover:bg-slate-700 text-amber-300 border border-amber-500/30 px-3 py-2 rounded-xl text-xs font-bold transition-colors"
+            className="flex items-center space-x-1.5 bg-slate-800 hover:bg-slate-700 text-amber-300 border border-amber-500/30 px-3 py-2 rounded-xl text-xs font-bold transition-colors cursor-pointer"
           >
             <FileSpreadsheet className="w-3.5 h-3.5" />
             <span>Export CSV</span>
           </button>
 
           <button
+            type="button"
             onClick={() => window.print()}
-            className="flex items-center space-x-1.5 bg-slate-800 hover:bg-slate-700 text-slate-300 border border-slate-700 px-3 py-2 rounded-xl text-xs font-bold transition-colors"
+            className="flex items-center space-x-1.5 bg-slate-800 hover:bg-slate-700 text-slate-300 border border-slate-700 px-3 py-2 rounded-xl text-xs font-bold transition-colors cursor-pointer"
           >
             <Printer className="w-3.5 h-3.5" />
             <span>Print</span>
