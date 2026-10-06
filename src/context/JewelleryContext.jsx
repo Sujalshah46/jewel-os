@@ -41,7 +41,18 @@ export function JewelleryProvider({ children }) {
 
   const [customers, setCustomers] = useState(() => {
     const saved = localStorage.getItem(STORAGE_KEY + '_CUSTOMERS');
-    return saved ? JSON.parse(saved) : INITIAL_CUSTOMERS;
+    if (!saved) return INITIAL_CUSTOMERS;
+    try {
+      const parsed = JSON.parse(saved);
+      const hasOtherTypes = parsed.some(c => c.userType === 'Supplier' || c.userType === 'Staff' || c.userType === 'Money Lender');
+      if (!hasOtherTypes) {
+        const nonCustomers = INITIAL_CUSTOMERS.filter(c => c.userType && c.userType !== 'Customer');
+        return [...parsed, ...nonCustomers];
+      }
+      return parsed;
+    } catch (e) {
+      return INITIAL_CUSTOMERS;
+    }
   });
 
   const [karigars, setKarigars] = useState(() => {
