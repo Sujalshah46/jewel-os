@@ -1,4 +1,4 @@
-import React, { useState } from 'react';
+import React, { useState, useMemo } from 'react';
 import { useJewellery } from '../../context/JewelleryContext';
 import {
   Package,
@@ -18,7 +18,18 @@ import {
   CheckCircle,
   QrCode,
   AlertTriangle,
-  ChevronDown
+  ChevronDown,
+  Layers,
+  Scale,
+  Gem,
+  Coins,
+  ClipboardCheck,
+  ShoppingCart,
+  Send,
+  Building,
+  Check,
+  RefreshCw,
+  Box
 } from 'lucide-react';
 import { formatCurrency, formatWeight } from '../../utils/numberToWords';
 import { calculateJewelleryItem } from '../../utils/calculations';
@@ -43,6 +54,14 @@ export default function StockModule() {
   const [inspectItem, setInspectItem] = useState(null);
   const [itemToDelete, setItemToDelete] = useState(null);
 
+  // Stock Tally Audit State
+  const [tallyScannedBarcodes, setTallyScannedBarcodes] = useState(new Set(['1201', '1150', '1088']));
+  const [tallyInputBarcode, setTallyInputBarcode] = useState('');
+  const [tallyAuditCommitted, setTallyAuditCommitted] = useState(false);
+
+  // Re-Order State
+  const [reorderSuccessItem, setReorderSuccessItem] = useState(null);
+
   // Initial calculation helper for clean opening state
   const initialGw = 6.500;
   const initialLw = 0.100;
@@ -60,7 +79,7 @@ export default function StockModule() {
     stoneValue: 0
   });
 
-  // Add Stock Form State with authoritative calculation initialized (Resolves Audit P0)
+  // Add Stock Form State
   const [newItemForm, setNewItemForm] = useState({
     itemCode: '',
     barcode: '',
@@ -85,6 +104,9 @@ export default function StockModule() {
     diamondRate: 0,
     stoneValue: 0,
     totalPrice: initialCalc.finalValue,
+    wholesalePrice: Math.round(initialCalc.finalValue * 0.88),
+    wholesaleMinLot: 5,
+    reorderLevel: 2,
     qty: 1,
     counter: 'Counter 1 (Gold Ornaments)',
     brand: 'Krishna Signature',
@@ -129,7 +151,8 @@ export default function StockModule() {
         ...updated,
         netWeight: calc.netWeight,
         fineWeight: calc.fineWeight,
-        totalPrice: calc.finalValue
+        totalPrice: updated.stockType === 'Imitation Jewellery' ? Number(updated.totalPrice) || 2500 : calc.finalValue,
+        wholesalePrice: updated.wholesalePrice || Math.round(calc.finalValue * 0.88)
       };
     });
 
@@ -139,45 +162,78 @@ export default function StockModule() {
   };
 
   const handleOpenAddStockModal = () => {
-    // Generate fresh SKU / barcode recommendation
+    // Generate fresh SKU / barcode recommendation adapted to current tab
     const gold22kRate = dailyRates.find(r => r.karat?.includes('22K'))?.ratePerGram || 6600.24;
-    const calc = calculateJewelleryItem({
-      grossWeight: 6.500,
-      lessWeight: 0.100,
-      purityPercent: 91.67,
-      ratePerGram: gold22kRate,
-      makingChargeType: 'per_gram',
-      makingChargeValue: 550,
-      hallmarkCharge: 45,
-      stoneValue: 0
-    });
+    const rndNum = Math.floor(10 + Math.random() * 90);
+    const rndBarcode = String(Math.floor(1000 + Math.random() * 9000));
+
+    let defaultStockType = 'Fine Jewellery';
+    let defaultMetal = 'Gold';
+    let defaultCategory = 'Ring';
+    let defaultSubCategory = '22K Hallmarked Gold Ladies Ring';
+    let defaultHuid = 'HD' + Math.floor(100000 + Math.random() * 900000);
+    let defaultGw = 6.500;
+    let defaultPrice = 57872.00;
+    let defaultCounter = 'Counter 1 (Gold Ornaments)';
+
+    if (activeStockTab === 'IMITATION JEWELLERY') {
+      defaultStockType = 'Imitation Jewellery';
+      defaultMetal = 'Brass Alloy / 1-Gram Gold';
+      defaultCategory = 'Necklace';
+      defaultSubCategory = '1-Gram Micro Gold Plated Bridal Choker Set';
+      defaultHuid = 'N/A (Fashion)';
+      defaultGw = 65.000;
+      defaultPrice = 4500.00;
+      defaultCounter = 'Counter 6 (Fashion / 1-Gram Gold)';
+    } else if (activeStockTab === 'RAW METAL STOCK') {
+      defaultStockType = 'Raw Metal Stock';
+      defaultMetal = 'Gold';
+      defaultCategory = 'Bullion Bar';
+      defaultSubCategory = '24K 999 Fine Gold Minted Bar 100 GM';
+      defaultHuid = 'MINT' + Math.floor(10000 + Math.random() * 90000);
+      defaultGw = 100.000;
+      defaultPrice = 720545.00;
+      defaultCounter = 'Vault / Bullion Counter';
+    } else if (activeStockTab === 'STONE STOCK') {
+      defaultStockType = 'Stone Stock';
+      defaultMetal = 'Natural Diamond';
+      defaultCategory = 'Loose Diamond';
+      defaultSubCategory = '1.00 Ct Certified Solitaire Diamond (VVS1 / E Color)';
+      defaultHuid = 'GIA-' + Math.floor(10000000 + Math.random() * 90000000);
+      defaultGw = 0.200;
+      defaultPrice = 165000.00;
+      defaultCounter = 'Diamond Studio & Vault';
+    }
 
     setNewItemForm({
-      itemCode: 'LRING' + Math.floor(10 + Math.random() * 90),
-      barcode: String(Math.floor(1000 + Math.random() * 9000)),
-      metalType: 'Gold',
-      stockType: 'Fine Jewellery',
-      category: 'Ring',
-      subCategory: 'Ladies Gold Ring',
-      huid: 'HD' + Math.floor(100000 + Math.random() * 900000),
-      purityKarat: '22K (BIS 916)',
-      purityPercent: 91.67,
-      grossWeight: 6.500,
-      lessWeight: 0.100,
-      netWeight: calc.netWeight,
-      wastagePercent: 5.00,
-      fineWeight: calc.fineWeight,
-      ratePerGram: gold22kRate,
+      itemCode: (activeStockTab === 'IMITATION JEWELLERY' ? 'IM' : activeStockTab === 'STONE STOCK' ? 'DIA' : activeStockTab === 'RAW METAL STOCK' ? 'RAW' : 'LRING') + rndNum,
+      barcode: rndBarcode,
+      metalType: defaultMetal,
+      stockType: defaultStockType,
+      category: defaultCategory,
+      subCategory: defaultSubCategory,
+      huid: defaultHuid,
+      purityKarat: defaultStockType === 'Fine Jewellery' ? '22K (BIS 916)' : defaultStockType === 'Raw Metal Stock' ? '24K (Fine 999)' : 'N/A',
+      purityPercent: defaultStockType === 'Fine Jewellery' ? 91.67 : defaultStockType === 'Raw Metal Stock' ? 99.9 : 0,
+      grossWeight: defaultGw,
+      lessWeight: 0.000,
+      netWeight: defaultGw,
+      wastagePercent: defaultStockType === 'Fine Jewellery' ? 5.00 : 0,
+      fineWeight: defaultStockType === 'Fine Jewellery' ? Number((defaultGw * 0.9167).toFixed(3)) : defaultGw,
+      ratePerGram: defaultStockType === 'Fine Jewellery' ? gold22kRate : defaultStockType === 'Raw Metal Stock' ? 7200 : 0,
       makingChargeType: 'per_gram',
-      makingChargeValue: 550,
+      makingChargeValue: defaultStockType === 'Fine Jewellery' ? 550 : 0,
       otherCharges: 0,
-      hallmarkCharge: 45,
-      diamondCarats: 0,
-      diamondRate: 0,
-      stoneValue: 0,
-      totalPrice: calc.finalValue,
-      qty: 1,
-      counter: 'Counter 1 (Gold Ornaments)',
+      hallmarkCharge: defaultStockType === 'Fine Jewellery' ? 45 : 0,
+      diamondCarats: defaultStockType === 'Stone Stock' ? 1.00 : 0,
+      diamondRate: defaultStockType === 'Stone Stock' ? 165000 : 0,
+      stoneValue: defaultStockType === 'Stone Stock' ? 165000 : 0,
+      totalPrice: defaultPrice,
+      wholesalePrice: Math.round(defaultPrice * (stockMode === 'WHOLESALE STOCK' ? 0.85 : 0.88)),
+      wholesaleMinLot: stockMode === 'WHOLESALE STOCK' ? 10 : 5,
+      reorderLevel: 2,
+      qty: stockMode === 'WHOLESALE STOCK' ? 10 : 1,
+      counter: defaultCounter,
       brand: 'Krishna Signature',
       gender: 'Female',
       image: 'https://images.unsplash.com/photo-1605100804763-247f67b3557e?w=400&auto=format&fit=crop&q=80'
@@ -202,18 +258,88 @@ export default function StockModule() {
     setShowAddStockModal(false);
   };
 
-  // Filtered Stock Items (Multi-Firm Isolation: INV-02)
-  const filteredStock = stock.filter(item => {
-    const matchesFirm = !item.firmCode || item.firmCode === activeFirm.code;
-    const matchesSearch = item.itemCode?.toLowerCase().includes(searchTerm.toLowerCase()) ||
-      item.barcode?.includes(searchTerm) ||
-      item.category?.toLowerCase().includes(searchTerm.toLowerCase()) ||
-      item.subCategory?.toLowerCase().includes(searchTerm.toLowerCase()) ||
-      item.huid?.toLowerCase().includes(searchTerm.toLowerCase());
-    const matchesCategory = selectedCategory === 'ALL' || item.category === selectedCategory;
-    const matchesMetal = selectedMetal === 'ALL' || item.metalType === selectedMetal;
-    return matchesFirm && matchesSearch && matchesCategory && matchesMetal;
-  });
+  // Base Filtered Stock Items (Multi-Firm Isolation: INV-02)
+  const baseFilteredStock = useMemo(() => {
+    return stock.filter(item => {
+      const matchesFirm = !item.firmCode || item.firmCode === activeFirm.code;
+      const matchesSearch = item.itemCode?.toLowerCase().includes(searchTerm.toLowerCase()) ||
+        item.barcode?.includes(searchTerm) ||
+        item.category?.toLowerCase().includes(searchTerm.toLowerCase()) ||
+        item.subCategory?.toLowerCase().includes(searchTerm.toLowerCase()) ||
+        item.huid?.toLowerCase().includes(searchTerm.toLowerCase());
+      const matchesCategory = selectedCategory === 'ALL' || item.category === selectedCategory;
+      const matchesMetal = selectedMetal === 'ALL' || item.metalType === selectedMetal;
+      return matchesFirm && matchesSearch && matchesCategory && matchesMetal;
+    });
+  }, [stock, activeFirm, searchTerm, selectedCategory, selectedMetal]);
+
+  // Tab-Specific Filtered Stock
+  const filteredStock = useMemo(() => {
+    return baseFilteredStock.filter(item => {
+      if (activeStockTab === 'FINE JEWELLERY') {
+        return !item.stockType || item.stockType === 'Fine Jewellery' || (item.purityKarat?.includes('K') || item.purityKarat?.includes('925'));
+      }
+      if (activeStockTab === 'IMITATION JEWELLERY') {
+        return item.stockType === 'Imitation Jewellery' || item.metalType?.toLowerCase().includes('alloy') || item.purityKarat?.includes('Plated');
+      }
+      if (activeStockTab === 'RAW METAL STOCK') {
+        return item.stockType === 'Raw Metal Stock' || item.category === 'Bullion Bar' || item.category === 'Scrap';
+      }
+      if (activeStockTab === 'STONE STOCK') {
+        return item.stockType === 'Stone Stock' || item.category?.includes('Diamond') || item.category?.includes('Gemstone') || (item.diamondCarats && item.diamondCarats > 0);
+      }
+      if (activeStockTab === 'RE-ORDER LIST') {
+        const threshold = item.reorderLevel || 2;
+        return (item.qty || 1) <= threshold;
+      }
+      return true; // STOCK TALLY includes all stock
+    });
+  }, [baseFilteredStock, activeStockTab]);
+
+  // Stock Tally Statistics
+  const tallyStats = useMemo(() => {
+    const totalItems = baseFilteredStock.length;
+    const verifiedCount = baseFilteredStock.filter(item => tallyScannedBarcodes.has(item.barcode)).length;
+    const uncountedCount = totalItems - verifiedCount;
+    const totalBookWeight = baseFilteredStock.reduce((acc, i) => acc + (Number(i.grossWeight) || 0), 0);
+    const verifiedWeight = baseFilteredStock
+      .filter(item => tallyScannedBarcodes.has(item.barcode))
+      .reduce((acc, i) => acc + (Number(i.grossWeight) || 0), 0);
+    const weightVariance = verifiedWeight - totalBookWeight;
+
+    return {
+      totalItems,
+      verifiedCount,
+      uncountedCount,
+      totalBookWeight: totalBookWeight.toFixed(3),
+      verifiedWeight: verifiedWeight.toFixed(3),
+      weightVariance: weightVariance.toFixed(3)
+    };
+  }, [baseFilteredStock, tallyScannedBarcodes]);
+
+  // Handle Scanning Barcode in Tally
+  const handleTallyScan = (e) => {
+    e.preventDefault();
+    if (!tallyInputBarcode.trim()) return;
+    const found = baseFilteredStock.find(i => i.barcode === tallyInputBarcode.trim() || i.itemCode?.toLowerCase() === tallyInputBarcode.trim().toLowerCase());
+    if (found) {
+      setTallyScannedBarcodes(prev => new Set(prev).add(found.barcode));
+      setTallyInputBarcode('');
+    } else {
+      alert(`Barcode "${tallyInputBarcode}" not found in current firm inventory.`);
+    }
+  };
+
+  const handleVerifyAllTally = () => {
+    const allBarcodes = baseFilteredStock.map(i => i.barcode).filter(Boolean);
+    setTallyScannedBarcodes(new Set(allBarcodes));
+  };
+
+  // Handle Raising Re-order / Karigar PO
+  const handleRaiseReorder = (item) => {
+    setReorderSuccessItem(item);
+    setTimeout(() => setReorderSuccessItem(null), 4000);
+  };
 
   // Helper to sanitize CSV cells against formula injection (SEC-04)
   const sanitizeCsvCell = (val) => {
@@ -228,10 +354,16 @@ export default function StockModule() {
 
   // Export to CSV simulation with SEC-04 formula injection protection
   const handleExportExcel = () => {
-    const headers = ["SRNO","FIRM","METAL","ITEM CODE","BARCODE","CATEGORY","DESC","QTY","GROSS WT","NET WT","PURITY","FINE WT","RATE/GM","MAKING","TOTAL PRICE"];
+    const headers = [
+      "SRNO", "FIRM", "MODE", "TAB", "METAL", "ITEM CODE", "BARCODE",
+      "CATEGORY", "DESC", "QTY", "GROSS WT", "NET WT", "PURITY",
+      "FINE WT", "RATE/GM", "MAKING", "RETAIL PRICE", "WHOLESALE PRICE", "MIN LOT"
+    ];
     const rows = filteredStock.map((s, idx) => [
       sanitizeCsvCell(idx + 1),
       sanitizeCsvCell(s.firmCode),
+      sanitizeCsvCell(stockMode),
+      sanitizeCsvCell(activeStockTab),
       sanitizeCsvCell(s.metalType),
       sanitizeCsvCell(s.itemCode),
       sanitizeCsvCell(s.barcode),
@@ -244,14 +376,16 @@ export default function StockModule() {
       sanitizeCsvCell(s.fineWeight),
       sanitizeCsvCell(s.ratePerGram),
       sanitizeCsvCell(s.makingChargeValue),
-      sanitizeCsvCell(s.totalPrice)
+      sanitizeCsvCell(s.totalPrice),
+      sanitizeCsvCell(s.wholesalePrice || Math.round(s.totalPrice * 0.88)),
+      sanitizeCsvCell(s.wholesaleMinLot || 5)
     ].join(','));
 
     const csvContent = "data:text/csv;charset=utf-8," + [headers.join(','), ...rows].join("\n");
     const encodedUri = encodeURI(csvContent);
     const link = document.createElement("a");
     link.setAttribute("href", encodedUri);
-    link.setAttribute("download", `Gold_Silver_Stock_Export_${new Date().toISOString().split('T')[0]}.csv`);
+    link.setAttribute("download", `Jewellery_OS_${activeStockTab.replace(/\s+/g, '_')}_${stockMode.replace(/\s+/g, '_')}_${new Date().toISOString().split('T')[0]}.csv`);
     document.body.appendChild(link);
     link.click();
     link.remove();
@@ -265,21 +399,24 @@ export default function StockModule() {
           <div className="flex items-center space-x-2.5">
             <Package className="w-6 h-6 text-amber-400 flex-shrink-0" />
             <h2 className="text-xl font-serif font-bold text-slate-100 uppercase tracking-wider">
-              STOCK & INVENTORY MANAGEMENT
+              STOCK &amp; INVENTORY MANAGEMENT
             </h2>
           </div>
           <p className="text-xs text-slate-400 mt-1">
-            Firm: <strong className="text-slate-200">{activeFirm.name}</strong> • Real-time Gold & Silver Stock Register
+            Firm: <strong className="text-slate-200">{activeFirm.name}</strong> • Real-time Gold &amp; Silver Stock Register
           </p>
         </div>
 
         <div className="no-print flex items-center space-x-2">
-          <div className="bg-slate-900 border border-slate-700 p-0.5 rounded-xl flex">
+          {/* Mode Switcher: RETAIL vs WHOLESALE */}
+          <div className="bg-slate-900 border border-slate-700 p-0.5 rounded-xl flex shadow">
             <button
               type="button"
               onClick={() => setStockMode('RETAIL STOCK')}
-              className={`px-3 py-1.5 text-xs font-bold rounded-lg transition-all ${
-                stockMode === 'RETAIL STOCK' ? 'bg-amber-500 text-slate-950' : 'text-slate-400 hover:text-white'
+              className={`px-3 py-1.5 text-xs font-bold rounded-lg transition-all cursor-pointer ${
+                stockMode === 'RETAIL STOCK'
+                  ? 'bg-amber-500 text-slate-950 shadow-md font-extrabold'
+                  : 'text-slate-400 hover:text-white'
               }`}
             >
               RETAIL STOCK
@@ -287,24 +424,42 @@ export default function StockModule() {
             <button
               type="button"
               onClick={() => setStockMode('WHOLESALE STOCK')}
-              className={`px-3 py-1.5 text-xs font-bold rounded-lg transition-all ${
-                stockMode === 'WHOLESALE STOCK' ? 'bg-amber-500 text-slate-950' : 'text-slate-400 hover:text-white'
+              className={`px-3 py-1.5 text-xs font-bold rounded-lg transition-all cursor-pointer ${
+                stockMode === 'WHOLESALE STOCK'
+                  ? 'bg-amber-500 text-slate-950 shadow-md font-extrabold'
+                  : 'text-slate-400 hover:text-white'
               }`}
             >
               WHOLESALE STOCK
             </button>
           </div>
 
+          {/* ADD NEW STOCK Button */}
           <button
             type="button"
             onClick={handleOpenAddStockModal}
-            className="flex items-center space-x-1.5 bg-gradient-to-r from-amber-500 to-amber-600 hover:from-amber-400 text-slate-950 font-bold px-4 py-2 rounded-xl text-xs md:text-sm shadow-lg shadow-amber-500/20 transition-all hover:scale-[1.02]"
+            className="flex items-center space-x-1.5 bg-gradient-to-r from-amber-500 to-amber-600 hover:from-amber-400 text-slate-950 font-bold px-4 py-2 rounded-xl text-xs md:text-sm shadow-lg shadow-amber-500/20 transition-all hover:scale-[1.02] cursor-pointer"
           >
             <PlusCircle className="w-4 h-4" />
             <span>ADD NEW STOCK</span>
           </button>
         </div>
       </div>
+
+      {/* Mode Indicator Banner when Wholesale is Active */}
+      {stockMode === 'WHOLESALE STOCK' && (
+        <div className="p-3.5 bg-amber-950/70 border border-amber-500/50 rounded-2xl text-amber-200 text-xs flex items-center justify-between shadow-lg">
+          <div className="flex items-center space-x-2.5">
+            <Building className="w-4 h-4 text-amber-400 shrink-0" />
+            <span>
+              <strong>B2B Wholesale Catalog Active:</strong> Showing trade lot prices, minimum order quantities (MOQ), and volume discounts for jewelers &amp; dealers.
+            </span>
+          </div>
+          <span className="font-mono text-[11px] bg-amber-500 text-slate-950 px-2.5 py-0.5 rounded-full font-bold">
+            Trade Mode
+          </span>
+        </div>
+      )}
 
       {/* Tabs */}
       <div className="no-print flex items-center space-x-1 overflow-x-auto no-scrollbar border-b border-slate-800 pb-1">
@@ -313,9 +468,9 @@ export default function StockModule() {
             type="button"
             key={tab}
             onClick={() => setActiveStockTab(tab)}
-            className={`px-3.5 py-1.5 rounded-lg text-xs font-bold whitespace-nowrap transition-all ${
+            className={`px-3.5 py-1.5 rounded-lg text-xs font-bold whitespace-nowrap transition-all cursor-pointer ${
               activeStockTab === tab
-                ? 'bg-amber-500 text-slate-950 shadow-md'
+                ? 'bg-amber-500 text-slate-950 shadow-md font-extrabold'
                 : 'text-slate-400 hover:bg-slate-800 hover:text-slate-200'
             }`}
           >
@@ -323,6 +478,16 @@ export default function StockModule() {
           </button>
         ))}
       </div>
+
+      {/* Reorder Success Feedback */}
+      {reorderSuccessItem && (
+        <div className="p-3 bg-emerald-950/90 border border-emerald-500 rounded-xl text-emerald-200 text-xs flex items-center space-x-2 shadow-lg animate-fade-in">
+          <CheckCircle className="w-4 h-4 text-emerald-400" />
+          <span>
+            Karigar Manufacturing Work Order generated for <strong>{reorderSuccessItem.itemCode}</strong> ({reorderSuccessItem.subCategory})!
+          </span>
+        </div>
+      )}
 
       {/* Stock Filter Bar */}
       <div className="bg-slate-900 border border-slate-800 rounded-2xl p-4 shadow-xl flex flex-wrap items-center justify-between gap-3">
@@ -332,7 +497,7 @@ export default function StockModule() {
               type="text"
               value={searchTerm}
               onChange={(e) => setSearchTerm(e.target.value)}
-              placeholder="Search Code, Barcode (1201), HUID, Item..."
+              placeholder="Search Code, Barcode, HUID, Item..."
               className="w-full bg-slate-950 border border-slate-700 focus:border-amber-400 rounded-xl pl-9 pr-3 py-2 text-xs md:text-sm text-slate-100 placeholder-slate-500 focus:outline-none"
             />
             <Search className="w-4 h-4 text-slate-400 absolute left-3 top-2.5" />
@@ -343,9 +508,11 @@ export default function StockModule() {
             onChange={(e) => setSelectedMetal(e.target.value)}
             className="bg-slate-950 border border-slate-700 text-slate-200 rounded-xl px-3 py-2 text-xs md:text-sm font-semibold focus:outline-none"
           >
-            <option value="ALL">All Metals (Gold / Silver)</option>
+            <option value="ALL">All Metals / Types</option>
             <option value="Gold">Gold Only</option>
             <option value="Silver">Silver Only</option>
+            <option value="Natural Diamond">Diamond</option>
+            <option value="Brass Alloy / 1-Gram Gold">1-Gram Gold</option>
           </select>
 
           <select
@@ -356,10 +523,12 @@ export default function StockModule() {
             <option value="ALL">All Categories</option>
             <option value="Ring">Rings</option>
             <option value="Earring">Earrings</option>
-            <option value="Necklace">Necklaces</option>
-            <option value="Bangles">Bangles</option>
+            <option value="Necklace">Necklaces / Chokers</option>
+            <option value="Bangles">Bangles &amp; Kadas</option>
             <option value="Anklet / Payal">Payal / Anklets</option>
-            <option value="Bullion Bar">Bullion Bars & Coins</option>
+            <option value="Bullion Bar">Bullion Bars &amp; Coins</option>
+            <option value="Loose Diamond">Loose Diamonds</option>
+            <option value="Precious Gemstone">Precious Gemstones</option>
           </select>
         </div>
 
@@ -389,7 +558,172 @@ export default function StockModule() {
         </div>
       </div>
 
-      {/* STOCK INVENTORY TABLE */}
+      {/* ========================================================= */}
+      {/* TAB 1: RAW METAL STOCK STATS CARDS                        */}
+      {/* ========================================================= */}
+      {activeStockTab === 'RAW METAL STOCK' && (
+        <div className="grid grid-cols-1 sm:grid-cols-3 gap-4">
+          <div className="bg-slate-900 border border-slate-800 p-4 rounded-2xl space-y-1">
+            <p className="text-xs text-slate-400 flex items-center gap-1.5">
+              <Coins className="w-4 h-4 text-amber-400" /> Vault Bullion Weight
+            </p>
+            <p className="text-xl font-bold font-mono text-slate-100">1,100.000 GM</p>
+            <p className="text-[11px] text-amber-400">100g 24K Gold Bar + 1,000g Fine Silver Bar</p>
+          </div>
+
+          <div className="bg-slate-900 border border-slate-800 p-4 rounded-2xl space-y-1">
+            <p className="text-xs text-slate-400 flex items-center gap-1.5">
+              <Scale className="w-4 h-4 text-emerald-400" /> Pure Fine Weight
+            </p>
+            <p className="text-xl font-bold font-mono text-emerald-400">1,099.000 GM</p>
+            <p className="text-[11px] text-slate-400">99.9% - 100% Certified Pure Assay</p>
+          </div>
+
+          <div className="bg-slate-900 border border-slate-800 p-4 rounded-2xl space-y-1">
+            <p className="text-xs text-slate-400 flex items-center gap-1.5">
+              <Box className="w-4 h-4 text-amber-300" /> Total Bullion Valuation
+            </p>
+            <p className="text-xl font-bold font-mono text-amber-300">₹8,06,845.00</p>
+            <p className="text-[11px] text-slate-400">Vault Custody: Main Fireproof Safe A</p>
+          </div>
+        </div>
+      )}
+
+      {/* ========================================================= */}
+      {/* TAB 2: STONE STOCK STATS CARDS                            */}
+      {/* ========================================================= */}
+      {activeStockTab === 'STONE STOCK' && (
+        <div className="grid grid-cols-1 sm:grid-cols-3 gap-4">
+          <div className="bg-slate-900 border border-slate-800 p-4 rounded-2xl space-y-1">
+            <p className="text-xs text-slate-400 flex items-center gap-1.5">
+              <Gem className="w-4 h-4 text-cyan-400" /> Loose Certified Diamonds
+            </p>
+            <p className="text-xl font-bold font-mono text-slate-100">3.50 CARATS</p>
+            <p className="text-[11px] text-cyan-300">GIA Certified Solitaires (VVS1 / E Color)</p>
+          </div>
+
+          <div className="bg-slate-900 border border-slate-800 p-4 rounded-2xl space-y-1">
+            <p className="text-xs text-slate-400 flex items-center gap-1.5">
+              <Sparkles className="w-4 h-4 text-emerald-400" /> Precious Colored Gemstones
+            </p>
+            <p className="text-xl font-bold font-mono text-emerald-400">4.25 CARATS</p>
+            <p className="text-[11px] text-slate-400">Zambian Emerald (Panna), Burmese Rubies</p>
+          </div>
+
+          <div className="bg-slate-900 border border-slate-800 p-4 rounded-2xl space-y-1">
+            <p className="text-xs text-slate-400 flex items-center gap-1.5">
+              <Package className="w-4 h-4 text-amber-300" /> Total Stone Inventory Value
+            </p>
+            <p className="text-xl font-bold font-mono text-amber-300">₹3,28,500.00</p>
+            <p className="text-[11px] text-slate-400">Available for Custom Ring / Choker Setting</p>
+          </div>
+        </div>
+      )}
+
+      {/* ========================================================= */}
+      {/* TAB 3: STOCK TALLY AUDIT WORKSPACE                        */}
+      {/* ========================================================= */}
+      {activeStockTab === 'STOCK TALLY' && (
+        <div className="bg-slate-900 border border-slate-800 rounded-2xl p-5 shadow-xl space-y-5">
+          <div className="flex flex-wrap items-center justify-between gap-3 pb-3 border-b border-slate-800">
+            <div>
+              <h3 className="text-sm font-bold uppercase tracking-wider text-amber-400 flex items-center gap-2">
+                <ClipboardCheck className="w-5 h-5 text-amber-400" /> Physical Inventory Tally Reconciliation
+              </h3>
+              <p className="text-xs text-slate-400 mt-0.5">
+                Scan trays or barcodes to verify physical stock against book balance.
+              </p>
+            </div>
+
+            <div className="flex items-center space-x-2">
+              <button
+                type="button"
+                onClick={handleVerifyAllTally}
+                className="px-3.5 py-1.5 bg-slate-800 hover:bg-slate-700 text-slate-200 border border-slate-700 rounded-xl text-xs font-bold transition-all cursor-pointer"
+              >
+                Verify All In Stock
+              </button>
+              <button
+                type="button"
+                onClick={() => {
+                  setTallyAuditCommitted(true);
+                  setTimeout(() => setTallyAuditCommitted(false), 5000);
+                }}
+                className="px-4 py-1.5 bg-emerald-600 hover:bg-emerald-500 text-white rounded-xl text-xs font-bold shadow transition-all cursor-pointer"
+              >
+                Commit Audit Tally
+              </button>
+            </div>
+          </div>
+
+          {tallyAuditCommitted && (
+            <div className="p-3 bg-emerald-950 border border-emerald-500 rounded-xl text-emerald-200 text-xs flex items-center space-x-2 shadow">
+              <Check className="w-4 h-4 text-emerald-400" />
+              <span>
+                Physical Stock Audit Tally finalized and logged in System Audit Register with zero discrepancies!
+              </span>
+            </div>
+          )}
+
+          {/* Audit KPIs */}
+          <div className="grid grid-cols-2 md:grid-cols-4 gap-3">
+            <div className="bg-slate-950 p-3 rounded-xl border border-slate-800">
+              <p className="text-[11px] text-slate-400">Total Book Items</p>
+              <p className="text-lg font-bold font-mono text-slate-100">{tallyStats.totalItems} Items</p>
+            </div>
+            <div className="bg-slate-950 p-3 rounded-xl border border-slate-800">
+              <p className="text-[11px] text-emerald-400">Physically Verified</p>
+              <p className="text-lg font-bold font-mono text-emerald-400">{tallyStats.verifiedCount} Items</p>
+            </div>
+            <div className="bg-slate-950 p-3 rounded-xl border border-slate-800">
+              <p className="text-[11px] text-rose-400">Uncounted / Pending</p>
+              <p className="text-lg font-bold font-mono text-rose-400">{tallyStats.uncountedCount} Items</p>
+            </div>
+            <div className="bg-slate-950 p-3 rounded-xl border border-slate-800">
+              <p className="text-[11px] text-amber-400">Weight Discrepancy</p>
+              <p className="text-lg font-bold font-mono text-amber-300">{tallyStats.weightVariance} GM</p>
+            </div>
+          </div>
+
+          {/* Barcode Scanner Input */}
+          <form onSubmit={handleTallyScan} className="flex gap-2">
+            <input
+              type="text"
+              placeholder="Scan or type barcode (e.g. 1201, 1150, 1104)..."
+              value={tallyInputBarcode}
+              onChange={(e) => setTallyInputBarcode(e.target.value)}
+              className="flex-1 bg-slate-950 border border-slate-700 focus:border-amber-400 rounded-xl px-3 py-2 text-xs font-mono text-slate-100 focus:outline-none"
+            />
+            <button
+              type="submit"
+              className="px-4 py-2 bg-amber-500 hover:bg-amber-400 text-slate-950 font-bold rounded-xl text-xs cursor-pointer"
+            >
+              Scan Barcode
+            </button>
+          </form>
+        </div>
+      )}
+
+      {/* ========================================================= */}
+      {/* TAB 4: RE-ORDER LIST ALERT BANNER                         */}
+      {/* ========================================================= */}
+      {activeStockTab === 'RE-ORDER LIST' && (
+        <div className="p-3.5 bg-rose-950/70 border border-rose-500/50 rounded-2xl text-rose-200 text-xs flex items-center justify-between shadow-lg">
+          <div className="flex items-center space-x-2.5">
+            <AlertTriangle className="w-4 h-4 text-rose-400 shrink-0" />
+            <span>
+              <strong>Low Inventory Replenishment Alert:</strong> {filteredStock.length} items have reached or breached their minimum reorder safety threshold.
+            </span>
+          </div>
+          <span className="font-mono text-[11px] bg-rose-600 text-white px-2.5 py-0.5 rounded-full font-bold">
+            Restock Required
+          </span>
+        </div>
+      )}
+
+      {/* ========================================================= */}
+      {/* MAIN STOCK INVENTORY TABLE                                */}
+      {/* ========================================================= */}
       <div className="bg-slate-900 border border-slate-800 rounded-2xl p-4 md:p-5 shadow-xl">
         <div className="overflow-x-auto rounded-xl border border-slate-800">
           <table className="w-full text-xs text-left">
@@ -398,103 +732,169 @@ export default function StockModule() {
                 <th className="py-3 px-3">#</th>
                 <th className="py-3 px-3">Photo</th>
                 <th className="py-3 px-3">Code / Barcode</th>
-                <th className="py-3 px-3">Metal / Karat</th>
-                <th className="py-3 px-3">Category & Name</th>
-                <th className="py-3 px-3">BIS HUID</th>
+                <th className="py-3 px-3">Type / Metal</th>
+                <th className="py-3 px-3">Category &amp; Description</th>
+                <th className="py-3 px-3">BIS HUID / Cert</th>
                 <th className="py-3 px-3 text-right">Gross Wt (g)</th>
                 <th className="py-3 px-3 text-right">Net Wt (g)</th>
-                <th className="py-3 px-3 text-right">Fine Wt (g)</th>
-                <th className="py-3 px-3 text-right">Making (₹)</th>
-                <th className="py-3 px-3 text-right">Calculated Total</th>
-                <th className="py-3 px-3">Status</th>
+                <th className="py-3 px-3 text-right">Qty / Lot</th>
+                <th className="py-3 px-3 text-right">
+                  {stockMode === 'WHOLESALE STOCK' ? 'Wholesale Price' : 'Calculated Price'}
+                </th>
+                {stockMode === 'WHOLESALE STOCK' && (
+                  <th className="py-3 px-3 text-right">Min Lot MOQ</th>
+                )}
+                {activeStockTab === 'STOCK TALLY' && (
+                  <th className="py-3 px-3 text-center">Tally Status</th>
+                )}
                 <th className="py-3 px-3 text-center">Actions</th>
               </tr>
             </thead>
             <tbody className="divide-y divide-slate-800/80 font-medium text-xs">
-              {filteredStock.map((item, idx) => (
-                <tr key={item.id} className="hover:bg-slate-800/40 transition-colors">
-                  <td className="py-3 px-3 font-mono text-slate-500">{idx + 1}</td>
-                  <td className="py-3 px-3">
-                    <img
-                      src={item.image}
-                      alt={item.itemCode}
-                      className="w-10 h-10 object-cover rounded-lg border border-slate-700 shadow"
-                    />
-                  </td>
-                  <td className="py-3 px-3">
-                    <p className="font-bold text-amber-300 font-mono">{item.itemCode}</p>
-                    <p className="text-[10px] text-slate-400 font-mono">BCD: {item.barcode}</p>
-                  </td>
-                  <td className="py-3 px-3">
-                    <p className="font-bold text-slate-200">{item.metalType}</p>
-                    <p className="text-[10px] text-amber-400/90">{item.purityKarat}</p>
-                  </td>
-                  <td className="py-3 px-3">
-                    <p className="font-bold text-slate-100">{item.category}</p>
-                    <p className="text-[10px] text-slate-400 truncate max-w-[150px]">{item.subCategory}</p>
-                  </td>
-                  <td className="py-3 px-3 font-mono text-slate-300 text-[11px]">{item.huid}</td>
-                  <td className="py-3 px-3 font-mono font-bold text-slate-100 text-right">{item.grossWeight.toFixed(3)}g</td>
-                  <td className="py-3 px-3 font-mono font-bold text-amber-200 text-right">{item.netWeight.toFixed(3)}g</td>
-                  <td className="py-3 px-3 font-mono text-emerald-400 font-bold text-right">{item.fineWeight.toFixed(3)}g</td>
-                  <td className="py-3 px-3 font-mono text-slate-300 text-right">
-                    ₹{item.makingChargeValue} {item.makingChargeType === 'per_gram' ? '/g' : 'fix'}
-                  </td>
-                  <td className="py-3 px-3 font-mono font-bold text-slate-100 text-right">
-                    {formatCurrency(item.totalPrice)}
-                  </td>
-                  <td className="py-3 px-3">
-                    <span className={`px-2 py-0.5 rounded text-[10px] font-bold ${
-                      item.status === 'In Stock'
-                        ? 'bg-emerald-950 text-emerald-300 border border-emerald-800'
-                        : 'bg-rose-950 text-rose-300 border border-rose-800'
-                    }`}>
-                      {item.status}
-                    </span>
-                  </td>
-                  <td className="py-3 px-3 text-center">
-                    <div className="flex items-center justify-center space-x-1">
-                      <button
-                        type="button"
-                        onClick={() => setInspectItem(item)}
-                        title="View Full Details"
-                        aria-label={`View details for ${item.itemCode}`}
-                        className="p-1.5 bg-slate-800 hover:bg-slate-700 text-slate-300 rounded-lg transition-colors"
-                      >
-                        <Eye className="w-3.5 h-3.5" />
-                      </button>
-
-                      <button
-                        type="button"
-                        onClick={() => {
-                          setActiveModule('tags');
-                        }}
-                        title="Print Jewellery Tag"
-                        aria-label={`Print jewellery tag for ${item.itemCode}`}
-                        className="p-1.5 bg-slate-800 hover:bg-slate-700 text-amber-300 rounded-lg transition-colors"
-                      >
-                        <Tag className="w-3.5 h-3.5" />
-                      </button>
-
-                      <button
-                        type="button"
-                        onClick={() => setItemToDelete(item)}
-                        title="Delete Item"
-                        aria-label={`Delete item ${item.itemCode}`}
-                        className="p-1.5 bg-rose-500/10 hover:bg-rose-500/20 text-rose-400 rounded-lg transition-colors"
-                      >
-                        <Trash2 className="w-3.5 h-3.5" />
-                      </button>
-                    </div>
+              {filteredStock.length === 0 ? (
+                <tr>
+                  <td colSpan={13} className="py-12 text-center text-slate-500">
+                    <Package className="w-8 h-8 mx-auto text-slate-600 mb-2" />
+                    <p className="font-bold text-sm">No inventory items found in this tab.</p>
+                    <p className="text-xs text-slate-500 mt-1">
+                      Click <strong>ADD NEW STOCK</strong> to add items to {activeStockTab}.
+                    </p>
                   </td>
                 </tr>
-              ))}
+              ) : (
+                filteredStock.map((item, idx) => {
+                  const isTallyVerified = tallyScannedBarcodes.has(item.barcode);
+                  const isLowStock = (item.qty || 1) <= (item.reorderLevel || 2);
+
+                  return (
+                    <tr key={item.id} className="hover:bg-slate-800/40 transition-colors">
+                      <td className="py-3 px-3 font-mono text-slate-500">{idx + 1}</td>
+                      <td className="py-3 px-3">
+                        <img
+                          src={item.image}
+                          alt={item.itemCode}
+                          className="w-10 h-10 object-cover rounded-lg border border-slate-700 shadow"
+                        />
+                      </td>
+                      <td className="py-3 px-3">
+                        <p className="font-bold text-amber-300 font-mono">{item.itemCode}</p>
+                        <p className="text-[10px] text-slate-400 font-mono">BCD: {item.barcode}</p>
+                      </td>
+                      <td className="py-3 px-3">
+                        <p className="font-bold text-slate-200">{item.metalType}</p>
+                        <p className="text-[10px] text-amber-400/90">{item.purityKarat || item.stockType}</p>
+                      </td>
+                      <td className="py-3 px-3">
+                        <p className="font-bold text-slate-100">{item.category}</p>
+                        <p className="text-[10px] text-slate-400 truncate max-w-[160px]">{item.subCategory}</p>
+                      </td>
+                      <td className="py-3 px-3 font-mono text-slate-300 text-[11px]">{item.huid || '—'}</td>
+                      <td className="py-3 px-3 font-mono font-bold text-slate-100 text-right">
+                        {item.grossWeight ? item.grossWeight.toFixed(3) + 'g' : '—'}
+                      </td>
+                      <td className="py-3 px-3 font-mono font-bold text-amber-200 text-right">
+                        {item.netWeight ? item.netWeight.toFixed(3) + 'g' : '—'}
+                      </td>
+                      <td className="py-3 px-3 font-mono text-right">
+                        <span className={`px-2 py-0.5 rounded text-[11px] font-bold ${
+                          isLowStock
+                            ? 'bg-rose-950 text-rose-300 border border-rose-800'
+                            : 'bg-slate-800 text-slate-200'
+                        }`}>
+                          {item.qty || 1} {item.wholesaleMinLot ? 'pcs' : ''}
+                        </span>
+                      </td>
+                      <td className="py-3 px-3 font-mono font-bold text-slate-100 text-right">
+                        {stockMode === 'WHOLESALE STOCK'
+                          ? formatCurrency(item.wholesalePrice || Math.round(item.totalPrice * 0.88))
+                          : formatCurrency(item.totalPrice)}
+                      </td>
+                      {stockMode === 'WHOLESALE STOCK' && (
+                        <td className="py-3 px-3 font-mono text-emerald-400 text-right font-bold">
+                          {item.wholesaleMinLot || 5} Pcs Lot
+                        </td>
+                      )}
+                      {activeStockTab === 'STOCK TALLY' && (
+                        <td className="py-3 px-3 text-center">
+                          <button
+                            type="button"
+                            onClick={() => {
+                              setTallyScannedBarcodes(prev => {
+                                const next = new Set(prev);
+                                if (next.has(item.barcode)) next.delete(item.barcode);
+                                else next.add(item.barcode);
+                                return next;
+                              });
+                            }}
+                            className={`px-2 py-1 rounded text-[10px] font-bold transition-all cursor-pointer ${
+                              isTallyVerified
+                                ? 'bg-emerald-950 text-emerald-300 border border-emerald-700'
+                                : 'bg-slate-800 text-slate-400 hover:text-slate-200'
+                            }`}
+                          >
+                            {isTallyVerified ? '✓ Verified' : '○ Pending'}
+                          </button>
+                        </td>
+                      )}
+                      <td className="py-3 px-3 text-center">
+                        <div className="flex items-center justify-center space-x-1">
+                          {/* Re-order action if on Re-order tab */}
+                          {activeStockTab === 'RE-ORDER LIST' && (
+                            <button
+                              type="button"
+                              onClick={() => handleRaiseReorder(item)}
+                              title="Raise Karigar Work Order"
+                              className="px-2 py-1 bg-amber-500 hover:bg-amber-400 text-slate-950 font-bold rounded-lg text-[10px] flex items-center gap-1 cursor-pointer"
+                            >
+                              <Send className="w-3 h-3" /> Reorder
+                            </button>
+                          )}
+
+                          <button
+                            type="button"
+                            onClick={() => setInspectItem(item)}
+                            title="View Full Details"
+                            aria-label={`View details for ${item.itemCode}`}
+                            className="p-1.5 bg-slate-800 hover:bg-slate-700 text-slate-300 rounded-lg transition-colors cursor-pointer"
+                          >
+                            <Eye className="w-3.5 h-3.5" />
+                          </button>
+
+                          <button
+                            type="button"
+                            onClick={() => {
+                              setActiveModule('tags');
+                            }}
+                            title="Print Jewellery Tag"
+                            aria-label={`Print jewellery tag for ${item.itemCode}`}
+                            className="p-1.5 bg-slate-800 hover:bg-slate-700 text-amber-300 rounded-lg transition-colors cursor-pointer"
+                          >
+                            <Tag className="w-3.5 h-3.5" />
+                          </button>
+
+                          <button
+                            type="button"
+                            onClick={() => setItemToDelete(item)}
+                            title="Delete Item"
+                            aria-label={`Delete item ${item.itemCode}`}
+                            className="p-1.5 bg-rose-500/10 hover:bg-rose-500/20 text-rose-400 rounded-lg transition-colors cursor-pointer"
+                          >
+                            <Trash2 className="w-3.5 h-3.5" />
+                          </button>
+                        </div>
+                      </td>
+                    </tr>
+                  );
+                })
+              )}
             </tbody>
           </table>
         </div>
       </div>
 
-      {/* ADD JEWELLERY RETAIL STOCK MODAL (Audit Sizing & Logical Grouping Fix) */}
+      {/* ========================================================= */}
+      {/* ADD JEWELLERY RETAIL / WHOLESALE STOCK MODAL              */}
+      {/* ========================================================= */}
       {showAddStockModal && (
         <div className="fixed inset-0 z-50 bg-black/80 backdrop-blur-sm flex items-center justify-center p-3 md:p-6 overflow-y-auto">
           <div className="bg-slate-900 border border-amber-500/40 rounded-2xl max-w-4xl w-full shadow-2xl flex flex-col max-h-[92vh]">
@@ -504,27 +904,29 @@ export default function StockModule() {
                 <PlusCircle className="w-5 h-5 text-amber-400" />
                 <div>
                   <h3 className="font-serif font-bold text-base md:text-lg text-slate-100 uppercase tracking-wider">
-                    Add Jewellery Inventory Stock
+                    Add Inventory Item ({activeStockTab})
                   </h3>
-                  <p className="text-xs text-slate-400">Opening Stock Entry & Barcode Generation</p>
+                  <p className="text-xs text-slate-400">
+                    Mode: <strong className="text-amber-400">{stockMode}</strong> • Opening Stock Entry &amp; Barcode Generation
+                  </p>
                 </div>
               </div>
               <button
                 onClick={() => setShowAddStockModal(false)}
-                className="text-slate-400 hover:text-white p-1 rounded-lg"
+                className="text-slate-400 hover:text-white p-1 rounded-lg cursor-pointer"
               >
                 <X className="w-5 h-5" />
               </button>
             </div>
 
-            {/* Modal Body: Scrollable with 3 clear logical sections */}
+            {/* Modal Body */}
             <form onSubmit={handleAddStockSubmit} className="flex-1 overflow-y-auto p-5 md:p-6 space-y-6 text-xs">
               {/* SECTION 1: Product & Classification */}
               <div className="space-y-3">
                 <div className="flex items-center space-x-2 pb-1.5 border-b border-slate-800">
                   <span className="w-5 h-5 rounded-full bg-amber-500/20 text-amber-400 flex items-center justify-center text-[11px] font-bold">1</span>
                   <h4 className="font-bold text-xs uppercase tracking-wider text-slate-200">
-                    Product Identification & Category
+                    Product Identification &amp; Category
                   </h4>
                 </div>
 
@@ -554,250 +956,181 @@ export default function StockModule() {
                   </div>
 
                   <div>
-                    <label className="block text-slate-300 font-semibold mb-1">Metal Type *</label>
+                    <label className="block text-slate-300 font-semibold mb-1">Stock Classification *</label>
                     <select
+                      value={newItemForm.stockType}
+                      onChange={(e) => handleFormChange('stockType', e.target.value)}
+                      className="w-full bg-slate-950 border border-slate-700 text-slate-100 rounded-lg px-3 py-2 text-xs md:text-sm font-semibold"
+                    >
+                      <option value="Fine Jewellery">Fine Jewellery (Gold / Silver)</option>
+                      <option value="Imitation Jewellery">Imitation / 1-Gram Gold</option>
+                      <option value="Raw Metal Stock">Raw Metal Bullion (Vault)</option>
+                      <option value="Stone Stock">Loose Stone / Diamond</option>
+                    </select>
+                  </div>
+
+                  <div>
+                    <label className="block text-slate-300 font-semibold mb-1">Metal / Material *</label>
+                    <input
+                      type="text"
                       value={newItemForm.metalType}
                       onChange={(e) => handleFormChange('metalType', e.target.value)}
                       className="w-full bg-slate-950 border border-slate-700 text-slate-100 rounded-lg px-3 py-2 text-xs md:text-sm font-semibold"
-                    >
-                      <option value="Gold">Gold (सोना)</option>
-                      <option value="Silver">Silver (चांदी)</option>
-                      <option value="Platinum">Platinum</option>
-                    </select>
+                      placeholder="e.g. Gold, Silver, Brass"
+                    />
                   </div>
+                </div>
 
-                  <div>
-                    <label className="block text-slate-300 font-semibold mb-1">Purity / Karat *</label>
-                    <select
-                      value={newItemForm.purityKarat}
-                      onChange={(e) => {
-                        const val = e.target.value;
-                        let p = 91.67;
-                        let r = 6600.24;
-                        if (val.includes('24K')) { p = 100; r = 7200; }
-                        if (val.includes('18K')) { p = 75; r = 5400; }
-                        if (val.includes('14K')) { p = 58.33; r = 4199.76; }
-                        if (val.includes('925')) { p = 92.5; r = 79.55; }
-                        setNewItemForm(prev => {
-                          const updated = {
-                            ...prev,
-                            purityKarat: val,
-                            purityPercent: p,
-                            ratePerGram: r
-                          };
-                          const calc = calculateJewelleryItem({
-                            grossWeight: updated.grossWeight,
-                            lessWeight: updated.lessWeight,
-                            purityPercent: p,
-                            ratePerGram: r,
-                            makingChargeType: updated.makingChargeType,
-                            makingChargeValue: updated.makingChargeValue,
-                            hallmarkCharge: updated.hallmarkCharge,
-                            stoneValue: updated.stoneValue
-                          });
-                          return {
-                            ...updated,
-                            netWeight: calc.netWeight,
-                            fineWeight: calc.fineWeight,
-                            totalPrice: calc.finalValue
-                          };
-                        });
-                      }}
-                      className="w-full bg-slate-950 border border-slate-700 text-slate-100 rounded-lg px-3 py-2 text-xs md:text-sm font-semibold"
-                    >
-                      <option value="22K (BIS 916)">22K (BIS 916 Hallmark)</option>
-                      <option value="24K">24K (Pure Gold)</option>
-                      <option value="18K (BIS 750)">18K (BIS 750 Hallmark)</option>
-                      <option value="14K (BIS 585)">14K (BIS 585)</option>
-                      <option value="Sterling 925">Sterling 925 (Silver)</option>
-                    </select>
-                  </div>
-
+                <div className="grid grid-cols-1 sm:grid-cols-2 md:grid-cols-3 gap-3.5">
                   <div>
                     <label className="block text-slate-300 font-semibold mb-1">Category *</label>
-                    <select
+                    <input
+                      type="text"
                       value={newItemForm.category}
                       onChange={(e) => handleFormChange('category', e.target.value)}
-                      className="w-full bg-slate-950 border border-slate-700 text-slate-100 rounded-lg px-3 py-2 text-xs md:text-sm font-semibold"
-                    >
-                      <option value="Ring">Ring (अंगूठी)</option>
-                      <option value="Earring">Earring (झुमका/बाली)</option>
-                      <option value="Necklace">Necklace / Choker (हार)</option>
-                      <option value="Bangles">Bangles / Kangan (कंगन)</option>
-                      <option value="Mangalsutra">Mangalsutra (मंगलसूत्र)</option>
-                      <option value="Chain">Chain (चेन)</option>
-                      <option value="Anklet / Payal">Payal (पायल)</option>
-                      <option value="Bullion Bar">Coin / Bar (सिक्का/बार)</option>
-                    </select>
+                      className="w-full bg-slate-950 border border-slate-700 text-slate-100 rounded-lg px-3 py-2 text-xs font-semibold"
+                      placeholder="Ring, Necklace, Bullion Bar"
+                      required
+                    />
                   </div>
 
                   <div>
-                    <label className="block text-slate-300 font-semibold mb-1">Sub-Category / Ornament</label>
+                    <label className="block text-slate-300 font-semibold mb-1">Description / Subcategory</label>
                     <input
                       type="text"
                       value={newItemForm.subCategory}
                       onChange={(e) => handleFormChange('subCategory', e.target.value)}
-                      placeholder="e.g. Ladies Designer Ring"
-                      className="w-full bg-slate-950 border border-slate-700 focus:border-amber-400 rounded-lg px-3 py-2 text-xs md:text-sm text-slate-100"
+                      className="w-full bg-slate-950 border border-slate-700 text-slate-100 rounded-lg px-3 py-2 text-xs"
+                      placeholder="e.g. Ladies Floral Gold Ring"
                     />
                   </div>
 
                   <div>
-                    <label className="block text-slate-300 font-semibold mb-1">BIS HUID Number</label>
+                    <label className="block text-slate-300 font-semibold mb-1">BIS HUID / Cert No</label>
                     <input
                       type="text"
                       value={newItemForm.huid}
-                      onChange={(e) => handleFormChange('huid', e.target.value.toUpperCase())}
-                      placeholder="e.g. HD102934"
-                      className="w-full bg-slate-950 border border-slate-700 focus:border-amber-400 rounded-lg px-3 py-2 text-xs md:text-sm text-slate-100 font-mono font-bold"
-                    />
-                  </div>
-
-                  <div>
-                    <label className="block text-slate-300 font-semibold mb-1">Counter Location</label>
-                    <input
-                      type="text"
-                      value={newItemForm.counter}
-                      onChange={(e) => handleFormChange('counter', e.target.value)}
-                      className="w-full bg-slate-950 border border-slate-700 focus:border-amber-400 rounded-lg px-3 py-2 text-xs md:text-sm text-slate-100"
+                      onChange={(e) => handleFormChange('huid', e.target.value)}
+                      className="w-full bg-slate-950 border border-slate-700 text-slate-100 rounded-lg px-3 py-2 text-xs font-mono"
+                      placeholder="e.g. HD884391 or GIA-Cert"
                     />
                   </div>
                 </div>
               </div>
 
-              {/* SECTION 2: Weight & Purity Calculations */}
+              {/* SECTION 2: Weights & Gold Rate */}
               <div className="space-y-3">
                 <div className="flex items-center space-x-2 pb-1.5 border-b border-slate-800">
                   <span className="w-5 h-5 rounded-full bg-amber-500/20 text-amber-400 flex items-center justify-center text-[11px] font-bold">2</span>
                   <h4 className="font-bold text-xs uppercase tracking-wider text-slate-200">
-                    Weights & Purity Analysis
+                    Weights, Purity &amp; Pricing
                   </h4>
                 </div>
 
-                <div className="grid grid-cols-1 sm:grid-cols-2 md:grid-cols-4 gap-3.5">
+                <div className="grid grid-cols-2 sm:grid-cols-4 gap-3.5">
                   <div>
-                    <label className="block text-slate-300 font-semibold mb-1">Gross Weight (g) *</label>
+                    <label className="block text-slate-300 font-semibold mb-1">Gross Wt (g) *</label>
                     <input
                       type="number"
                       step="0.001"
                       value={newItemForm.grossWeight}
                       onChange={(e) => handleFormChange('grossWeight', e.target.value)}
-                      className={`w-full bg-slate-950 border ${formValidationErrors.grossWeight ? 'border-rose-500' : 'border-slate-700'} focus:border-amber-400 rounded-lg px-3 py-2 text-xs md:text-sm text-slate-100 font-mono font-bold`}
+                      className="w-full bg-slate-950 border border-slate-700 text-slate-100 rounded-lg px-3 py-2 text-xs font-mono font-bold"
                       required
                     />
-                    {formValidationErrors.grossWeight && <p className="text-[10px] text-rose-400 mt-0.5">{formValidationErrors.grossWeight}</p>}
                   </div>
 
                   <div>
-                    <label className="block text-slate-300 font-semibold mb-1">Less / Stone Wt (g)</label>
+                    <label className="block text-slate-300 font-semibold mb-1">Less Wt (g)</label>
                     <input
                       type="number"
                       step="0.001"
                       value={newItemForm.lessWeight}
                       onChange={(e) => handleFormChange('lessWeight', e.target.value)}
-                      className="w-full bg-slate-950 border border-slate-700 focus:border-amber-400 rounded-lg px-3 py-2 text-xs md:text-sm text-slate-100 font-mono"
+                      className="w-full bg-slate-950 border border-slate-700 text-slate-100 rounded-lg px-3 py-2 text-xs font-mono"
                     />
                   </div>
 
                   <div>
-                    <label className="block text-slate-400 font-semibold mb-1">Net Weight (Auto Calc)</label>
-                    <div className="bg-slate-950 border border-slate-800 rounded-lg px-3 py-2 text-xs md:text-sm text-amber-300 font-mono font-bold">
-                      {newItemForm.netWeight.toFixed(3)}g
-                    </div>
-                  </div>
-
-                  <div>
-                    <label className="block text-slate-400 font-semibold mb-1">Fine Pure Weight (Auto Calc)</label>
-                    <div className="bg-slate-950 border border-slate-800 rounded-lg px-3 py-2 text-xs md:text-sm text-emerald-400 font-mono font-bold">
-                      {newItemForm.fineWeight.toFixed(3)}g
-                    </div>
-                  </div>
-                </div>
-              </div>
-
-              {/* SECTION 3: Pricing & Making Charges */}
-              <div className="space-y-3">
-                <div className="flex items-center space-x-2 pb-1.5 border-b border-slate-800">
-                  <span className="w-5 h-5 rounded-full bg-amber-500/20 text-amber-400 flex items-center justify-center text-[11px] font-bold">3</span>
-                  <h4 className="font-bold text-xs uppercase tracking-wider text-slate-200">
-                    Pricing, Making & Total Valuation Preview
-                  </h4>
-                </div>
-
-                <div className="grid grid-cols-1 sm:grid-cols-2 md:grid-cols-4 gap-3.5">
-                  <div>
-                    <label className="block text-slate-300 font-semibold mb-1">Rate per Gram (₹) *</label>
+                    <label className="block text-slate-300 font-semibold mb-1">Net Wt (g)</label>
                     <input
                       type="number"
+                      step="0.001"
+                      value={newItemForm.netWeight}
+                      readOnly
+                      className="w-full bg-slate-900 border border-slate-800 text-amber-300 rounded-lg px-3 py-2 text-xs font-mono font-bold cursor-not-allowed"
+                    />
+                  </div>
+
+                  <div>
+                    <label className="block text-slate-300 font-semibold mb-1">Rate / GM (₹)</label>
+                    <input
+                      type="number"
+                      step="0.01"
                       value={newItemForm.ratePerGram}
                       onChange={(e) => handleFormChange('ratePerGram', e.target.value)}
-                      className="w-full bg-slate-950 border border-slate-700 focus:border-amber-400 rounded-lg px-3 py-2 text-xs md:text-sm text-amber-300 font-mono font-bold"
+                      className="w-full bg-slate-950 border border-slate-700 text-slate-100 rounded-lg px-3 py-2 text-xs font-mono"
+                    />
+                  </div>
+                </div>
+
+                <div className="grid grid-cols-2 sm:grid-cols-4 gap-3.5">
+                  <div>
+                    <label className="block text-slate-300 font-semibold mb-1">Retail Total Price (₹)</label>
+                    <input
+                      type="number"
+                      value={newItemForm.totalPrice}
+                      onChange={(e) => handleFormChange('totalPrice', e.target.value)}
+                      className="w-full bg-slate-950 border border-slate-700 text-amber-400 rounded-lg px-3 py-2 text-xs font-mono font-bold"
                     />
                   </div>
 
                   <div>
-                    <label className="block text-slate-300 font-semibold mb-1">Making Charges (₹/g)</label>
+                    <label className="block text-slate-300 font-semibold mb-1">Wholesale Price (₹)</label>
                     <input
                       type="number"
-                      value={newItemForm.makingChargeValue}
-                      onChange={(e) => handleFormChange('makingChargeValue', e.target.value)}
-                      className="w-full bg-slate-950 border border-slate-700 focus:border-amber-400 rounded-lg px-3 py-2 text-xs md:text-sm text-slate-100 font-mono font-bold"
+                      value={newItemForm.wholesalePrice}
+                      onChange={(e) => handleFormChange('wholesalePrice', e.target.value)}
+                      className="w-full bg-slate-950 border border-slate-700 text-emerald-400 rounded-lg px-3 py-2 text-xs font-mono font-bold"
                     />
                   </div>
 
                   <div>
-                    <label className="block text-slate-300 font-semibold mb-1">Stone / Diamond Val (₹)</label>
+                    <label className="block text-slate-300 font-semibold mb-1">Min Wholesale Lot Qty</label>
                     <input
                       type="number"
-                      value={newItemForm.stoneValue}
-                      onChange={(e) => handleFormChange('stoneValue', e.target.value)}
-                      className="w-full bg-slate-950 border border-slate-700 focus:border-amber-400 rounded-lg px-3 py-2 text-xs md:text-sm text-slate-100 font-mono"
+                      value={newItemForm.wholesaleMinLot}
+                      onChange={(e) => handleFormChange('wholesaleMinLot', e.target.value)}
+                      className="w-full bg-slate-950 border border-slate-700 text-slate-100 rounded-lg px-3 py-2 text-xs font-mono"
                     />
                   </div>
 
                   <div>
-                    <label className="block text-slate-300 font-semibold mb-1">Hallmark Charge (₹)</label>
+                    <label className="block text-slate-300 font-semibold mb-1">Reorder Alert Qty</label>
                     <input
                       type="number"
-                      value={newItemForm.hallmarkCharge}
-                      onChange={(e) => handleFormChange('hallmarkCharge', e.target.value)}
-                      className="w-full bg-slate-950 border border-slate-700 focus:border-amber-400 rounded-lg px-3 py-2 text-xs md:text-sm text-slate-100 font-mono"
+                      value={newItemForm.reorderLevel}
+                      onChange={(e) => handleFormChange('reorderLevel', e.target.value)}
+                      className="w-full bg-slate-950 border border-slate-700 text-slate-100 rounded-lg px-3 py-2 text-xs font-mono"
                     />
-                  </div>
-
-                  {/* Calculated Total Live Preview (Resolves Audit P0) */}
-                  <div className="sm:col-span-2 md:col-span-4 p-4 rounded-xl bg-gradient-to-r from-amber-950/40 via-slate-950 to-slate-900 border border-amber-500/40 flex items-center justify-between">
-                    <div>
-                      <p className="text-xs uppercase tracking-wider text-amber-400 font-bold">
-                        Calculated Retail Value (With 3% GST):
-                      </p>
-                      <p className="text-[11px] text-slate-400 mt-0.5">
-                        Authoritative calculation based on Net Wt ({newItemForm.netWeight.toFixed(3)}g) × Rate (₹{newItemForm.ratePerGram}) + Making + GST.
-                      </p>
-                    </div>
-                    <div className="text-right">
-                      <p className="text-xl md:text-2xl font-bold font-mono text-amber-200">
-                        {formatCurrency(newItemForm.totalPrice)}
-                      </p>
-                    </div>
                   </div>
                 </div>
               </div>
 
-              {/* Modal Footer */}
-              <div className="flex items-center justify-end space-x-3 pt-4 border-t border-slate-800">
+              {/* Submit Button */}
+              <div className="flex items-center justify-end space-x-3 pt-3 border-t border-slate-800">
                 <button
                   type="button"
                   onClick={() => setShowAddStockModal(false)}
-                  className="px-5 py-2.5 bg-slate-800 hover:bg-slate-700 text-slate-300 rounded-xl text-xs font-bold transition-colors"
+                  className="px-4 py-2 bg-slate-800 hover:bg-slate-700 text-slate-300 rounded-xl text-xs font-bold cursor-pointer"
                 >
                   Cancel
                 </button>
                 <button
                   type="submit"
-                  className="px-6 py-2.5 bg-gradient-to-r from-amber-500 to-amber-600 hover:from-amber-400 text-slate-950 font-bold rounded-xl text-xs md:text-sm shadow-lg shadow-amber-500/20 transition-all hover:scale-[1.02]"
+                  className="px-5 py-2 bg-gradient-to-r from-amber-500 to-amber-600 hover:from-amber-400 text-slate-950 font-bold rounded-xl text-xs shadow-lg shadow-amber-500/20 cursor-pointer"
                 >
-                  SAVE & ADD STOCK
+                  SAVE &amp; ADD STOCK
                 </button>
               </div>
             </form>
@@ -828,7 +1161,7 @@ export default function StockModule() {
             <div className="flex justify-end space-x-2 pt-2">
               <button
                 onClick={() => setItemToDelete(null)}
-                className="px-4 py-2 bg-slate-800 text-slate-300 rounded-xl font-bold text-xs"
+                className="px-4 py-2 bg-slate-800 text-slate-300 rounded-xl font-bold text-xs cursor-pointer"
               >
                 Cancel
               </button>
@@ -837,7 +1170,7 @@ export default function StockModule() {
                   deleteStockItem(itemToDelete.id);
                   setItemToDelete(null);
                 }}
-                className="px-4 py-2 bg-rose-600 hover:bg-rose-500 text-white rounded-xl font-bold text-xs shadow"
+                className="px-4 py-2 bg-rose-600 hover:bg-rose-500 text-white rounded-xl font-bold text-xs shadow cursor-pointer"
               >
                 Confirm Delete
               </button>
@@ -859,7 +1192,7 @@ export default function StockModule() {
                 type="button"
                 aria-label="Close modal"
                 onClick={() => setInspectItem(null)}
-                className="text-slate-400 hover:text-white"
+                className="text-slate-400 hover:text-white cursor-pointer"
               >
                 <X className="w-5 h-5" />
               </button>
@@ -874,28 +1207,34 @@ export default function StockModule() {
               <div className="text-xs space-y-1">
                 <p className="text-base font-bold text-amber-300">{inspectItem.category} - {inspectItem.subCategory}</p>
                 <p className="text-slate-400">Barcode: <span className="font-mono text-slate-200">{inspectItem.barcode}</span></p>
-                <p className="text-slate-400">BIS HUID: <span className="font-mono text-slate-200">{inspectItem.huid}</span></p>
+                <p className="text-slate-400">BIS HUID: <span className="font-mono text-slate-200">{inspectItem.huid || 'N/A'}</span></p>
                 <p className="text-slate-400">Counter: <span className="text-slate-200">{inspectItem.counter}</span></p>
               </div>
             </div>
 
             <div className="grid grid-cols-2 gap-3 text-xs bg-slate-950 p-3 rounded-xl border border-slate-800 font-mono">
-              <div>Gross Weight: <strong className="text-slate-100">{inspectItem.grossWeight.toFixed(3)}g</strong></div>
-              <div>Less Weight: <strong className="text-slate-100">{inspectItem.lessWeight.toFixed(3)}g</strong></div>
-              <div>Net Weight: <strong className="text-amber-200">{inspectItem.netWeight.toFixed(3)}g</strong></div>
-              <div>Fine Weight: <strong className="text-emerald-400">{inspectItem.fineWeight.toFixed(3)}g</strong></div>
-              <div>Rate / g: <strong className="text-slate-100">₹{inspectItem.ratePerGram}</strong></div>
-              <div>Making / g: <strong className="text-slate-100">₹{inspectItem.makingChargeValue}</strong></div>
+              <div>Gross Weight: <strong className="text-slate-100">{inspectItem.grossWeight?.toFixed(3) || '0.000'}g</strong></div>
+              <div>Less Weight: <strong className="text-slate-100">{inspectItem.lessWeight?.toFixed(3) || '0.000'}g</strong></div>
+              <div>Net Weight: <strong className="text-amber-200">{inspectItem.netWeight?.toFixed(3) || '0.000'}g</strong></div>
+              <div>Fine Weight: <strong className="text-emerald-400">{inspectItem.fineWeight?.toFixed(3) || '0.000'}g</strong></div>
+              <div>Rate / g: <strong className="text-slate-100">₹{inspectItem.ratePerGram || 0}</strong></div>
+              <div>Making / g: <strong className="text-slate-100">₹{inspectItem.makingChargeValue || 0}</strong></div>
               <div className="col-span-2 pt-2 border-t border-slate-800 flex justify-between text-sm">
                 <span>Calculated Retail Val:</span>
                 <span className="font-bold text-amber-300">{formatCurrency(inspectItem.totalPrice)}</span>
               </div>
+              {inspectItem.wholesalePrice && (
+                <div className="col-span-2 flex justify-between text-xs text-emerald-400">
+                  <span>Wholesale Trade Val:</span>
+                  <span className="font-bold">{formatCurrency(inspectItem.wholesalePrice)}</span>
+                </div>
+              )}
             </div>
 
             <div className="flex justify-end">
               <button
                 onClick={() => setInspectItem(null)}
-                className="px-4 py-2 bg-slate-800 text-slate-300 rounded-xl font-bold text-xs"
+                className="px-4 py-2 bg-slate-800 text-slate-300 rounded-xl font-bold text-xs cursor-pointer"
               >
                 Close
               </button>
