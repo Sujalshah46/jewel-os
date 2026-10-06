@@ -1,6 +1,62 @@
 import React, { useState } from 'react';
 import { Calculator, X } from 'lucide-react';
 
+// Safe arithmetic parser without Function() or eval() (SEC-05)
+function safeEvaluateMath(expr) {
+  const tokens = expr.match(/(\d+(\.\d+)?|[+\-*/()])/g);
+  if (!tokens || tokens.length === 0) return 0;
+
+  let pos = 0;
+  const peek = () => tokens[pos];
+  const consume = () => tokens[pos++];
+
+  function parsePrimary() {
+    const t = peek();
+    if (t === '(') {
+      consume();
+      const val = parseExpression();
+      if (peek() === ')') consume();
+      return val;
+    }
+    if (t === '+' || t === '-') {
+      const sign = consume() === '-' ? -1 : 1;
+      return sign * parsePrimary();
+    }
+    const num = parseFloat(consume());
+    if (Number.isNaN(num)) throw new Error('Invalid number');
+    return num;
+  }
+
+  function parseTerm() {
+    let val = parsePrimary();
+    while (peek() === '*' || peek() === '/') {
+      const op = consume();
+      const next = parsePrimary();
+      if (op === '*') val *= next;
+      else {
+        if (next === 0) throw new Error('Division by zero');
+        val /= next;
+      }
+    }
+    return val;
+  }
+
+  function parseExpression() {
+    let val = parseTerm();
+    while (peek() === '+' || peek() === '-') {
+      const op = consume();
+      const next = parseTerm();
+      if (op === '+') val += next;
+      else val -= next;
+    }
+    return val;
+  }
+
+  const result = parseExpression();
+  if (pos < tokens.length) throw new Error('Syntax error');
+  return Number.isFinite(result) ? result : 0;
+}
+
 export default function CalculatorModal({ isOpen, onClose }) {
   const [calcInput, setCalcInput] = useState('');
 
@@ -11,9 +67,12 @@ export default function CalculatorModal({ isOpen, onClose }) {
       setCalcInput('');
     } else if (val === '=') {
       try {
-        const clean = calcInput.replace(/[^0-9+\-*/.]/g, '');
-        const res = Function(`'use strict'; return (${clean})`)();
-        setCalcInput(String(res));
+        const clean = calcInput.replace(/[^0-9+\-*/.()]/g, '');
+        if (!clean) return;
+        const res = safeEvaluateMath(clean);
+        // Format cleanly (up to 4 decimals if fractional)
+        const formatted = Number.isInteger(res) ? String(res) : String(Number(res.toFixed(4)));
+        setCalcInput(formatted);
       } catch (err) {
         setCalcInput('Error');
       }
