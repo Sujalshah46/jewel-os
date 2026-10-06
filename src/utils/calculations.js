@@ -1,0 +1,146 @@
+// Jewellery Calculation Engine
+
+export function calculateJewelleryItem({
+  grossWeight = 0,
+  lessWeight = 0,
+  purityPercent = 91.67, // 22K default
+  wastagePercent = 0,
+  customerWastagePercent = 0,
+  ratePerGram = 6600.24, // Rate per gram for selected purity
+  makingChargeType = 'per_gram', // 'per_gram', 'fixed', 'percentage'
+  makingChargeValue = 500, // e.g., 500 per gm
+  makingDiscountPercent = 0,
+  otherCharges = 0,
+  hallmarkCharge = 45, // BIS hallmark fee
+  diamondWeightCarats = 0,
+  diamondRatePerCarat = 0,
+  stoneValue = 0,
+  itemDiscount = 0,
+  gstRatePercent = 3.0 // Standard jewellery GST 3% (1.5% CGST + 1.5% SGST)
+}) {
+  const gw = Number(grossWeight) || 0;
+  const lw = Number(lessWeight) || 0;
+  const nw = Math.max(0, gw - lw);
+  const purity = Number(purityPercent) || 0;
+  const wastage = Number(wastagePercent) || 0;
+  
+  // Fine Weight calculation
+  const fineWeight = Number(((nw * purity) / 100).toFixed(3));
+  
+  // Metal Value
+  const metalValue = Number((nw * Number(ratePerGram)).toFixed(2));
+
+  // Making charges calculation
+  let rawMakingCharge = 0;
+  if (makingChargeType === 'per_gram') {
+    rawMakingCharge = gw * Number(makingChargeValue);
+  } else if (makingChargeType === 'percentage') {
+    rawMakingCharge = (metalValue * Number(makingChargeValue)) / 100;
+  } else {
+    rawMakingCharge = Number(makingChargeValue);
+  }
+
+  // Making discount
+  const makingDiscount = (rawMakingCharge * (Number(makingDiscountPercent) || 0)) / 100;
+  const totalMakingCharges = Math.max(0, rawMakingCharge - makingDiscount);
+
+  // Stone & Diamond Value
+  const diamondVal = (Number(diamondWeightCarats) || 0) * (Number(diamondRatePerCarat) || 0);
+  const totalStoneValue = Number(stoneValue || 0) + diamondVal;
+
+  // Taxable Amount (Before GST)
+  const baseAmount = metalValue + totalMakingCharges + Number(otherCharges) + Number(hallmarkCharge) + totalStoneValue;
+  const taxableAmount = Math.max(0, baseAmount - (Number(itemDiscount) || 0));
+
+  // GST Calculation (3% total: 1.5% CGST + 1.5% SGST)
+  const gstAmount = Number(((taxableAmount * (Number(gstRatePercent) || 3)) / 100).toFixed(2));
+  const cgst = Number((gstAmount / 2).toFixed(2));
+  const sgst = Number((gstAmount / 2).toFixed(2));
+
+  // Final Value
+  const finalValue = Number((taxableAmount + gstAmount).toFixed(2));
+
+  return {
+    grossWeight: Number(gw.toFixed(3)),
+    lessWeight: Number(lw.toFixed(3)),
+    netWeight: Number(nw.toFixed(3)),
+    fineWeight,
+    purityPercent: purity,
+    wastagePercent: wastage,
+    metalValue,
+    totalMakingCharges: Number(totalMakingCharges.toFixed(2)),
+    makingDiscount: Number(makingDiscount.toFixed(2)),
+    totalStoneValue: Number(totalStoneValue.toFixed(2)),
+    hallmarkCharge: Number(hallmarkCharge),
+    otherCharges: Number(otherCharges),
+    taxableAmount: Number(taxableAmount.toFixed(2)),
+    cgst,
+    sgst,
+    gstAmount,
+    finalValue
+  };
+}
+
+// Old Metal (Gold/Silver Exchange) Calculation
+export function calculateOldMetalExchange({
+  metalType = 'Gold',
+  grossWeight = 0,
+  lessWeight = 0, // Dust, stones, lac
+  touchPercent = 85.0, // Purity test / tunch %
+  currentBaseRate = 7200, // 24K per gram base rate
+  rateDeductionPerGram = 0 // Melting / testing deduction
+}) {
+  const gw = Number(grossWeight) || 0;
+  const lw = Number(lessWeight) || 0;
+  const nw = Math.max(0, gw - lw);
+  const touch = Number(touchPercent) || 0;
+
+  // Fine metal calculated
+  const fineWeight = Number(((nw * touch) / 100).toFixed(3));
+  
+  // Rate applied (base 24k rate * touch / 100) minus deduction
+  const effectiveRatePerGram = Math.max(0, ((Number(currentBaseRate) * touch) / 100) - Number(rateDeductionPerGram));
+  const valuation = Number((nw * effectiveRatePerGram).toFixed(2));
+
+  return {
+    grossWeight: Number(gw.toFixed(3)),
+    lessWeight: Number(lw.toFixed(3)),
+    netWeight: Number(nw.toFixed(3)),
+    touchPercent: touch,
+    fineWeight,
+    effectiveRatePerGram: Number(effectiveRatePerGram.toFixed(2)),
+    valuation
+  };
+}
+
+// Loan / Girvi Interest Calculation
+export function calculateGirviInterest({
+  principalAmount = 0,
+  monthlyRoiPercent = 1.5, // 1.5% per month
+  startDateStr,
+  endDateStr = new Date().toISOString().split('T')[0]
+}) {
+  const principal = Number(principalAmount) || 0;
+  const roi = Number(monthlyRoiPercent) || 0;
+  
+  if (!startDateStr) {
+    return { days: 0, months: 0, interestAmount: 0, totalPayable: principal };
+  }
+
+  const start = new Date(startDateStr);
+  const end = new Date(endDateStr);
+  const diffTime = Math.max(0, end - start);
+  const days = Math.ceil(diffTime / (1000 * 60 * 60 * 24));
+  
+  // Monthly interest with daily pro-rata or full month rounding
+  const months = Number((days / 30).toFixed(2));
+  const interestAmount = Number(((principal * (roi / 100) * days) / 30).toFixed(2));
+  const totalPayable = Number((principal + interestAmount).toFixed(2));
+
+  return {
+    days,
+    months,
+    interestAmount,
+    totalPayable
+  };
+}
