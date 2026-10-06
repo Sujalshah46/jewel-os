@@ -130,6 +130,7 @@ export function JewelleryProvider({ children }) {
     const item = {
       ...newItem,
       id: 'STK-' + Date.now().toString().slice(-6),
+      firmId: activeFirm.id,
       firmCode: activeFirm.code,
       firmName: activeFirm.name,
       status: 'In Stock'

@@ -202,8 +202,9 @@ export default function StockModule() {
     setShowAddStockModal(false);
   };
 
-  // Filtered Stock Items
+  // Filtered Stock Items (Multi-Firm Isolation: INV-02)
   const filteredStock = stock.filter(item => {
+    const matchesFirm = !item.firmCode || item.firmCode === activeFirm.code;
     const matchesSearch = item.itemCode?.toLowerCase().includes(searchTerm.toLowerCase()) ||
       item.barcode?.includes(searchTerm) ||
       item.category?.toLowerCase().includes(searchTerm.toLowerCase()) ||
@@ -211,7 +212,7 @@ export default function StockModule() {
       item.huid?.toLowerCase().includes(searchTerm.toLowerCase());
     const matchesCategory = selectedCategory === 'ALL' || item.category === selectedCategory;
     const matchesMetal = selectedMetal === 'ALL' || item.metalType === selectedMetal;
-    return matchesSearch && matchesCategory && matchesMetal;
+    return matchesFirm && matchesSearch && matchesCategory && matchesMetal;
   });
 
   // Helper to sanitize CSV cells against formula injection (SEC-04)
