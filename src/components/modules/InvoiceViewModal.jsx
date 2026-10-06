@@ -107,7 +107,7 @@ export default function InvoiceViewModal() {
           </div>
         </div>
 
-        {/* Printable Invoice Sheet (Faithful replica of Online Munim Audit 10:40 Krishna Jewellers Tax Invoice) */}
+        {/* Printable Invoice Sheet (Krishna Jewellers Tax Invoice) */}
         <div className={`p-6 overflow-y-auto bg-white text-slate-950 rounded-b-2xl font-sans text-xs ${
           printFormat === 'A4' ? 'print-format-a4' : printFormat === 'A5' ? 'print-format-a5' : 'print-format-thermal'
         }`}>
@@ -289,7 +289,7 @@ export default function InvoiceViewModal() {
               </div>
             </div>
 
-            {/* DIWALI / FESTIVAL MARKETING BANNER (Exact replica from Online Munim Audit 10:40-11:02) */}
+            {/* DIWALI / FESTIVAL MARKETING BANNER (Jewellery OS Invoice Format) */}
             <div className="mt-4 rounded-xl bg-gradient-to-r from-amber-900 via-yellow-800 to-amber-950 text-amber-100 p-4 text-center border-2 border-amber-600 shadow-md">
               <div className="flex items-center justify-center space-x-2 text-yellow-300 font-serif font-bold text-sm">
                 <Sparkles className="w-4 h-4" />

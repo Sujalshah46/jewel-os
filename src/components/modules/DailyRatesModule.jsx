@@ -118,7 +118,7 @@ export default function DailyRatesModule() {
       <div className="flex flex-wrap items-center justify-between gap-4 pb-4 border-b border-slate-800">
         <div>
           <h2 className="text-xl font-serif font-bold text-slate-100 uppercase tracking-wider">
-            ONLINE MUNIM CONTROL PANEL — MASTER DATA
+            JEWELLERY OS CONTROL PANEL — MASTER DATA
           </h2>
           <p className="text-xs text-amber-400/90 font-medium mt-0.5">
             (*) Required Fields • Live Bullion Matrix & Digital Rate Board Configuration

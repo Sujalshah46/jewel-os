@@ -1,4 +1,4 @@
-// Initial Seed Data accurately modeled from Online Munim Video Audit
+// Initial Seed Data for Jewellery OS
 
 export const INITIAL_FIRMS = [
   {
@@ -11,7 +11,7 @@ export const INITIAL_FIRMS = [
     pan: 'AABCU9603R',
     phone: '+91 8956693545',
     altPhone: '+91 8956582027',
-    email: 'sales@onmunim.com',
+    email: 'sales@jewelleryos.com',
     website: 'www.krishnajewellers.com',
     address: 'Marvel Fuego, Office No. 402, Hadapsar, Pune, Maharashtra 411028',
     city: 'Pune',

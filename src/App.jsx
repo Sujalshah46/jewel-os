@@ -117,7 +117,7 @@ function MainApp() {
         <div className="flex items-center space-x-3">
           <span className="font-serif font-bold text-amber-400">JEWELLERY OS</span>
           <span>•</span>
-          <span>Online Munim Certified Architecture</span>
+          <span>Jewellery OS Enterprise Architecture</span>
           <span>•</span>
           <span>Multi-Firm Cloud Sync Active</span>
         </div>

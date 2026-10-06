@@ -53,7 +53,7 @@ export default function FirmMasterModule() {
 
   return (
     <div className="space-y-6">
-      {/* Header Bar matching Online Munim Audit 0:42 */}
+      {/* Header Bar - Jewellery OS Firm Master */}
       <div className="flex flex-wrap items-center justify-between gap-4 pb-4 border-b border-slate-800">
         <div>
           <div className="flex items-center space-x-2">
@@ -352,7 +352,7 @@ export default function FirmMasterModule() {
           </div>
         </div>
 
-        {/* Section 3: E-Invoice API Integrations (Matching Online Munim 0:42) */}
+        {/* Section 3: E-Invoice API Integrations (Jewellery OS Government API Bridge) */}
         <div className="bg-slate-900/80 border border-slate-800 rounded-2xl p-5 shadow-xl space-y-4">
           <h3 className="text-xs font-bold uppercase tracking-wider text-amber-400 pb-2 border-b border-slate-800 flex items-center gap-1.5">
             <Globe className="w-4 h-4" /> 3. Government E-Invoice & E-Way Bill Integration API

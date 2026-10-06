@@ -105,15 +105,15 @@ export default function BackupRestoreModule() {
             <div className="p-3 bg-rose-500/20 rounded-2xl text-rose-300 w-fit mb-3">
               <RefreshCw className="w-6 h-6" />
             </div>
-            <h3 className="font-bold text-base text-slate-100">Reset to Online Munim Audit State</h3>
+            <h3 className="font-bold text-base text-slate-100">Reset to Jewellery OS Baseline State</h3>
             <p className="text-xs text-slate-400 mt-1">
-              Reset all records back to the exact demo datasets from the 13-minute video audit (Krishna Jewellers, Avinash, IS86, ₹27.53L daybook).
+              Reset all records back to the exact demo datasets (Krishna Jewellers, Avinash, IS86, ₹27.53L daybook).
             </p>
           </div>
 
           <button
             onClick={() => {
-              if (confirm('Reset entire system to Online Munim audit initial data?')) {
+              if (confirm('Reset entire system to Jewellery OS baseline initial data?')) {
                 resetToAuditData();
                 alert('Reset complete!');
               }
