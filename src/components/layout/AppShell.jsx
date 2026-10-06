@@ -32,7 +32,7 @@ import {
 } from 'lucide-react';
 import { formatCurrency } from '../../utils/numberToWords';
 
-export default function AppShell({ sidebarCollapsed, setSidebarCollapsed, mobileMenuOpen, setMobileMenuOpen, onOpenCalculator }) {
+export default function AppShell({ sidebarCollapsed, setSidebarCollapsed, mobileMenuOpen, setMobileMenuOpen, onOpenCalculator, onSwitchToAdmin }) {
   const {
     activeFirm,
     firms,
@@ -58,14 +58,8 @@ export default function AppShell({ sidebarCollapsed, setSidebarCollapsed, mobile
   const gold18k = dailyRates.find(r => r.karat?.includes('18K'))?.ratePerGram || 5400;
   const silver999 = dailyRates.find(r => r.metalType === 'Silver' && r.karat?.includes('999'))?.ratePerGram || 86;
 
-  // Grouped Navigation Structure
+  // Retail Store Navigation Structure (SaaS Admin is a separate portal)
   const navigationGroups = [
-    {
-      title: 'SaaS Administration',
-      items: [
-        { id: 'admin', label: 'Admin Panel (SaaS & Master)', icon: ShieldCheck, highlight: true, badge: 'SaaS' }
-      ]
-    },
     {
       title: 'Sales & POS',
       items: [
@@ -304,18 +298,16 @@ export default function AppShell({ sidebarCollapsed, setSidebarCollapsed, mobile
 
           {/* Right Action Buttons */}
           <div className="flex items-center space-x-2">
-            {/* Admin Panel Button */}
+            {/* Separate Admin Portal Switcher */}
             <button
               type="button"
-              onClick={() => setActiveModule('admin')}
-              className={`flex items-center space-x-1.5 px-3 md:px-3.5 py-2 rounded-xl text-xs font-bold transition-all ${
-                activeModule === 'admin'
-                  ? 'bg-amber-400 text-slate-950 shadow-lg shadow-amber-500/20'
-                  : 'bg-slate-900 hover:bg-slate-800 text-amber-300 border border-amber-500/30'
-              }`}
+              onClick={onSwitchToAdmin || (() => setActiveModule('admin'))}
+              title="Switch to SaaS Enterprise Admin Console"
+              className="flex items-center space-x-1.5 px-3 md:px-3.5 py-2 rounded-xl text-xs font-bold transition-all bg-slate-900 hover:bg-slate-800 text-amber-300 border border-amber-500/30 shadow-md cursor-pointer hover:border-amber-400"
             >
               <ShieldCheck className="w-4 h-4 text-amber-400 flex-shrink-0" />
               <span className="hidden sm:inline">ADMIN PANEL</span>
+              <span className="text-[10px] bg-amber-500/20 text-amber-300 px-1.5 py-0.5 rounded font-mono font-bold">SaaS</span>
             </button>
 
             <button
@@ -476,17 +468,11 @@ export default function AppShell({ sidebarCollapsed, setSidebarCollapsed, mobile
   );
 }
 
-// 3. Desktop Collapsible Grouped Sidebar Component
-export function DesktopSidebar({ collapsed, activeModule, setActiveModule, onOpenCalculator }) {
+// 3. Desktop Collapsible Grouped Sidebar Component (Purely Store Operations)
+export function DesktopSidebar({ collapsed, activeModule, setActiveModule, onOpenCalculator, onSwitchToAdmin }) {
   const { isModuleEnabled, activeClient } = useJewellery();
 
   const navigationGroups = [
-    {
-      title: 'SaaS Administration',
-      items: [
-        { id: 'admin', label: 'Admin Panel (SaaS)', icon: ShieldCheck, highlight: true, badge: 'SaaS' }
-      ]
-    },
     {
       title: 'Sales & POS',
       items: [
@@ -597,8 +583,8 @@ export function DesktopSidebar({ collapsed, activeModule, setActiveModule, onOpe
         ))}
       </div>
 
-      {/* Sidebar Footer with Calculator & Shortcuts */}
-      <div className="p-2 border-t border-slate-800 space-y-1">
+      {/* Sidebar Footer with Calculator & Admin Switcher */}
+      <div className="p-2 border-t border-slate-800 space-y-1.5">
         <button
           onClick={onOpenCalculator}
           className={`w-full flex items-center ${collapsed ? 'justify-center p-2.5' : 'space-x-2 px-3 py-2'} rounded-xl bg-slate-900 hover:bg-slate-800 text-amber-300 text-xs font-bold border border-amber-500/20 transition-colors`}
@@ -606,6 +592,16 @@ export function DesktopSidebar({ collapsed, activeModule, setActiveModule, onOpe
         >
           <Calculator className="w-4 h-4 text-amber-400 flex-shrink-0" />
           {!collapsed && <span>Gold Calculator</span>}
+        </button>
+
+        <button
+          type="button"
+          onClick={onSwitchToAdmin}
+          className={`w-full flex items-center ${collapsed ? 'justify-center p-2.5' : 'space-x-2 px-3 py-2'} rounded-xl bg-amber-500/10 hover:bg-amber-500/20 text-amber-300 text-xs font-bold border border-amber-500/30 transition-colors cursor-pointer`}
+          title="Switch to SaaS Admin Panel"
+        >
+          <ShieldCheck className="w-4 h-4 text-amber-400 flex-shrink-0" />
+          {!collapsed && <span>SaaS Admin Panel</span>}
         </button>
       </div>
     </aside>

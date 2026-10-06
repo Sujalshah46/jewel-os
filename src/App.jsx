@@ -39,11 +39,47 @@ function MainApp() {
   const [mobileMenuOpen, setMobileMenuOpen] = useState(false);
   const [calculatorOpen, setCalculatorOpen] = useState(false);
 
+  // Dedicated Portal State: 'retail' vs 'admin'
+  const [currentPortal, setCurrentPortal] = useState(() => {
+    if (typeof window !== 'undefined' && window.location.hash === '#admin') {
+      return 'admin';
+    }
+    return activeModule === 'admin' ? 'admin' : 'retail';
+  });
+
+  // Synchronize URL Hash and browser history
+  useEffect(() => {
+    const handleHashChange = () => {
+      if (window.location.hash === '#admin') {
+        setCurrentPortal('admin');
+      } else {
+        setCurrentPortal('retail');
+      }
+    };
+    window.addEventListener('hashchange', handleHashChange);
+    return () => window.removeEventListener('hashchange', handleHashChange);
+  }, []);
+
+  const switchPortal = (portal) => {
+    setCurrentPortal(portal);
+    if (portal === 'admin') {
+      window.location.hash = '#admin';
+    } else {
+      window.location.hash = '#retail';
+      if (activeModule === 'admin') {
+        setActiveModule('dashboard');
+      }
+    }
+  };
+
   // Keyboard Shortcuts (F2 -> POS Billing, Esc -> Close modals)
   useEffect(() => {
     const handleKeyDown = (e) => {
       if (e.key === 'F2') {
         e.preventDefault();
+        if (currentPortal === 'admin') {
+          switchPortal('retail');
+        }
         setActiveModule('billing');
       }
       if (e.key === 'Escape') {
@@ -55,14 +91,44 @@ function MainApp() {
     };
     window.addEventListener('keydown', handleKeyDown);
     return () => window.removeEventListener('keydown', handleKeyDown);
-  }, [previewInvoice, previewEstimate, calculatorOpen, mobileMenuOpen, setActiveModule, setPreviewInvoice, setPreviewEstimate]);
+  }, [previewInvoice, previewEstimate, calculatorOpen, mobileMenuOpen, currentPortal, setActiveModule, setPreviewInvoice, setPreviewEstimate]);
 
+  // =========================================================================
+  // 1. DEDICATED SAAS PLATFORM ADMIN PORTAL VIEW (Independent Full-Screen UI)
+  // =========================================================================
+  if (currentPortal === 'admin') {
+    return (
+      <div className="min-h-screen bg-[#070A12] text-slate-100 flex flex-col font-sans">
+        <main className="flex-1 w-full max-w-7xl mx-auto p-4 md:p-6 lg:p-8">
+          <AdminPanel onSwitchToRetail={() => switchPortal('retail')} />
+        </main>
+
+        {/* Dedicated Admin Console Footer */}
+        <footer className="no-print bg-[#04060b] border-t border-slate-800/80 py-2.5 px-6 text-xs text-slate-400 flex flex-wrap items-center justify-between gap-2">
+          <div className="flex items-center space-x-3">
+            <span className="font-serif font-bold text-amber-400">JEWELLERY OS</span>
+            <span>•</span>
+            <span>SaaS Platform &amp; Multi-Tenant Enterprise Admin</span>
+            <span>•</span>
+            <span className="font-mono text-emerald-400">System Healthy</span>
+          </div>
+          <div className="flex items-center space-x-3">
+            <button
+              onClick={() => switchPortal('retail')}
+              className="text-amber-400 hover:text-amber-300 font-bold flex items-center gap-1 cursor-pointer transition-colors"
+            >
+              <span>← Return to Retail Store POS (F2)</span>
+            </button>
+          </div>
+        </footer>
+      </div>
+    );
+  }
+
+  // =========================================================================
+  // 2. DEDICATED RETAIL STORE POS & SHOWROOM PORTAL VIEW
+  // =========================================================================
   const renderActiveModule = () => {
-    // If admin panel, always render regardless of tenant gating
-    if (activeModule === 'admin') {
-      return <AdminPanel />;
-    }
-
     // Module Entitlement Guard
     if (!isModuleEnabled(activeModule)) {
       return (
@@ -80,10 +146,10 @@ function MainApp() {
           </div>
           <div className="pt-2 flex justify-center gap-3">
             <button
-              onClick={() => setActiveModule('admin')}
+              onClick={() => switchPortal('admin')}
               className="px-5 py-2 bg-gradient-to-r from-amber-500 to-amber-600 hover:from-amber-400 text-slate-950 font-bold rounded-xl text-xs shadow-lg shadow-amber-500/20 cursor-pointer"
             >
-              Open Admin Panel to Enable Module
+              Open SaaS Admin Panel to Enable Module
             </button>
             <button
               onClick={() => setActiveModule('dashboard')}
@@ -140,15 +206,17 @@ function MainApp() {
         mobileMenuOpen={mobileMenuOpen}
         setMobileMenuOpen={setMobileMenuOpen}
         onOpenCalculator={() => setCalculatorOpen(prev => !prev)}
+        onSwitchToAdmin={() => switchPortal('admin')}
       />
 
       <div className="flex-1 flex overflow-hidden">
-        {/* Unified Left Sidebar for Desktop */}
+        {/* Unified Left Sidebar for Desktop Store Operations */}
         <DesktopSidebar
           collapsed={sidebarCollapsed}
           activeModule={activeModule}
           setActiveModule={setActiveModule}
           onOpenCalculator={() => setCalculatorOpen(prev => !prev)}
+          onSwitchToAdmin={() => switchPortal('admin')}
         />
 
         {/* Main Content Area */}
@@ -167,14 +235,14 @@ function MainApp() {
         <div className="flex items-center space-x-3">
           <span className="font-serif font-bold text-amber-400">JEWELLERY OS</span>
           <span>•</span>
-          <span>Jewellery OS Enterprise Architecture</span>
+          <span>Jewellery Store POS &amp; Showroom Portal</span>
           <span>•</span>
           <span>Multi-Firm Cloud Sync Active</span>
         </div>
         <div className="flex items-center space-x-3 font-mono text-[11px]">
           <span className="flex items-center gap-1.5">
             <span className="w-2 h-2 rounded-full bg-emerald-400"></span>
-            <span>System Online</span>
+            <span>Store Online</span>
           </span>
           <span>•</span>
           <span>Shortcut: <kbd className="bg-slate-800 text-amber-300 px-1.5 py-0.5 rounded border border-slate-700">F2</kbd> (New Bill)</span>
