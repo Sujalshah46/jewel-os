@@ -172,8 +172,36 @@ export function JewelleryProvider({ children }) {
 
   const [currentRole, setCurrentRole] = useState('Platform Super Admin');
 
-  // Active module navigation
-  const [activeModule, setActiveModule] = useState('dashboard');
+  // Active module navigation (supports URL hash e.g. #admin, #billing, #stock)
+  const [activeModule, setActiveModuleState] = useState(() => {
+    if (typeof window !== 'undefined') {
+      const hash = window.location.hash.replace(/^#\/?/, '');
+      if (hash) return hash;
+      const params = new URLSearchParams(window.location.search);
+      const mod = params.get('module') || params.get('tab');
+      if (mod) return mod;
+    }
+    return 'dashboard';
+  });
+
+  const setActiveModule = (mod) => {
+    setActiveModuleState(mod);
+    if (typeof window !== 'undefined') {
+      window.location.hash = mod;
+    }
+  };
+
+  useEffect(() => {
+    const handleHashChange = () => {
+      const hash = window.location.hash.replace(/^#\/?/, '');
+      if (hash && hash !== activeModule) {
+        setActiveModuleState(hash);
+      }
+    };
+    window.addEventListener('hashchange', handleHashChange);
+    return () => window.removeEventListener('hashchange', handleHashChange);
+  }, [activeModule]);
+
   const [globalSearch, setGlobalSearch] = useState('');
   const [previewInvoice, setPreviewInvoice] = useState(null);
   const [previewEstimate, setPreviewEstimate] = useState(null);

@@ -27,7 +27,8 @@ import {
   Layers,
   HelpCircle,
   Lock,
-  Server
+  Server,
+  ShieldCheck
 } from 'lucide-react';
 import { formatCurrency } from '../../utils/numberToWords';
 
