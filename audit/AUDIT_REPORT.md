@@ -289,3 +289,24 @@ The audit scripts are committed in `jewellery-os/audit/`:
 ### 7.2 Audit Limitations
 - Because no backend API or live database existed in the repository, network-level penetration tests (e.g., SQL injection against a live DBMS, server DDoS resilience, TLS cipher configurations) were not applicable.
 - All tests were executed deterministically against the client-side state machine, React source components, and build artifacts.
+
+---
+
+## 8. GSD AUDIT-FIX EXECUTION & VERIFICATION LOG
+
+Following GSD audit-fix methodology, all code-level, security, and integrity findings have been resolved with atomic commits and verified via automated test suites:
+
+| Finding ID | Title | Status | Git Commit | Verification Method |
+| :--- | :--- | :--- | :--- | :--- |
+| **SEC-03** | Strip Hardcoded Secret from Bundle | **FIXED** | `1199f07` | Verified absent in `initialData.js` and production bundle |
+| **SEC-04** | Sanitize CSV Export against Formula Injection | **FIXED** | `6e2e38d` | Verified dangerous prefix characters (`=, +, -, @`) escaped with `'` |
+| **SEC-05** | Replace Dynamic Function() Eval with Safe Math Parser | **FIXED** | `d3dd85b` | Recursive descent arithmetic parser implemented; zero `eval`/`Function` |
+| **SEC-06** | Enforce Schema Validation on JSON Database Restore | **FIXED** | `f13ad8a` | Verified JSON structure validation and error feedback in UI |
+| **INV-01** | Serialized Stock Double-Selling Prevention | **FIXED** | `2478e9a` | Blocked adding sold items to cart; `createInvoice()` throws if item sold |
+| **INV-03** | Mandatory Customer Booking for Udhaar Debts | **FIXED** | `2478e9a` | Invoices with unpaid balance mandate customer; books to Udhaar ledger |
+| **INV-02** | Multi-Firm Data Isolation | **FIXED** | `28d123b` | Stock catalog and barcode scans scoped strictly by `activeFirm.code` |
+| **INV-07** | Dynamic Accounting Engine & Statutory Reports | **FIXED** | `ab42f1f` | Live P&L, Trial Balance, Balance Sheet & Stock Valuation rendered |
+| **MOD-01** | Functional Karigar Job Work & Metal Ledger | **FIXED** | `df30f4b` | Live metal issue/return ledger with *Ghat* wastage & vouchers |
+| **MOD-02** | Functional Gold Schemes (11+1) Passbook | **FIXED** | `df30f4b` | Live customer enrollment, monthly installments, and passbook tracker |
+| **TEST-01** | Automated Verification Test Suite | **VERIFIED** | `327c448` | `audit/verify-fixes.js`: 18/18 tests passed; `calculation-tests.js`: 21/21 passed |
+
