@@ -19,9 +19,20 @@ import FirmMasterModule from './components/modules/FirmMasterModule';
 import BackupRestoreModule from './components/modules/BackupRestoreModule';
 import InvoiceViewModal from './components/modules/InvoiceViewModal';
 import EstimateModal from './components/modules/EstimateModal';
+import AdminPanel from './components/admin/AdminPanel';
+import { Lock, ShieldAlert } from 'lucide-react';
 
 function MainApp() {
-  const { activeModule, setActiveModule, previewInvoice, setPreviewInvoice, previewEstimate, setPreviewEstimate } = useJewellery();
+  const {
+    activeModule,
+    setActiveModule,
+    previewInvoice,
+    setPreviewInvoice,
+    previewEstimate,
+    setPreviewEstimate,
+    isModuleEnabled,
+    activeClient
+  } = useJewellery();
   
   const [sidebarCollapsed, setSidebarCollapsed] = useState(false);
   const [mobileMenuOpen, setMobileMenuOpen] = useState(false);
@@ -46,6 +57,44 @@ function MainApp() {
   }, [previewInvoice, previewEstimate, calculatorOpen, mobileMenuOpen, setActiveModule, setPreviewInvoice, setPreviewEstimate]);
 
   const renderActiveModule = () => {
+    // If admin panel, always render regardless of tenant gating
+    if (activeModule === 'admin') {
+      return <AdminPanel />;
+    }
+
+    // Module Entitlement Guard
+    if (!isModuleEnabled(activeModule)) {
+      return (
+        <div className="bg-slate-900/90 border border-amber-500/30 rounded-2xl p-8 text-center max-w-xl mx-auto my-12 shadow-2xl space-y-4">
+          <div className="w-14 h-14 rounded-2xl bg-amber-500/10 border border-amber-500/30 text-amber-400 mx-auto flex items-center justify-center">
+            <Lock className="w-7 h-7" />
+          </div>
+          <div>
+            <h2 className="text-xl font-serif font-bold text-slate-100">
+              Module Access Restricted
+            </h2>
+            <p className="text-xs text-slate-400 mt-1">
+              This module is not enabled for <strong className="text-amber-300">{activeClient?.name}</strong> under the current <strong>{activeClient?.plan}</strong> plan.
+            </p>
+          </div>
+          <div className="pt-2 flex justify-center gap-3">
+            <button
+              onClick={() => setActiveModule('admin')}
+              className="px-5 py-2 bg-gradient-to-r from-amber-500 to-amber-600 hover:from-amber-400 text-slate-950 font-bold rounded-xl text-xs shadow-lg shadow-amber-500/20 cursor-pointer"
+            >
+              Open Admin Panel to Enable Module
+            </button>
+            <button
+              onClick={() => setActiveModule('dashboard')}
+              className="px-4 py-2 bg-slate-800 hover:bg-slate-700 text-slate-300 font-semibold rounded-xl text-xs cursor-pointer"
+            >
+              Back to Dashboard
+            </button>
+          </div>
+        </div>
+      );
+    }
+
     switch (activeModule) {
       case 'dashboard':
         return <DashboardModule />;

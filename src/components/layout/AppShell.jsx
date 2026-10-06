@@ -25,7 +25,9 @@ import {
   ArrowUpRight,
   ArrowDownRight,
   Layers,
-  HelpCircle
+  HelpCircle,
+  Lock,
+  Server
 } from 'lucide-react';
 import { formatCurrency } from '../../utils/numberToWords';
 
@@ -39,10 +41,15 @@ export default function AppShell({ sidebarCollapsed, setSidebarCollapsed, mobile
     activeModule,
     setActiveModule,
     globalSearch,
-    setGlobalSearch
+    setGlobalSearch,
+    activeClient,
+    currentRole,
+    setCurrentRole,
+    isModuleEnabled
   } = useJewellery();
 
   const [firmDropdownOpen, setFirmDropdownOpen] = useState(false);
+  const [roleDropdownOpen, setRoleDropdownOpen] = useState(false);
   const [ratesExpanded, setRatesExpanded] = useState(false);
 
   const gold24k = dailyRates.find(r => r.karat?.includes('24K'))?.ratePerGram || 7200;
@@ -52,6 +59,12 @@ export default function AppShell({ sidebarCollapsed, setSidebarCollapsed, mobile
 
   // Grouped Navigation Structure
   const navigationGroups = [
+    {
+      title: 'SaaS Administration',
+      items: [
+        { id: 'admin', label: 'Admin Panel (SaaS & Master)', icon: ShieldCheck, highlight: true, badge: 'SaaS' }
+      ]
+    },
     {
       title: 'Sales & POS',
       items: [
@@ -290,6 +303,20 @@ export default function AppShell({ sidebarCollapsed, setSidebarCollapsed, mobile
 
           {/* Right Action Buttons */}
           <div className="flex items-center space-x-2">
+            {/* Admin Panel Button */}
+            <button
+              type="button"
+              onClick={() => setActiveModule('admin')}
+              className={`flex items-center space-x-1.5 px-3 md:px-3.5 py-2 rounded-xl text-xs font-bold transition-all ${
+                activeModule === 'admin'
+                  ? 'bg-amber-400 text-slate-950 shadow-lg shadow-amber-500/20'
+                  : 'bg-slate-900 hover:bg-slate-800 text-amber-300 border border-amber-500/30'
+              }`}
+            >
+              <ShieldCheck className="w-4 h-4 text-amber-400 flex-shrink-0" />
+              <span className="hidden sm:inline">ADMIN PANEL</span>
+            </button>
+
             <button
               type="button"
               onClick={() => setActiveModule('billing')}
@@ -309,15 +336,62 @@ export default function AppShell({ sidebarCollapsed, setSidebarCollapsed, mobile
               <Calculator className="w-4 h-4" />
             </button>
 
-            {/* Profile Chip */}
-            <div className="hidden xl:flex items-center space-x-2 pl-2 border-l border-slate-800 text-xs">
-              <div className="w-7 h-7 rounded-full bg-gradient-to-br from-amber-400 to-amber-700 flex items-center justify-center font-bold text-slate-950 text-[11px] shadow">
-                MA
-              </div>
-              <div className="text-left">
-                <p className="font-semibold text-slate-200 leading-tight">Mansi Anil</p>
-                <p className="text-[10px] text-amber-400/90 leading-tight">Admin</p>
-              </div>
+            {/* Profile & Role Switcher Chip */}
+            <div className="relative hidden xl:block">
+              <button
+                type="button"
+                onClick={() => setRoleDropdownOpen(!roleDropdownOpen)}
+                className="flex items-center space-x-2 pl-2 border-l border-slate-800 text-xs text-left cursor-pointer hover:opacity-90"
+              >
+                <div className="w-7 h-7 rounded-full bg-gradient-to-br from-amber-400 to-amber-700 flex items-center justify-center font-bold text-slate-950 text-[11px] shadow">
+                  MA
+                </div>
+                <div>
+                  <p className="font-semibold text-slate-200 leading-tight">Mansi Anil</p>
+                  <p className="text-[10px] text-amber-400/90 leading-tight truncate max-w-[110px]">{currentRole}</p>
+                </div>
+                <ChevronDown className="w-3 h-3 text-slate-400 ml-0.5" />
+              </button>
+
+              {roleDropdownOpen && (
+                <div className="absolute right-0 top-full mt-2 w-56 bg-slate-900 border border-amber-500/30 rounded-xl shadow-2xl z-50 py-2">
+                  <div className="px-3 py-1 border-b border-slate-800 text-[10px] font-bold text-slate-400 uppercase tracking-wider">
+                    Switch Active Session Role
+                  </div>
+                  {[
+                    'Platform Super Admin',
+                    'Business Owner',
+                    'Branch Manager',
+                    'Salesperson / Cashier',
+                    'Read-only Auditor'
+                  ].map(r => (
+                    <button
+                      key={r}
+                      onClick={() => {
+                        setCurrentRole(r);
+                        setRoleDropdownOpen(false);
+                      }}
+                      className={`w-full text-left px-3 py-1.5 text-xs flex items-center justify-between hover:bg-slate-800 transition-colors ${
+                        r === currentRole ? 'bg-amber-500/15 text-amber-300 font-bold' : 'text-slate-300'
+                      }`}
+                    >
+                      <span>{r}</span>
+                      {r === currentRole && <span className="text-[10px] text-amber-400">Active</span>}
+                    </button>
+                  ))}
+                  <div className="px-3 pt-2 border-t border-slate-800 mt-1">
+                    <button
+                      onClick={() => {
+                        setActiveModule('admin');
+                        setRoleDropdownOpen(false);
+                      }}
+                      className="text-[11px] text-amber-400 hover:underline flex items-center gap-1 font-semibold"
+                    >
+                      <ShieldCheck className="w-3.5 h-3.5" /> Open Full Admin Panel
+                    </button>
+                  </div>
+                </div>
+              )}
             </div>
           </div>
         </div>
@@ -403,7 +477,15 @@ export default function AppShell({ sidebarCollapsed, setSidebarCollapsed, mobile
 
 // 3. Desktop Collapsible Grouped Sidebar Component
 export function DesktopSidebar({ collapsed, activeModule, setActiveModule, onOpenCalculator }) {
+  const { isModuleEnabled, activeClient } = useJewellery();
+
   const navigationGroups = [
+    {
+      title: 'SaaS Administration',
+      items: [
+        { id: 'admin', label: 'Admin Panel (SaaS)', icon: ShieldCheck, highlight: true, badge: 'SaaS' }
+      ]
+    },
     {
       title: 'Sales & POS',
       items: [
@@ -463,31 +545,49 @@ export function DesktopSidebar({ collapsed, activeModule, setActiveModule, onOpe
             {group.items.map(item => {
               const Icon = item.icon;
               const isActive = activeModule === item.id;
+              const isEnabled = item.id === 'admin' || isModuleEnabled(item.id);
+
               return (
                 <button
                   key={item.id}
                   onClick={() => setActiveModule(item.id)}
-                  title={collapsed ? item.label : undefined}
+                  title={collapsed ? `${item.label}${!isEnabled ? ' (Disabled on Plan)' : ''}` : undefined}
                   className={`w-full flex items-center ${
                     collapsed ? 'justify-center px-2 py-3' : 'justify-between px-3 py-2.5'
                   } rounded-xl text-sm font-semibold transition-all ${
                     isActive
                       ? 'bg-amber-500 text-slate-950 font-bold shadow-md shadow-amber-500/20'
+                      : !isEnabled
+                      ? 'text-slate-500 hover:bg-slate-900/60 hover:text-slate-400'
                       : item.highlight
                       ? 'bg-amber-500/10 text-amber-300 hover:bg-amber-500/20 border border-amber-500/25'
                       : 'text-slate-300 hover:bg-slate-900 hover:text-white'
                   }`}
                 >
                   <div className="flex items-center space-x-3 min-w-0">
-                    <Icon className={`w-4 h-4 flex-shrink-0 ${isActive ? 'text-slate-950' : item.highlight ? 'text-amber-400' : 'text-slate-400'}`} />
-                    {!collapsed && <span className="truncate">{item.label}</span>}
+                    <Icon className={`w-4 h-4 flex-shrink-0 ${
+                      isActive ? 'text-slate-950' : !isEnabled ? 'text-slate-600' : item.highlight ? 'text-amber-400' : 'text-slate-400'
+                    }`} />
+                    {!collapsed && (
+                      <span className={`truncate ${!isEnabled ? 'line-through opacity-70' : ''}`}>
+                        {item.label}
+                      </span>
+                    )}
                   </div>
-                  {!collapsed && item.badge && (
-                    <span className={`text-[10px] px-1.5 py-0.5 rounded font-mono font-bold flex-shrink-0 ${
-                      isActive ? 'bg-slate-950 text-amber-400' : 'bg-slate-800 text-slate-300'
-                    }`}>
-                      {item.badge}
-                    </span>
+                  {!collapsed && (
+                    <div className="flex items-center gap-1 flex-shrink-0">
+                      {!isEnabled ? (
+                        <span className="text-[9px] bg-slate-900 text-slate-500 px-1.5 py-0.5 rounded font-mono border border-slate-800 flex items-center gap-0.5">
+                          <Lock className="w-2.5 h-2.5" /> Plan
+                        </span>
+                      ) : item.badge ? (
+                        <span className={`text-[10px] px-1.5 py-0.5 rounded font-mono font-bold ${
+                          isActive ? 'bg-slate-950 text-amber-400' : 'bg-slate-800 text-slate-300'
+                        }`}>
+                          {item.badge}
+                        </span>
+                      ) : null}
+                    </div>
                   )}
                 </button>
               );
