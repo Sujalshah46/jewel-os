@@ -74,6 +74,42 @@ export function JewelleryProvider({ children }) {
     return saved ? JSON.parse(saved) : INITIAL_DAILY_DIARY;
   });
 
+  const [karigarVouchers, setKarigarVouchers] = useState(() => {
+    const saved = localStorage.getItem(STORAGE_KEY + '_KARIGAR_VOUCHERS');
+    return saved ? JSON.parse(saved) : [
+      {
+        id: 'KV-101',
+        karigarId: 'KAR-001',
+        karigarName: 'Gopal Soni (Master Ring Craftsman)',
+        type: 'ISSUE',
+        metalType: 'Gold',
+        weightGm: 20.000,
+        date: '2024-10-01',
+        notes: 'Issued 24K pure gold for ladies casting rings'
+      }
+    ];
+  });
+
+  const [schemeEnrollments, setSchemeEnrollments] = useState(() => {
+    const saved = localStorage.getItem(STORAGE_KEY + '_SCHEME_ENROLLMENTS');
+    return saved ? JSON.parse(saved) : [
+      {
+        id: 'ENR-101',
+        schemeId: 'SCH-001',
+        schemeName: 'Swarna Nidhi 11+1 Bonus Plan',
+        customerId: 'CUST-001',
+        customerName: 'Priya Sharma',
+        mobile: '+91 9822019283',
+        monthlyInstallment: 5000,
+        durationMonths: 11,
+        paidInstallmentsCount: 5,
+        totalPaidAmount: 25000,
+        startDate: '2024-05-10',
+        status: 'Active'
+      }
+    ];
+  });
+
   // Active module navigation
   const [activeModule, setActiveModule] = useState('dashboard');
   const [globalSearch, setGlobalSearch] = useState('');
@@ -107,6 +143,22 @@ export function JewelleryProvider({ children }) {
   useEffect(() => {
     localStorage.setItem(STORAGE_KEY + '_UDHAAR', JSON.stringify(udhaarList));
   }, [udhaarList]);
+
+  useEffect(() => {
+    localStorage.setItem(STORAGE_KEY + '_KARIGARS', JSON.stringify(karigars));
+  }, [karigars]);
+
+  useEffect(() => {
+    localStorage.setItem(STORAGE_KEY + '_KARIGAR_VOUCHERS', JSON.stringify(karigarVouchers));
+  }, [karigarVouchers]);
+
+  useEffect(() => {
+    localStorage.setItem(STORAGE_KEY + '_SCHEMES', JSON.stringify(schemes));
+  }, [schemes]);
+
+  useEffect(() => {
+    localStorage.setItem(STORAGE_KEY + '_SCHEME_ENROLLMENTS', JSON.stringify(schemeEnrollments));
+  }, [schemeEnrollments]);
 
   // Live MCX ticker update simulation
   useEffect(() => {
@@ -322,6 +374,124 @@ export function JewelleryProvider({ children }) {
     return newLoan;
   };
 
+  // Karigar Job Work Actions (MOD-01)
+  const issueMetalToKarigar = (karigarId, { metalType, grams, notes }) => {
+    const wt = Number(grams) || 0;
+    if (wt <= 0) throw new Error('Valid metal weight is required');
+    const targetKarigar = karigars.find(k => k.id === karigarId);
+    const voucher = {
+      id: 'KV-' + Date.now().toString().slice(-5),
+      karigarId,
+      karigarName: targetKarigar?.name || 'Karigar',
+      type: 'ISSUE',
+      metalType: metalType || 'Gold',
+      weightGm: wt,
+      date: new Date().toISOString().split('T')[0],
+      notes: notes || 'Pure metal issued for ornament fabrication'
+    };
+    setKarigarVouchers(prev => [voucher, ...prev]);
+    setKarigars(prev => prev.map(k => {
+      if (k.id === karigarId) {
+        if (metalType === 'Silver') {
+          return { ...k, silverIssuedBalanceGm: Number(((k.silverIssuedBalanceGm || 0) + wt).toFixed(3)) };
+        } else {
+          return { ...k, pureGoldIssuedBalanceGm: Number(((k.pureGoldIssuedBalanceGm || 0) + wt).toFixed(3)) };
+        }
+      }
+      return k;
+    }));
+    return voucher;
+  };
+
+  const receiveOrnamentFromKarigar = (karigarId, { itemDescription, metalType, grossWeight, fineWeight, labourAmount, ghatLossGm }) => {
+    const fineWt = Number(fineWeight) || 0;
+    const ghat = Number(ghatLossGm) || 0;
+    const totalMetalSettled = fineWt + ghat;
+    const labour = Number(labourAmount) || 0;
+    const targetKarigar = karigars.find(k => k.id === karigarId);
+
+    const voucher = {
+      id: 'KV-' + Date.now().toString().slice(-5),
+      karigarId,
+      karigarName: targetKarigar?.name || 'Karigar',
+      type: 'RECEIVE',
+      metalType: metalType || 'Gold',
+      itemDescription: itemDescription || 'Finished Ornament',
+      grossWeight: Number(grossWeight) || 0,
+      fineWeight: fineWt,
+      ghatLossGm: ghat,
+      labourAmount: labour,
+      date: new Date().toISOString().split('T')[0]
+    };
+    setKarigarVouchers(prev => [voucher, ...prev]);
+    setKarigars(prev => prev.map(k => {
+      if (k.id === karigarId) {
+        const updated = { ...k, labourChargesDue: (k.labourChargesDue || 0) + labour };
+        if (metalType === 'Silver') {
+          updated.silverIssuedBalanceGm = Math.max(0, Number(((k.silverIssuedBalanceGm || 0) - totalMetalSettled).toFixed(3)));
+        } else {
+          updated.pureGoldIssuedBalanceGm = Math.max(0, Number(((k.pureGoldIssuedBalanceGm || 0) - totalMetalSettled).toFixed(3)));
+        }
+        return updated;
+      }
+      return k;
+    }));
+    return voucher;
+  };
+
+  // Gold Scheme Actions (MOD-02)
+  const enrollCustomerInScheme = ({ schemeId, customerId, monthlyInstallment }) => {
+    const sch = schemes.find(s => s.id === schemeId);
+    const cust = customers.find(c => c.id === customerId);
+    if (!sch || !cust) throw new Error('Valid scheme and customer are required.');
+
+    const installment = Number(monthlyInstallment) || sch.monthlyInstallment;
+    const enrollment = {
+      id: 'ENR-' + Date.now().toString().slice(-5),
+      schemeId: sch.id,
+      schemeName: sch.name,
+      customerId: cust.id,
+      customerName: cust.fullName || `${cust.firstName || ''} ${cust.lastName || ''}`.trim(),
+      mobile: cust.mobile || cust.phone || '',
+      monthlyInstallment: installment,
+      durationMonths: sch.durationMonths || 11,
+      paidInstallmentsCount: 1,
+      totalPaidAmount: installment,
+      startDate: new Date().toISOString().split('T')[0],
+      status: 'Active'
+    };
+
+    setSchemeEnrollments(prev => [enrollment, ...prev]);
+    setSchemes(prev => prev.map(s => {
+      if (s.id === schemeId) {
+        return {
+          ...s,
+          activeMembersCount: (s.activeMembersCount || 0) + 1,
+          totalCollectedAmount: (s.totalCollectedAmount || 0) + installment
+        };
+      }
+      return s;
+    }));
+    return enrollment;
+  };
+
+  const recordSchemeInstallment = (enrollmentId, amount) => {
+    const amt = Number(amount) || 0;
+    setSchemeEnrollments(prev => prev.map(enr => {
+      if (enr.id === enrollmentId) {
+        const newCount = (enr.paidInstallmentsCount || 0) + 1;
+        const newTotal = (enr.totalPaidAmount || 0) + amt;
+        return {
+          ...enr,
+          paidInstallmentsCount: newCount,
+          totalPaidAmount: newTotal,
+          status: newCount >= enr.durationMonths ? 'Matured' : 'Active'
+        };
+      }
+      return enr;
+    }));
+  };
+
   // Reset entire database to audit seed data
   const resetToAuditData = () => {
     localStorage.clear();
@@ -464,12 +634,18 @@ export function JewelleryProvider({ children }) {
       addCustomer,
       updateCustomer,
       karigars,
+      karigarVouchers,
+      issueMetalToKarigar,
+      receiveOrnamentFromKarigar,
       invoices,
       createInvoice,
       udhaarList,
       recordUdhaarDeposit,
       createGirviLoan,
       schemes,
+      schemeEnrollments,
+      enrollCustomerInScheme,
+      recordSchemeInstallment,
       expenses,
       dailyDiary,
       activeModule,
