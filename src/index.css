@@ -135,6 +135,24 @@
     font-size: 10px !important;
   }
 
+  .print-tag-dumbbell {
+    width: 86mm !important;
+    max-width: 86mm !important;
+    height: 14mm !important;
+    margin: 0 !important;
+    padding: 1mm 2mm !important;
+    page-break-inside: avoid !important;
+  }
+
+  .print-tag-butterfly {
+    width: 60mm !important;
+    max-width: 60mm !important;
+    height: 28mm !important;
+    margin: 0 !important;
+    padding: 1.5mm !important;
+    page-break-inside: avoid !important;
+  }
+
   @page {
     margin: 8mm;
     size: auto;

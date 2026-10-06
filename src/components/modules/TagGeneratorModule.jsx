@@ -88,33 +88,115 @@ export default function TagGeneratorModule() {
         </div>
 
         {/* Right Column: High Fidelity Tag Preview */}
-        <div className="md:col-span-2 bg-slate-900/80 border border-slate-800 rounded-2xl p-6 shadow-xl flex flex-col items-center justify-center min-h-[300px] print:border-none print:p-0 print:m-0 print:bg-white">
-          <h3 className="no-print font-bold text-xs uppercase tracking-wider text-slate-400 mb-4">
-            Thermal Label Live Preview (45mm x 12mm Dual Tag)
-          </h3>
+        <div className="md:col-span-2 bg-slate-900/80 border border-slate-800 rounded-2xl p-6 shadow-xl flex flex-col items-center justify-center min-h-[360px] print:border-none print:p-0 print:m-0 print:bg-white">
+          <div className="no-print flex items-center justify-between w-full max-w-lg mb-4 pb-2 border-b border-slate-800">
+            <div>
+              <h3 className="font-bold text-xs uppercase tracking-wider text-slate-300">
+                {tagFormat === 'Dumbbell'
+                  ? 'Dumbbell (Rat-tail) Tag • 86mm × 14mm'
+                  : 'Butterfly (Foldover Flap) Tag • 60mm × 28mm'}
+              </h3>
+              <p className="text-[11px] text-amber-400">
+                {tagFormat === 'Dumbbell'
+                  ? 'Two printable oval heads connected by a narrow rat-tail wrap loop'
+                  : 'Two equal rectangular wings folding symmetrically over ornament string'}
+              </p>
+            </div>
+            <span className="text-[10px] font-mono px-2 py-0.5 rounded bg-amber-500/20 text-amber-300 border border-amber-500/30">
+              {tagFormat.toUpperCase()} TEMPLATE
+            </span>
+          </div>
 
-          {selectedItem && (
-            <div className="bg-white text-slate-950 p-3 rounded-lg border-2 border-slate-400 shadow-2xl flex items-center space-x-6 font-mono text-[10px] w-full max-w-md print:max-w-none print:shadow-none print:border-slate-800 print:m-0">
-              {/* Left Head */}
-              <div className="border-r-2 border-dashed border-slate-300 pr-4 space-y-0.5 flex-1">
-                <p className="font-bold font-sans text-xs text-slate-900 leading-tight">{activeFirm.code || 'KJJ'}</p>
-                <p className="font-bold text-slate-900">{selectedItem.itemCode}</p>
-                <p className="font-mono text-[9px] text-slate-600">BCD: {selectedItem.barcode}</p>
-                <p className="font-bold text-amber-700">{selectedItem.purityKarat}</p>
-                <p className="text-[9px] text-slate-500">HUID: {selectedItem.huid}</p>
+          {selectedItem && tagFormat === 'Dumbbell' && (
+            /* DUMBBELL (RAT-TAIL) JEWELLERY TAG */
+            <div className="print-tag-dumbbell bg-white text-slate-950 p-2.5 rounded-2xl border-2 border-slate-400 shadow-2xl flex items-center justify-between font-mono text-[9px] w-full max-w-lg print:max-w-none print:shadow-none print:border-slate-800 print:m-0">
+              {/* Left Head (Front Face) */}
+              <div className="bg-slate-50 border border-slate-300 rounded-xl p-2 w-[44%] space-y-0.5 shadow-sm">
+                <div className="flex items-center justify-between pb-0.5 border-b border-slate-200">
+                  <span className="font-serif font-black text-[11px] text-slate-900 tracking-tight leading-none">
+                    {activeFirm.code || 'KJJ'}
+                  </span>
+                  <span className="text-[9px] font-bold text-amber-800 px-1 rounded bg-amber-100">
+                    {selectedItem.purityKarat || '22K'}
+                  </span>
+                </div>
+                <p className="font-bold text-slate-900 text-[10px] leading-tight pt-0.5">{selectedItem.itemCode}</p>
+                <p className="text-slate-600 font-mono text-[8.5px]">BCD: {selectedItem.barcode}</p>
+                <p className="text-[8.5px] text-slate-500 truncate">HUID: {selectedItem.huid || 'HUID8834591'}</p>
               </div>
 
-              {/* Right Head */}
-              <div className="pl-2 space-y-0.5 flex-1 text-right">
-                <p className="font-bold text-slate-900">GW: {selectedItem.grossWeight.toFixed(3)}g</p>
-                <p className="font-bold text-slate-900">NW: {selectedItem.netWeight.toFixed(3)}g</p>
-                <p className="text-slate-700">M: ₹{selectedItem.makingChargeValue}</p>
-                <p className="font-bold text-slate-900 text-xs mt-1">₹{Math.round(selectedItem.totalPrice).toLocaleString('en-IN')}</p>
+              {/* Narrow Tail (Clear plastic string loop that wraps around the ring / chain) */}
+              <div className="w-[12%] flex flex-col items-center justify-center px-1">
+                <div className="h-0.5 w-full bg-slate-300 border-t border-b border-dashed border-slate-400"></div>
+                <span className="text-[7px] text-slate-400 uppercase font-sans tracking-tighter my-0.5">LOOP</span>
+                <div className="h-0.5 w-full bg-slate-300 border-t border-b border-dashed border-slate-400"></div>
               </div>
 
-              {/* QR */}
-              <div className="w-10 h-10 bg-slate-950 p-0.5 rounded flex items-center justify-center text-white">
-                <QrCode className="w-9 h-9" />
+              {/* Right Head (Back Face / QR Code) */}
+              <div className="bg-slate-50 border border-slate-300 rounded-xl p-2 w-[44%] flex items-center justify-between gap-1 shadow-sm">
+                <div className="space-y-0.5 flex-1">
+                  <p className="text-[8.5px] text-slate-600">GW: <strong className="text-slate-900">{selectedItem.grossWeight.toFixed(3)}g</strong></p>
+                  <p className="text-[8.5px] text-slate-600">NW: <strong className="text-slate-900">{selectedItem.netWeight.toFixed(3)}g</strong></p>
+                  <p className="text-[8.5px] text-slate-600">M/G: ₹{selectedItem.makingChargeValue}</p>
+                  <p className="font-black text-slate-950 text-[10.5px] leading-tight pt-0.5">
+                    ₹{Math.round(selectedItem.totalPrice).toLocaleString('en-IN')}
+                  </p>
+                </div>
+                <div className="w-10 h-10 bg-slate-950 p-0.5 rounded flex items-center justify-center text-white flex-shrink-0">
+                  <QrCode className="w-9 h-9" />
+                </div>
+              </div>
+            </div>
+          )}
+
+          {selectedItem && tagFormat === 'Butterfly' && (
+            /* BUTTERFLY (FOLDOVER DUAL WING) JEWELLERY TAG */
+            <div className="print-tag-butterfly bg-white text-slate-950 p-3 rounded-lg border-2 border-slate-400 shadow-2xl flex flex-col items-center font-mono text-[9px] w-full max-w-sm print:max-w-none print:shadow-none print:border-slate-800 print:m-0 space-y-2">
+              {/* Upper Wing (Front Face with Firm & Ornament Specs) */}
+              <div className="w-full bg-amber-50/60 border border-amber-200/80 rounded p-2 flex items-center justify-between">
+                <div>
+                  <div className="flex items-center space-x-1.5">
+                    <span className="font-serif font-black text-xs text-slate-900 tracking-wider">
+                      {activeFirm.name || 'KRISHNA JEWELLERS'}
+                    </span>
+                    <span className="text-[8px] bg-amber-500 text-slate-950 px-1 py-0.2 rounded font-bold">
+                      {selectedItem.purityKarat || '22K916'}
+                    </span>
+                  </div>
+                  <p className="font-bold text-slate-900 text-[10px] mt-0.5">{selectedItem.itemCode} ({selectedItem.category})</p>
+                  <p className="text-slate-600 text-[8.5px]">BARCODE: {selectedItem.barcode} • HUID: {selectedItem.huid}</p>
+                </div>
+                <div className="text-right">
+                  <span className="text-[8px] text-slate-500 uppercase font-sans">BIS CERTIFIED</span>
+                  <p className="font-bold text-amber-900 text-xs mt-0.5">₹{Math.round(selectedItem.totalPrice).toLocaleString('en-IN')}</p>
+                </div>
+              </div>
+
+              {/* Fold Line (Central Crease for Thread) */}
+              <div className="w-full flex items-center justify-center relative my-0.5">
+                <div className="w-full border-t-2 border-dashed border-amber-400"></div>
+                <span className="absolute bg-white px-2 text-[7.5px] font-sans font-bold text-amber-700 tracking-wider uppercase">
+                  ✂ FOLD LINE (THREAD CREASE) ✂
+                </span>
+              </div>
+
+              {/* Lower Wing (Mirror Back Face with QR Code & Detailed Weight Breakdown) */}
+              <div className="w-full bg-slate-50 border border-slate-300 rounded p-2 flex items-center justify-between">
+                <div className="grid grid-cols-2 gap-x-3 gap-y-0.5 text-[8.5px]">
+                  <span>GROSS WT: <strong className="text-slate-900 font-bold">{selectedItem.grossWeight.toFixed(3)}g</strong></span>
+                  <span>NET WT: <strong className="text-slate-900 font-bold">{selectedItem.netWeight.toFixed(3)}g</strong></span>
+                  <span>LESS WT: <strong className="text-slate-900 font-bold">{(selectedItem.lessWeight || 0).toFixed(3)}g</strong></span>
+                  <span>MAKING: <strong className="text-slate-900 font-bold">₹{selectedItem.makingChargeValue}/g</strong></span>
+                </div>
+                <div className="flex items-center space-x-1.5 pl-2 border-l border-slate-300">
+                  <div className="text-right">
+                    <p className="text-[7.5px] text-slate-500">SCAN POS</p>
+                    <p className="font-mono text-[8px] font-bold text-slate-800">{selectedItem.barcode}</p>
+                  </div>
+                  <div className="w-9 h-9 bg-slate-950 p-0.5 rounded flex items-center justify-center text-white flex-shrink-0">
+                    <QrCode className="w-8 h-8" />
+                  </div>
+                </div>
               </div>
             </div>
           )}
