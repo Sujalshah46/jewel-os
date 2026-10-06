@@ -240,10 +240,21 @@ export default function BillingModule() {
     e.preventDefault();
     if (!barcodeInput.trim()) return;
     const found = stock.find(s => 
-      s.barcode?.trim() === barcodeInput.trim() || 
-      s.itemCode?.toLowerCase() === barcodeInput.trim().toLowerCase()
+      (!s.firmCode || s.firmCode === activeFirm.code) &&
+      (s.barcode?.trim() === barcodeInput.trim() || 
+       s.itemCode?.toLowerCase() === barcodeInput.trim().toLowerCase())
     );
     if (found) {
+      // Prevent double selling (INV-01)
+      if (found.status === 'Sold' || found.status === 'Sold Out') {
+        alert(`Cannot add item "${found.itemCode}": This item is already marked as ${found.status}.`);
+        return;
+      }
+      // Prevent duplicate scan in same invoice
+      if (cartItems.some(item => item.itemId === found.id)) {
+        alert(`Item "${found.itemCode}" is already in your billing cart.`);
+        return;
+      }
       const newItem = {
         id: 'cart-' + Date.now(),
         itemId: found.id,

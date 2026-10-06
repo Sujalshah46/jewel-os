@@ -191,6 +191,24 @@ export function JewelleryProvider({ children }) {
 
   // Invoicing & Sales actions
   const createInvoice = (invoiceData) => {
+    // 1. Prevent double selling of serialized items (INV-01)
+    if (invoiceData.items && invoiceData.items.length > 0) {
+      const billedItemIds = invoiceData.items.map(i => i.itemId).filter(Boolean);
+      const alreadySoldItem = stock.find(item => 
+        billedItemIds.includes(item.id) && 
+        (item.status === 'Sold' || item.status === 'Sold Out')
+      );
+      if (alreadySoldItem) {
+        throw new Error(`Item "${alreadySoldItem.itemCode || alreadySoldItem.barcode || alreadySoldItem.id}" is already sold out and cannot be billed again.`);
+      }
+    }
+
+    // 2. Prevent unbooked debt hazard on partial payments (INV-03)
+    const balanceDue = Number(invoiceData.payments?.balanceUdhaarDue) || 0;
+    if (balanceDue > 0 && !invoiceData.customerId) {
+      throw new Error(`Outstanding balance (Udhaar) of ₹${balanceDue.toLocaleString('en-IN')} requires an enrolled customer account.`);
+    }
+
     const invoiceId = 'INV-IS' + (invoices.length + 87);
     const invoiceNo = `IS/${invoices.length + 87}/24-25`;
     const newInvoice = {
@@ -207,7 +225,7 @@ export function JewelleryProvider({ children }) {
     setInvoices(prev => [newInvoice, ...prev]);
 
     // If there is an unpaid balance, book to Udhaar
-    if (invoiceData.payments?.balanceUdhaarDue > 0 && invoiceData.customerId) {
+    if (balanceDue > 0 && invoiceData.customerId) {
       const newUdhaar = {
         id: 'UDH-' + Date.now().toString().slice(-4),
         invoiceNo: 'KUM' + (udhaarList.length + 83),
@@ -219,12 +237,12 @@ export function JewelleryProvider({ children }) {
         mobile: invoiceData.customerPhone || '',
         city: activeFirm.city,
         transType: 'Udhaar Debit',
-        principalAmount: invoiceData.payments.balanceUdhaarDue,
+        principalAmount: balanceDue,
         roiMonthlyPercent: 1.50,
-        amountWithInterest: invoiceData.payments.balanceUdhaarDue,
+        amountWithInterest: balanceDue,
         cashPaid: 0,
         depositedAmount: 0,
-        leftBalance: invoiceData.payments.balanceUdhaarDue,
+        leftBalance: balanceDue,
         status: 'Active',
         dueDate: new Date(Date.now() + 365*24*60*60*1000).toISOString().split('T')[0]
       };
@@ -235,7 +253,7 @@ export function JewelleryProvider({ children }) {
         if (c.id === invoiceData.customerId) {
           return {
             ...c,
-            currentUdhaarBalance: (c.currentUdhaarBalance || 0) + invoiceData.payments.balanceUdhaarDue
+            currentUdhaarBalance: (c.currentUdhaarBalance || 0) + balanceDue
           };
         }
         return c;
