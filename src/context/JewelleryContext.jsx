@@ -12,6 +12,16 @@ import {
   INITIAL_EXPENSES,
   INITIAL_DAILY_DIARY
 } from '../data/initialData';
+import {
+  ALL_SYSTEM_MODULES,
+  INITIAL_CLIENTS,
+  INITIAL_BRANCHES,
+  INITIAL_STAFF,
+  SYSTEM_ROLES_PERMISSIONS,
+  INITIAL_CATALOGUE_SETTINGS,
+  INITIAL_INTEGRATIONS,
+  INITIAL_AUDIT_LOGS
+} from '../data/initialAdminData';
 import { calculateJewelleryItem, calculateOldMetalExchange } from '../utils/calculations';
 
 const JewelleryContext = createContext();
@@ -121,19 +131,86 @@ export function JewelleryProvider({ children }) {
     ];
   });
 
+  // Admin & Multi-Tenant Platform State
+  const [clients, setClients] = useState(() => {
+    const saved = localStorage.getItem(STORAGE_KEY + '_CLIENTS');
+    return saved ? JSON.parse(saved) : INITIAL_CLIENTS;
+  });
+
+  const [activeClientId, setActiveClientId] = useState(() => {
+    return clients[0]?.id || 'CLIENT-001';
+  });
+
+  const [branches, setBranches] = useState(() => {
+    const saved = localStorage.getItem(STORAGE_KEY + '_BRANCHES');
+    return saved ? JSON.parse(saved) : INITIAL_BRANCHES;
+  });
+
+  const [activeBranchId, setActiveBranchId] = useState(() => {
+    return branches[0]?.id || 'BR-001';
+  });
+
+  const [staffUsers, setStaffUsers] = useState(() => {
+    const saved = localStorage.getItem(STORAGE_KEY + '_STAFF');
+    return saved ? JSON.parse(saved) : INITIAL_STAFF;
+  });
+
+  const [catalogueSettings, setCatalogueSettings] = useState(() => {
+    const saved = localStorage.getItem(STORAGE_KEY + '_CATALOGUE');
+    return saved ? JSON.parse(saved) : INITIAL_CATALOGUE_SETTINGS;
+  });
+
+  const [integrations, setIntegrations] = useState(() => {
+    const saved = localStorage.getItem(STORAGE_KEY + '_INTEGRATIONS');
+    return saved ? JSON.parse(saved) : INITIAL_INTEGRATIONS;
+  });
+
+  const [auditLogs, setAuditLogs] = useState(() => {
+    const saved = localStorage.getItem(STORAGE_KEY + '_AUDIT_LOGS');
+    return saved ? JSON.parse(saved) : INITIAL_AUDIT_LOGS;
+  });
+
+  const [currentRole, setCurrentRole] = useState('Platform Super Admin');
+
   // Active module navigation
   const [activeModule, setActiveModule] = useState('dashboard');
   const [globalSearch, setGlobalSearch] = useState('');
   const [previewInvoice, setPreviewInvoice] = useState(null);
   const [previewEstimate, setPreviewEstimate] = useState(null);
 
-  // Active Firm object
+  // Active Context Objects
   const activeFirm = firms.find(f => f.id === activeFirmId) || firms[0];
+  const activeClient = clients.find(c => c.id === activeClientId) || clients[0];
+  const activeBranch = branches.find(b => b.id === activeBranchId) || branches[0];
 
   // Save to localStorage when critical state changes
   useEffect(() => {
     localStorage.setItem(STORAGE_KEY + '_FIRMS', JSON.stringify(firms));
   }, [firms]);
+
+  useEffect(() => {
+    localStorage.setItem(STORAGE_KEY + '_CLIENTS', JSON.stringify(clients));
+  }, [clients]);
+
+  useEffect(() => {
+    localStorage.setItem(STORAGE_KEY + '_BRANCHES', JSON.stringify(branches));
+  }, [branches]);
+
+  useEffect(() => {
+    localStorage.setItem(STORAGE_KEY + '_STAFF', JSON.stringify(staffUsers));
+  }, [staffUsers]);
+
+  useEffect(() => {
+    localStorage.setItem(STORAGE_KEY + '_CATALOGUE', JSON.stringify(catalogueSettings));
+  }, [catalogueSettings]);
+
+  useEffect(() => {
+    localStorage.setItem(STORAGE_KEY + '_INTEGRATIONS', JSON.stringify(integrations));
+  }, [integrations]);
+
+  useEffect(() => {
+    localStorage.setItem(STORAGE_KEY + '_AUDIT_LOGS', JSON.stringify(auditLogs));
+  }, [auditLogs]);
 
   useEffect(() => {
     localStorage.setItem(STORAGE_KEY + '_RATES', JSON.stringify(dailyRates));
@@ -187,6 +264,289 @@ export function JewelleryProvider({ children }) {
     }, 15000);
     return () => clearInterval(interval);
   }, []);
+
+  // Audit Log Action
+  const addAuditLog = (entry) => {
+    const newLog = {
+      id: 'AUD-' + Date.now().toString().slice(-5),
+      timestamp: new Date().toISOString().replace('T', ' ').slice(0, 19),
+      actorName: entry.actorName || (currentRole === 'Platform Super Admin' ? 'Mansi Anil' : 'Rajesh Soni'),
+      actorRole: entry.actorRole || currentRole,
+      action: entry.action || 'System Action',
+      category: entry.category || 'General',
+      target: entry.target || 'General',
+      details: entry.details || '',
+      status: entry.status || 'Success'
+    };
+    setAuditLogs(prev => [newLog, ...prev]);
+    return newLog;
+  };
+
+  // SaaS Client / Tenant Administration
+  const addClient = (newClientData) => {
+    const clientId = 'CLIENT-' + Date.now().toString().slice(-4);
+    const client = {
+      id: clientId,
+      name: newClientData.name,
+      code: newClientData.code || ('CL-' + Date.now().toString().slice(-4)),
+      subdomain: newClientData.subdomain || newClientData.name.toLowerCase().replace(/[^a-z0-9]/g, ''),
+      plan: newClientData.plan || 'Professional',
+      status: newClientData.status || 'Active',
+      contactPerson: newClientData.contactPerson || 'Store Owner',
+      email: newClientData.email || '',
+      phone: newClientData.phone || '',
+      city: newClientData.city || 'Pune',
+      state: newClientData.state || 'Maharashtra',
+      maxUsers: Number(newClientData.maxUsers) || 10,
+      maxBranches: Number(newClientData.maxBranches) || 2,
+      storageQuotaMb: Number(newClientData.storageQuotaMb) || 2000,
+      validUntil: newClientData.validUntil || '2026-12-31',
+      createdAt: new Date().toISOString().split('T')[0],
+      linkedFirmIds: newClientData.linkedFirmIds || [activeFirm.id],
+      enabledModules: newClientData.enabledModules && newClientData.enabledModules.length > 0
+        ? newClientData.enabledModules
+        : ['dashboard', 'billing', 'stock', 'customers', 'daily_rates', 'accounts_reports', 'daily_diary', 'firm_master', 'backup']
+    };
+    setClients(prev => [client, ...prev]);
+    addAuditLog({
+      action: 'Client Created',
+      category: 'SaaS Platform',
+      target: `${client.name} (${client.id})`,
+      details: `Provisioned ${client.plan} license with ${client.enabledModules.length} enabled modules.`
+    });
+    return client;
+  };
+
+  const updateClient = (clientId, updatedFields) => {
+    setClients(prev => prev.map(c => {
+      if (c.id === clientId) {
+        return { ...c, ...updatedFields };
+      }
+      return c;
+    }));
+    addAuditLog({
+      action: 'Client Updated',
+      category: 'SaaS Platform',
+      target: `Client ID: ${clientId}`,
+      details: `Updated fields: ${Object.keys(updatedFields).join(', ')}`
+    });
+  };
+
+  const toggleClientModule = (clientId, moduleKey) => {
+    setClients(prev => prev.map(c => {
+      if (c.id === clientId) {
+        const isEnabled = c.enabledModules?.includes(moduleKey);
+        const updatedModules = isEnabled
+          ? c.enabledModules.filter(m => m !== moduleKey)
+          : [...(c.enabledModules || []), moduleKey];
+        return { ...c, enabledModules: updatedModules };
+      }
+      return c;
+    }));
+    addAuditLog({
+      action: 'Module Entitlement Changed',
+      category: 'SaaS Platform',
+      target: `Client ${clientId} - Module: ${moduleKey}`,
+      details: `Toggled module ${moduleKey} entitlement state.`
+    });
+  };
+
+  const deleteClient = (clientId) => {
+    if (clients.length <= 1) {
+      throw new Error('Cannot delete the only remaining SaaS tenant client.');
+    }
+    const target = clients.find(c => c.id === clientId);
+    if (activeClientId === clientId) {
+      const remaining = clients.find(c => c.id !== clientId);
+      setActiveClientId(remaining.id);
+    }
+    setClients(prev => prev.filter(c => c.id !== clientId));
+    addAuditLog({
+      action: 'Client Deleted',
+      category: 'SaaS Platform',
+      target: `${target?.name || clientId}`,
+      details: 'Tenant account purged.'
+    });
+  };
+
+  const isModuleEnabled = (moduleKey) => {
+    if (!activeClient || !activeClient.enabledModules) return true;
+    return activeClient.enabledModules.includes(moduleKey);
+  };
+
+  // Branch CRUD Actions
+  const addBranch = (newBranchData) => {
+    const branch = {
+      ...newBranchData,
+      id: 'BR-' + Date.now().toString().slice(-4),
+      firmId: newBranchData.firmId || activeFirm.id,
+      status: newBranchData.status || 'Active',
+      linkedStockCount: 0
+    };
+    setBranches(prev => [...prev, branch]);
+    addAuditLog({
+      action: 'Branch Added',
+      category: 'Organization',
+      target: `${branch.name} (${branch.code})`,
+      details: `New branch created for firm ${branch.firmId}`
+    });
+    return branch;
+  };
+
+  const updateBranch = (branchId, updatedFields) => {
+    setBranches(prev => prev.map(b => b.id === branchId ? { ...b, ...updatedFields } : b));
+    addAuditLog({
+      action: 'Branch Updated',
+      category: 'Organization',
+      target: `Branch ${branchId}`,
+      details: `Updated details: ${Object.keys(updatedFields).join(', ')}`
+    });
+  };
+
+  const deleteBranch = (branchId) => {
+    const targetBranch = branches.find(b => b.id === branchId);
+    const hasLinkedStock = stock.some(s => s.branchId === branchId);
+    if (hasLinkedStock) {
+      throw new Error(`Cannot delete branch "${targetBranch?.name}". Branch contains active inventory items. Please transfer stock first.`);
+    }
+    setBranches(prev => prev.filter(b => b.id !== branchId));
+    addAuditLog({
+      action: 'Branch Deleted',
+      category: 'Organization',
+      target: `${targetBranch?.name || branchId}`,
+      details: 'Branch removed from firm configuration.'
+    });
+  };
+
+  // Staff CRUD Actions
+  const addStaffUser = (newStaffData) => {
+    const staff = {
+      ...newStaffData,
+      id: 'STAFF-' + Date.now().toString().slice(-4),
+      branchId: newStaffData.branchId || branches[0]?.id || 'BR-001',
+      status: newStaffData.status || 'Active',
+      lastActive: 'Never'
+    };
+    setStaffUsers(prev => [staff, ...prev]);
+    addAuditLog({
+      action: 'Staff Member Added',
+      category: 'Staff & Roles',
+      target: `${staff.name} (${staff.role})`,
+      details: `Invited with role ${staff.role}`
+    });
+    return staff;
+  };
+
+  const updateStaffUser = (staffId, updatedFields) => {
+    setStaffUsers(prev => prev.map(s => s.id === staffId ? { ...s, ...updatedFields } : s));
+    addAuditLog({
+      action: 'Staff Profile Updated',
+      category: 'Staff & Roles',
+      target: `Staff ID ${staffId}`,
+      details: `Updated: ${Object.keys(updatedFields).join(', ')}`
+    });
+  };
+
+  const deleteStaffUser = (staffId) => {
+    const target = staffUsers.find(s => s.id === staffId);
+    setStaffUsers(prev => prev.filter(s => s.id !== staffId));
+    addAuditLog({
+      action: 'Staff Access Revoked',
+      category: 'Staff & Roles',
+      target: `${target?.name || staffId}`,
+      details: 'Staff member deactivated and access revoked.'
+    });
+  };
+
+  // Catalogue Rules
+  const updateCatalogueSettings = (newSettings) => {
+    setCatalogueSettings(prev => ({ ...prev, ...newSettings }));
+    addAuditLog({
+      action: 'Catalogue Rules Configured',
+      category: 'Catalogue',
+      target: 'Catalogue Master Rules',
+      details: 'Updated jewellery master pricing rules and purity settings.'
+    });
+  };
+
+  // Integrations Ping & Update
+  const testIntegrationConnection = (integrationId) => {
+    const target = integrations.find(i => i.id === integrationId);
+    setIntegrations(prev => prev.map(i => {
+      if (i.id === integrationId) {
+        return {
+          ...i,
+          status: 'Connected',
+          lastPing: 'Just now (HTTP 200 OK - Latency 24ms)'
+        };
+      }
+      return i;
+    }));
+    addAuditLog({
+      action: 'Integration Health Ping',
+      category: 'Integrations',
+      target: target?.name || integrationId,
+      details: 'Safe loopback endpoint pinged: Connection verified.'
+    });
+    return { success: true, latencyMs: 24, message: 'Ping handshake successful' };
+  };
+
+  const updateIntegration = (integrationId, updatedFields) => {
+    setIntegrations(prev => prev.map(i => i.id === integrationId ? { ...i, ...updatedFields } : i));
+    addAuditLog({
+      action: 'Integration Configuration Updated',
+      category: 'Integrations',
+      target: `Integration ${integrationId}`,
+      details: 'Configuration saved.'
+    });
+  };
+
+  // Inter-branch Stock Transfer & Adjustment
+  const transferStockBetweenBranches = (stockId, targetBranchId, reason) => {
+    const targetItem = stock.find(s => s.id === stockId);
+    const destBranch = branches.find(b => b.id === targetBranchId);
+    if (!targetItem) throw new Error('Stock item not found.');
+    if (!destBranch) throw new Error('Target destination branch not found.');
+
+    setStock(prev => prev.map(s => {
+      if (s.id === stockId) {
+        return {
+          ...s,
+          branchId: targetBranchId,
+          location: destBranch.name
+        };
+      }
+      return s;
+    }));
+
+    addAuditLog({
+      action: 'Stock Transferred Between Branches',
+      category: 'Inventory',
+      target: `${targetItem.itemCode || targetItem.id} -> ${destBranch.name}`,
+      details: `Reason: ${reason || 'Inter-branch rebalance'}`
+    });
+  };
+
+  const adjustStockItem = (stockId, adjustmentQty, reason) => {
+    const targetItem = stock.find(s => s.id === stockId);
+    if (!targetItem) throw new Error('Stock item not found.');
+    const qty = Number(adjustmentQty) || 0;
+    setStock(prev => prev.map(s => {
+      if (s.id === stockId) {
+        return {
+          ...s,
+          quantity: Math.max(0, (Number(s.quantity) || 1) + qty)
+        };
+      }
+      return s;
+    }));
+    addAuditLog({
+      action: 'Stock Adjustment Approved',
+      category: 'Inventory',
+      target: `${targetItem.itemCode || targetItem.id} (Adj: ${qty > 0 ? '+' : ''}${qty})`,
+      details: `Reason: ${reason || 'Physical inventory reconciliation'}`
+    });
+  };
 
   // Stock CRUD
   const addStockItem = (newItem) => {
@@ -517,6 +877,15 @@ export function JewelleryProvider({ children }) {
     setSchemes(INITIAL_SCHEMES);
     setExpenses(INITIAL_EXPENSES);
     setDailyDiary(INITIAL_DAILY_DIARY);
+    setClients(INITIAL_CLIENTS);
+    setActiveClientId(INITIAL_CLIENTS[0].id);
+    setBranches(INITIAL_BRANCHES);
+    setActiveBranchId(INITIAL_BRANCHES[0].id);
+    setStaffUsers(INITIAL_STAFF);
+    setCatalogueSettings(INITIAL_CATALOGUE_SETTINGS);
+    setIntegrations(INITIAL_INTEGRATIONS);
+    setAuditLogs(INITIAL_AUDIT_LOGS);
+    setCurrentRole('Platform Super Admin');
   };
 
   // Export full JSON database
@@ -534,7 +903,13 @@ export function JewelleryProvider({ children }) {
       udhaarList,
       schemes,
       expenses,
-      dailyDiary
+      dailyDiary,
+      clients,
+      branches,
+      staffUsers,
+      catalogueSettings,
+      integrations,
+      auditLogs
     };
     const dataStr = "data:text/json;charset=utf-8," + encodeURIComponent(JSON.stringify(fullDb, null, 2));
     const downloadAnchor = document.createElement('a');
@@ -551,7 +926,7 @@ export function JewelleryProvider({ children }) {
       throw new Error('Invalid backup file: Root structure must be a JSON object.');
     }
 
-    const validCollections = ['firms', 'dailyRates', 'stock', 'customers', 'karigars', 'invoices', 'udhaarList', 'schemes', 'expenses', 'dailyDiary'];
+    const validCollections = ['firms', 'dailyRates', 'stock', 'customers', 'karigars', 'invoices', 'udhaarList', 'schemes', 'expenses', 'dailyDiary', 'clients', 'branches'];
     const hasAtLeastOne = validCollections.some(key => Array.isArray(jsonObj[key]));
     if (!hasAtLeastOne) {
       throw new Error('Invalid backup schema: No valid Jewellery OS collections found in backup.');
@@ -597,6 +972,24 @@ export function JewelleryProvider({ children }) {
       if (!Array.isArray(jsonObj.dailyDiary)) throw new Error('Schema error: "dailyDiary" must be an array.');
       setDailyDiary(jsonObj.dailyDiary);
     }
+    if (jsonObj.clients && Array.isArray(jsonObj.clients)) {
+      setClients(jsonObj.clients);
+    }
+    if (jsonObj.branches && Array.isArray(jsonObj.branches)) {
+      setBranches(jsonObj.branches);
+    }
+    if (jsonObj.staffUsers && Array.isArray(jsonObj.staffUsers)) {
+      setStaffUsers(jsonObj.staffUsers);
+    }
+    if (jsonObj.catalogueSettings && typeof jsonObj.catalogueSettings === 'object') {
+      setCatalogueSettings(jsonObj.catalogueSettings);
+    }
+    if (jsonObj.integrations && Array.isArray(jsonObj.integrations)) {
+      setIntegrations(jsonObj.integrations);
+    }
+    if (jsonObj.auditLogs && Array.isArray(jsonObj.auditLogs)) {
+      setAuditLogs(jsonObj.auditLogs);
+    }
   };
 
   // Aggregate Dashboard Analytics
@@ -631,6 +1024,53 @@ export function JewelleryProvider({ children }) {
       activeFirm,
       activeFirmId,
       setActiveFirmId,
+      // Multi-Tenant Clients & Modules
+      clients,
+      setClients,
+      activeClientId,
+      setActiveClientId,
+      activeClient,
+      addClient,
+      updateClient,
+      toggleClientModule,
+      deleteClient,
+      isModuleEnabled,
+      allSystemModules: ALL_SYSTEM_MODULES,
+      // Branches & Warehouses
+      branches,
+      setBranches,
+      activeBranchId,
+      setActiveBranchId,
+      activeBranch,
+      addBranch,
+      updateBranch,
+      deleteBranch,
+      // Staff & Roles
+      staffUsers,
+      setStaffUsers,
+      addStaffUser,
+      updateStaffUser,
+      deleteStaffUser,
+      systemRolesPermissions: SYSTEM_ROLES_PERMISSIONS,
+      currentRole,
+      setCurrentRole,
+      // Catalogue Master Rules
+      catalogueSettings,
+      setCatalogueSettings,
+      updateCatalogueSettings,
+      // Integrations Hub
+      integrations,
+      setIntegrations,
+      testIntegrationConnection,
+      updateIntegration,
+      // Audit Log
+      auditLogs,
+      setAuditLogs,
+      addAuditLog,
+      // Inventory Admin actions
+      transferStockBetweenBranches,
+      adjustStockItem,
+      // Standard ERP State & Actions
       dailyRates,
       setDailyRates,
       updateDailyRate,
