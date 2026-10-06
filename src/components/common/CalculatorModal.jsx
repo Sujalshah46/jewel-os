@@ -1,7 +1,7 @@
 import React, { useState } from 'react';
 import { Calculator, X } from 'lucide-react';
 
-// Safe arithmetic parser without Function() or eval() (SEC-05)
+// Safe arithmetic parser without dynamic code evaluation (SEC-05)
 function safeEvaluateMath(expr) {
   const tokens = expr.match(/(\d+(\.\d+)?|[+\-*/()])/g);
   if (!tokens || tokens.length === 0) return 0;
