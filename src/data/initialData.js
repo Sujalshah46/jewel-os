@@ -30,7 +30,7 @@ export const INITIAL_FIRMS = [
     diwaliBannerText: 'HAPPY DIWALI & DHANTERAS SPECIAL OFFER — 5% OFF ON GOLD JEWELLERY MAKING | 15% OFF ON DIAMOND JEWELLERY | WWW.KRISHNAJEWELLERS.COM',
     eInvoiceApi: {
       appId: 'KJJ_EINV_9921',
-      apiKey: 'kjj_live_sec_89234892184912',
+      apiKey: '',
       username: 'krishna_einv_admin'
     }
   },
