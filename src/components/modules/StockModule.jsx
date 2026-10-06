@@ -214,13 +214,39 @@ export default function StockModule() {
     return matchesSearch && matchesCategory && matchesMetal;
   });
 
-  // Export to CSV simulation
+  // Helper to sanitize CSV cells against formula injection (SEC-04)
+  const sanitizeCsvCell = (val) => {
+    if (val === null || val === undefined) return '""';
+    let str = String(val).replace(/"/g, '""');
+    // Prefix single quote if starts with formula trigger characters
+    if (/^[=+\-@\t\r]/.test(str)) {
+      str = `'${str}`;
+    }
+    return `"${str}"`;
+  };
+
+  // Export to CSV simulation with SEC-04 formula injection protection
   const handleExportExcel = () => {
-    const csvContent = "data:text/csv;charset=utf-8," 
-      + "SRNO,FIRM,METAL,ITEM CODE,BARCODE,CATEGORY,DESC,QTY,GROSS WT,NET WT,PURITY,FINE WT,RATE/GM,MAKING,TOTAL PRICE\n"
-      + filteredStock.map((s, idx) => 
-        `${idx+1},${s.firmCode},${s.metalType},${s.itemCode},${s.barcode},${s.category},"${s.subCategory}",${s.qty},${s.grossWeight},${s.netWeight},${s.purityPercent}%,${s.fineWeight},${s.ratePerGram},${s.makingChargeValue},${s.totalPrice}`
-      ).join("\n");
+    const headers = ["SRNO","FIRM","METAL","ITEM CODE","BARCODE","CATEGORY","DESC","QTY","GROSS WT","NET WT","PURITY","FINE WT","RATE/GM","MAKING","TOTAL PRICE"];
+    const rows = filteredStock.map((s, idx) => [
+      sanitizeCsvCell(idx + 1),
+      sanitizeCsvCell(s.firmCode),
+      sanitizeCsvCell(s.metalType),
+      sanitizeCsvCell(s.itemCode),
+      sanitizeCsvCell(s.barcode),
+      sanitizeCsvCell(s.category),
+      sanitizeCsvCell(s.subCategory),
+      sanitizeCsvCell(s.qty),
+      sanitizeCsvCell(s.grossWeight),
+      sanitizeCsvCell(s.netWeight),
+      sanitizeCsvCell(`${s.purityPercent}%`),
+      sanitizeCsvCell(s.fineWeight),
+      sanitizeCsvCell(s.ratePerGram),
+      sanitizeCsvCell(s.makingChargeValue),
+      sanitizeCsvCell(s.totalPrice)
+    ].join(','));
+
+    const csvContent = "data:text/csv;charset=utf-8," + [headers.join(','), ...rows].join("\n");
     const encodedUri = encodeURI(csvContent);
     const link = document.createElement("a");
     link.setAttribute("href", encodedUri);
