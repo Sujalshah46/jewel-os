@@ -449,26 +449,32 @@ export default function StockModule() {
                   <td className="py-3 px-3 text-center">
                     <div className="flex items-center justify-center space-x-1">
                       <button
+                        type="button"
                         onClick={() => setInspectItem(item)}
                         title="View Full Details"
+                        aria-label={`View details for ${item.itemCode}`}
                         className="p-1.5 bg-slate-800 hover:bg-slate-700 text-slate-300 rounded-lg transition-colors"
                       >
                         <Eye className="w-3.5 h-3.5" />
                       </button>
 
                       <button
+                        type="button"
                         onClick={() => {
                           setActiveModule('tags');
                         }}
                         title="Print Jewellery Tag"
+                        aria-label={`Print jewellery tag for ${item.itemCode}`}
                         className="p-1.5 bg-slate-800 hover:bg-slate-700 text-amber-300 rounded-lg transition-colors"
                       >
                         <Tag className="w-3.5 h-3.5" />
                       </button>
 
                       <button
+                        type="button"
                         onClick={() => setItemToDelete(item)}
                         title="Delete Item"
+                        aria-label={`Delete item ${item.itemCode}`}
                         className="p-1.5 bg-rose-500/10 hover:bg-rose-500/20 text-rose-400 rounded-lg transition-colors"
                       >
                         <Trash2 className="w-3.5 h-3.5" />
@@ -843,7 +849,12 @@ export default function StockModule() {
                 <Package className="w-5 h-5 text-amber-400" />
                 <h3 className="font-bold text-base text-slate-100">Item Specification: {inspectItem.itemCode}</h3>
               </div>
-              <button onClick={() => setInspectItem(null)} className="text-slate-400 hover:text-white">
+              <button
+                type="button"
+                aria-label="Close modal"
+                onClick={() => setInspectItem(null)}
+                className="text-slate-400 hover:text-white"
+              >
                 <X className="w-5 h-5" />
               </button>
             </div>

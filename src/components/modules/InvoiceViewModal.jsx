@@ -56,18 +56,21 @@ export default function InvoiceViewModal() {
           <div className="flex items-center space-x-2">
             <div className="bg-slate-900 border border-slate-700 p-0.5 rounded-lg flex text-xs font-bold">
               <button
+                type="button"
                 onClick={() => setPrintFormat('A4')}
                 className={`px-2.5 py-1 rounded ${printFormat === 'A4' ? 'bg-amber-500 text-slate-950' : 'text-slate-400'}`}
               >
                 A4 Tax Invoice
               </button>
               <button
+                type="button"
                 onClick={() => setPrintFormat('A5')}
                 className={`px-2.5 py-1 rounded ${printFormat === 'A5' ? 'bg-amber-500 text-slate-950' : 'text-slate-400'}`}
               >
                 A5 Half-Page
               </button>
               <button
+                type="button"
                 onClick={() => setPrintFormat('Thermal')}
                 className={`px-2.5 py-1 rounded ${printFormat === 'Thermal' ? 'bg-amber-500 text-slate-950' : 'text-slate-400'}`}
               >
@@ -76,6 +79,7 @@ export default function InvoiceViewModal() {
             </div>
 
             <button
+              type="button"
               onClick={handleWhatsAppShare}
               className="flex items-center space-x-1 bg-emerald-600 hover:bg-emerald-500 text-white px-3 py-1.5 rounded-xl text-xs font-bold shadow transition-colors"
             >
@@ -84,6 +88,7 @@ export default function InvoiceViewModal() {
             </button>
 
             <button
+              type="button"
               onClick={handlePrint}
               className="flex items-center space-x-1 bg-amber-500 hover:bg-amber-400 text-slate-950 px-3.5 py-1.5 rounded-xl text-xs font-bold shadow transition-colors"
             >
@@ -92,6 +97,8 @@ export default function InvoiceViewModal() {
             </button>
 
             <button
+              type="button"
+              aria-label="Close modal"
               onClick={() => setPreviewInvoice(null)}
               className="text-slate-400 hover:text-white p-1 rounded-lg"
             >

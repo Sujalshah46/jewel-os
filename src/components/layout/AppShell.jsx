@@ -187,9 +187,11 @@ export default function AppShell({ sidebarCollapsed, setSidebarCollapsed, mobile
             </button>
 
             <button
+              type="button"
               onClick={() => setSidebarCollapsed(!sidebarCollapsed)}
               className="hidden lg:flex p-2 rounded-xl text-slate-400 hover:text-amber-300 hover:bg-slate-800/80 transition-colors"
               title={sidebarCollapsed ? "Expand sidebar" : "Collapse sidebar"}
+              aria-label={sidebarCollapsed ? "Expand sidebar" : "Collapse sidebar"}
             >
               <Menu className="w-5 h-5" />
             </button>
@@ -216,6 +218,7 @@ export default function AppShell({ sidebarCollapsed, setSidebarCollapsed, mobile
             {/* Firm Selector */}
             <div className="relative pl-3 border-l border-slate-800 hidden sm:block">
               <button
+                type="button"
                 onClick={() => setFirmDropdownOpen(!firmDropdownOpen)}
                 className="flex items-center space-x-2 bg-slate-900 border border-amber-500/30 hover:border-amber-400 px-3 py-1.5 rounded-xl text-left text-xs transition-colors"
               >
@@ -288,6 +291,7 @@ export default function AppShell({ sidebarCollapsed, setSidebarCollapsed, mobile
           {/* Right Action Buttons */}
           <div className="flex items-center space-x-2">
             <button
+              type="button"
               onClick={() => setActiveModule('billing')}
               className="flex items-center space-x-1.5 bg-gradient-to-r from-amber-500 to-amber-600 hover:from-amber-400 hover:to-amber-500 text-slate-950 font-bold px-3 md:px-4 py-2 rounded-xl text-xs md:text-sm shadow-lg shadow-amber-500/20 transition-all hover:scale-[1.02] active:scale-95"
             >
@@ -296,8 +300,10 @@ export default function AppShell({ sidebarCollapsed, setSidebarCollapsed, mobile
             </button>
 
             <button
+              type="button"
               onClick={onOpenCalculator}
               title="Gold & Jewellery Calculator"
+              aria-label="Gold and Jewellery Calculator"
               className="p-2 rounded-xl bg-slate-900 hover:bg-slate-800 border border-slate-700 text-amber-400 transition-colors"
             >
               <Calculator className="w-4 h-4" />

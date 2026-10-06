@@ -1,5 +1,6 @@
 import React, { useState } from 'react';
 import { useJewellery } from '../../context/JewelleryContext';
+import { safeEvaluateMath } from '../../utils/calculations';
 import {
   Building2,
   Settings,
@@ -41,9 +42,8 @@ export default function RightSidebar() {
       setCalcInput('');
     } else if (val === '=') {
       try {
-        // Simple safe evaluator for numbers & operators
         const clean = calcInput.replace(/[^0-9+\-*/.]/g, '');
-        const res = Function(`'use strict'; return (${clean})`)();
+        const res = safeEvaluateMath(clean);
         setCalcInput(String(res));
       } catch (err) {
         setCalcInput('Error');

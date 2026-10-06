@@ -59,6 +59,36 @@ export default function AccountsReportsModule() {
   const totalRevenue = salesRevenue + makingChargesInvoiced + interestIncome;
   const netProfit = totalRevenue - (estimatedCostOfGoods + directExpenses + 12500);
 
+  const handleExportGstr1 = () => {
+    const gstr1Payload = {
+      gstin: activeFirm.gstin,
+      fp: new Date().toISOString().slice(0, 7).replace('-', ''), // YYYYMM format
+      b2b: invoices.map(inv => ({
+        inum: inv.invoiceNo,
+        idt: inv.date,
+        val: Number(inv.totalInvoiceAmount || 0),
+        pos: "27",
+        rchrg: "N",
+        itms: [{
+          num: 1,
+          itm_det: {
+            txval: Number(inv.taxableAmount || (inv.totalInvoiceAmount * 0.97)).toFixed(2),
+            camt: Number(inv.cgst || (inv.totalInvoiceAmount * 0.015)).toFixed(2),
+            samt: Number(inv.sgst || (inv.totalInvoiceAmount * 0.015)).toFixed(2),
+            csamt: 0
+          }
+        }]
+      }))
+    };
+    const jsonStr = "data:text/json;charset=utf-8," + encodeURIComponent(JSON.stringify(gstr1Payload, null, 2));
+    const dlAnchor = document.createElement('a');
+    dlAnchor.setAttribute("href", jsonStr);
+    dlAnchor.setAttribute("download", `GSTR1_${activeFirm.gstin}_${new Date().toISOString().split('T')[0]}.json`);
+    document.body.appendChild(dlAnchor);
+    dlAnchor.click();
+    dlAnchor.remove();
+  };
+
   // Stock breakdown for Stock Valuation
   const goldStock = stock.filter(s => s.metalType === 'Gold' && s.status === 'In Stock');
   const silverStock = stock.filter(s => s.metalType === 'Silver' && s.status === 'In Stock');
@@ -365,7 +395,11 @@ export default function AccountsReportsModule() {
               <h3 className="font-serif font-bold text-base text-slate-100">GSTR-1 SUMMARY (OUTWARD SUPPLIES)</h3>
               <p className="text-xs text-slate-400">HSN 7113 - Gold Jewellery (3% GST)</p>
             </div>
-            <button className="bg-slate-800 hover:bg-slate-700 text-amber-300 border border-amber-500/30 px-3 py-1.5 rounded-xl text-xs font-bold flex items-center gap-1">
+            <button
+              type="button"
+              onClick={handleExportGstr1}
+              className="bg-slate-800 hover:bg-slate-700 text-amber-300 border border-amber-500/30 px-3 py-1.5 rounded-xl text-xs font-bold flex items-center gap-1 transition-colors"
+            >
               <FileSpreadsheet className="w-4 h-4" /> Export Govt JSON/Excel
             </button>
           </div>

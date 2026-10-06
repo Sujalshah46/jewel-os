@@ -386,7 +386,12 @@ export default function CustomerModule() {
                   REGISTER NEW {currentTargetType.toUpperCase()} (MASTER DIRECTORY)
                 </h3>
               </div>
-              <button onClick={() => setShowAddModal(false)} className="text-slate-400 hover:text-white">
+              <button
+                type="button"
+                aria-label="Close modal"
+                onClick={() => setShowAddModal(false)}
+                className="text-slate-400 hover:text-white"
+              >
                 <X className="w-5 h-5" />
               </button>
             </div>

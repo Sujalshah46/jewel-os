@@ -289,7 +289,12 @@ export default function UdhaarLoanModule() {
                 <ArrowDownRight className="w-5 h-5 text-emerald-400" />
                 <h3 className="font-bold text-sm text-slate-100">Receive Udhaar / Loan Repayment</h3>
               </div>
-              <button onClick={() => setShowDepositModal(false)} className="text-slate-400 hover:text-white">
+              <button
+                type="button"
+                aria-label="Close modal"
+                onClick={() => setShowDepositModal(false)}
+                className="text-slate-400 hover:text-white"
+              >
                 <X className="w-5 h-5" />
               </button>
             </div>
@@ -357,7 +362,12 @@ export default function UdhaarLoanModule() {
                   Book Girvi / Gold Pledge Loan
                 </h3>
               </div>
-              <button onClick={() => setShowGirviModal(false)} className="text-slate-400 hover:text-white">
+              <button
+                type="button"
+                aria-label="Close modal"
+                onClick={() => setShowGirviModal(false)}
+                className="text-slate-400 hover:text-white"
+              >
                 <X className="w-5 h-5" />
               </button>
             </div>

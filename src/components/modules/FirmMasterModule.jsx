@@ -22,6 +22,7 @@ export default function FirmMasterModule() {
   const [selectedFirmId, setSelectedFirmId] = useState(activeFirm.id);
   const [formData, setFormData] = useState(activeFirm);
   const [saveSuccess, setSaveSuccess] = useState(false);
+  const [showHelp, setShowHelp] = useState(false);
 
   // Switch form data when selected firm changes
   const handleSelectFirm = (firmId) => {
@@ -67,7 +68,11 @@ export default function FirmMasterModule() {
         </div>
 
         <div className="flex items-center space-x-3">
-          <button className="flex items-center space-x-1 bg-rose-500/20 hover:bg-rose-500/30 text-rose-300 border border-rose-500/40 px-3 py-1.5 rounded-lg text-xs font-bold transition-colors">
+          <button
+            type="button"
+            onClick={() => setShowHelp(true)}
+            className="flex items-center space-x-1 bg-rose-500/20 hover:bg-rose-500/30 text-rose-300 border border-rose-500/40 px-3 py-1.5 rounded-lg text-xs font-bold transition-colors cursor-pointer"
+          >
             <HelpCircle className="w-3.5 h-3.5" />
             <span>HELP</span>
           </button>
@@ -454,6 +459,42 @@ export default function FirmMasterModule() {
           </div>
         </div>
       </form>
+
+      {/* Help Modal */}
+      {showHelp && (
+        <div className="fixed inset-0 z-50 bg-slate-950/80 backdrop-blur-sm flex items-center justify-center p-4">
+          <div className="bg-slate-900 border border-slate-700 max-w-lg w-full rounded-2xl p-6 shadow-2xl space-y-4">
+            <div className="flex items-center justify-between pb-3 border-b border-slate-800">
+              <div className="flex items-center space-x-2">
+                <HelpCircle className="w-5 h-5 text-amber-400" />
+                <h3 className="font-serif font-bold text-base text-slate-100">Firm Master Instructions</h3>
+              </div>
+              <button
+                type="button"
+                onClick={() => setShowHelp(false)}
+                className="text-slate-400 hover:text-white p-1 rounded-lg"
+              >
+                ✕
+              </button>
+            </div>
+            <div className="text-xs text-slate-300 space-y-2 leading-relaxed">
+              <p>• <strong>GSTIN & HSN:</strong> Required for generating statutory B2B & B2C tax invoices under Indian jewellery taxation (HSN 7113, GST 3%).</p>
+              <p>• <strong>Hallmark ID:</strong> Enter your BIS certified registration code to automatically stamp Hallmark charges on receipts.</p>
+              <p>• <strong>Multi-Firm Policy:</strong> You can configure up to 2 active firms. Toggle between them anytime using the "Make Active" button.</p>
+              <p>• <strong>E-Invoicing API:</strong> Credentials entered here are securely validated for B2B e-invoice generation with the NIC IRP portal.</p>
+            </div>
+            <div className="pt-2 text-right">
+              <button
+                type="button"
+                onClick={() => setShowHelp(false)}
+                className="px-4 py-2 bg-amber-500 hover:bg-amber-400 text-slate-950 font-bold rounded-xl text-xs"
+              >
+                Got it
+              </button>
+            </div>
+          </div>
+        </div>
+      )}
     </div>
   );
 }

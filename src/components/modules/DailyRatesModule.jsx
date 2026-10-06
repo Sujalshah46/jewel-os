@@ -213,17 +213,86 @@ export default function DailyRatesModule() {
               {/* Action Toolbar: Copy, Csv, Excel, Pdf, Print, Delete All */}
               <div className="flex flex-wrap items-center gap-2">
                 <div className="flex items-center space-x-1 bg-slate-950 border border-slate-800 rounded-lg p-1 text-[11px] text-slate-300">
-                  <button className="px-2 py-0.5 hover:bg-slate-800 rounded">Copy</button>
-                  <button className="px-2 py-0.5 hover:bg-slate-800 rounded">CSV</button>
-                  <button className="px-2 py-0.5 hover:bg-slate-800 rounded">Excel</button>
-                  <button className="px-2 py-0.5 hover:bg-slate-800 rounded">PDF</button>
-                  <button className="px-2 py-0.5 hover:bg-slate-800 rounded flex items-center gap-1">
+                  <button
+                    type="button"
+                    onClick={() => {
+                      const text = dailyRates.map(r => `${r.name}\t${r.ratePerGram}\t${r.ratePer10Gm}`).join('\n');
+                      navigator.clipboard.writeText(text);
+                      alert('Rates copied to clipboard!');
+                    }}
+                    className="px-2 py-0.5 hover:bg-slate-800 rounded transition-colors"
+                  >
+                    Copy
+                  </button>
+                  <button
+                    type="button"
+                    onClick={() => {
+                      const headers = ['Metal', 'Purity', 'Karat', 'Rate/Gram', 'Rate/10g', 'Tax 3%', 'Rate Inc. Tax'];
+                      const rows = dailyRates.map(r => [
+                        `"${r.metalType}"`,
+                        `"${r.purityPercent}%"`,
+                        `"${r.karat || ''}"`,
+                        r.ratePerGram,
+                        r.ratePer10Gm,
+                        r.taxAmount || 0,
+                        r.rateWithTax || r.ratePerGram
+                      ].join(','));
+                      const csvContent = "data:text/csv;charset=utf-8," + [headers.join(','), ...rows].join("\n");
+                      const link = document.createElement("a");
+                      link.setAttribute("href", encodeURI(csvContent));
+                      link.setAttribute("download", `Daily_Rates_${new Date().toISOString().split('T')[0]}.csv`);
+                      document.body.appendChild(link);
+                      link.click();
+                      link.remove();
+                    }}
+                    className="px-2 py-0.5 hover:bg-slate-800 rounded transition-colors"
+                  >
+                    CSV
+                  </button>
+                  <button
+                    type="button"
+                    onClick={() => {
+                      const headers = ['Metal', 'Purity', 'Karat', 'Rate/Gram', 'Rate/10g', 'Tax 3%', 'Rate Inc. Tax'];
+                      const rows = dailyRates.map(r => [
+                        `"${r.metalType}"`,
+                        `"${r.purityPercent}%"`,
+                        `"${r.karat || ''}"`,
+                        r.ratePerGram,
+                        r.ratePer10Gm,
+                        r.taxAmount || 0,
+                        r.rateWithTax || r.ratePerGram
+                      ].join(','));
+                      const csvContent = "data:text/csv;charset=utf-8," + [headers.join(','), ...rows].join("\n");
+                      const link = document.createElement("a");
+                      link.setAttribute("href", encodeURI(csvContent));
+                      link.setAttribute("download", `Daily_Rates_${new Date().toISOString().split('T')[0]}.xls`);
+                      document.body.appendChild(link);
+                      link.click();
+                      link.remove();
+                    }}
+                    className="px-2 py-0.5 hover:bg-slate-800 rounded transition-colors"
+                  >
+                    Excel
+                  </button>
+                  <button
+                    type="button"
+                    onClick={() => window.print()}
+                    className="px-2 py-0.5 hover:bg-slate-800 rounded transition-colors"
+                  >
+                    PDF
+                  </button>
+                  <button
+                    type="button"
+                    onClick={() => window.print()}
+                    className="px-2 py-0.5 hover:bg-slate-800 rounded flex items-center gap-1 transition-colors"
+                  >
                     <Printer className="w-3 h-3" /> Print
                   </button>
                 </div>
 
                 {/* Pink Delete All Rates Button matching audit (triggers confirm modal) */}
                 <button
+                  type="button"
                   onClick={() => setShowDeleteModal(true)}
                   className="bg-rose-500/20 hover:bg-rose-500/30 text-rose-300 border border-rose-500/40 px-3 py-1 rounded-lg text-xs font-bold flex items-center gap-1 transition-colors"
                 >

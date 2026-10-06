@@ -270,7 +270,12 @@ export default function KarigarModule() {
                 <ArrowRightLeft className="w-5 h-5 text-amber-400" />
                 <h3 className="font-bold text-sm text-slate-100">Issue Raw Bullion to Karigar</h3>
               </div>
-              <button onClick={() => setShowIssueModal(false)} className="text-slate-400 hover:text-white">
+              <button
+                type="button"
+                aria-label="Close modal"
+                onClick={() => setShowIssueModal(false)}
+                className="text-slate-400 hover:text-white"
+              >
                 <X className="w-5 h-5" />
               </button>
             </div>
@@ -357,7 +362,12 @@ export default function KarigarModule() {
                 <Scale className="w-5 h-5 text-emerald-400" />
                 <h3 className="font-bold text-sm text-slate-100">Receive Finished Ornament from {selectedKarigar.name}</h3>
               </div>
-              <button onClick={() => setShowReceiveModal(false)} className="text-slate-400 hover:text-white">
+              <button
+                type="button"
+                aria-label="Close modal"
+                onClick={() => setShowReceiveModal(false)}
+                className="text-slate-400 hover:text-white"
+              >
                 <X className="w-5 h-5" />
               </button>
             </div>

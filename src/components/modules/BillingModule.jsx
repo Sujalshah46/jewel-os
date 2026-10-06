@@ -236,13 +236,14 @@ export default function BillingModule() {
   };
 
   // Add Item via Barcode Scan
-  const handleBarcodeScan = (e) => {
-    e.preventDefault();
-    if (!barcodeInput.trim()) return;
+  const handleBarcodeScan = (e, explicitCode) => {
+    if (e && e.preventDefault) e.preventDefault();
+    const query = (explicitCode !== undefined && explicitCode !== null ? explicitCode : barcodeInput).trim();
+    if (!query) return;
     const found = stock.find(s => 
       (!s.firmCode || s.firmCode === activeFirm.code) &&
-      (s.barcode?.trim() === barcodeInput.trim() || 
-       s.itemCode?.toLowerCase() === barcodeInput.trim().toLowerCase())
+      (s.barcode?.trim() === query || 
+       s.itemCode?.toLowerCase() === query.toLowerCase())
     );
     if (found) {
       // Prevent double selling (INV-01)
@@ -291,7 +292,7 @@ export default function BillingModule() {
       setCartItems(prev => [...prev, newItem]);
       setBarcodeInput('');
     } else {
-      alert(`Product with barcode/code "${barcodeInput}" not found in stock. Try 1201, 1150, or check Inventory.`);
+      alert(`Product with barcode/code "${query}" not found in stock. Try 1201, 1150, or check Inventory.`);
     }
   };
 
@@ -453,6 +454,7 @@ export default function BillingModule() {
         <div className="flex flex-wrap items-center gap-2">
           {!isDemoDraft && cartItems.length === 0 ? (
             <button
+              type="button"
               onClick={handleLoadDemoDraft}
               className="flex items-center space-x-1.5 bg-slate-800 hover:bg-slate-700 text-amber-300 border border-amber-500/40 px-3.5 py-2 rounded-xl text-xs font-bold transition-colors"
             >
@@ -461,6 +463,7 @@ export default function BillingModule() {
             </button>
           ) : (
             <button
+              type="button"
               onClick={handleClearTransaction}
               className="flex items-center space-x-1.5 bg-slate-800 hover:bg-rose-950/60 text-slate-300 hover:text-rose-300 border border-slate-700 px-3 py-2 rounded-xl text-xs font-bold transition-colors"
             >
@@ -470,6 +473,7 @@ export default function BillingModule() {
           )}
 
           <button
+            type="button"
             onClick={() => {
               setPreviewEstimate({
                 shopName: activeFirm.name,
@@ -487,6 +491,7 @@ export default function BillingModule() {
           </button>
 
           <button
+            type="button"
             onClick={() => handleSubmitInvoice(true)}
             disabled={cartItems.length === 0 || isSubmitting}
             className="flex items-center space-x-1.5 bg-gradient-to-r from-amber-500 to-amber-600 hover:from-amber-400 text-slate-950 font-bold px-4 py-2 rounded-xl text-xs md:text-sm shadow-lg shadow-amber-500/20 transition-all disabled:opacity-50"
@@ -568,8 +573,7 @@ export default function BillingModule() {
                 type="button"
                 onClick={() => {
                   setBarcodeInput(s.barcode);
-                  const fakeEvent = { preventDefault: () => {} };
-                  setTimeout(() => handleBarcodeScan(fakeEvent), 50);
+                  handleBarcodeScan(null, s.barcode);
                 }}
                 className="text-amber-400 hover:underline font-mono"
               >
@@ -1057,6 +1061,7 @@ export default function BillingModule() {
 
           <div className="space-y-2 pt-3 border-t border-slate-800">
             <button
+              type="button"
               onClick={() => handleSubmitInvoice(true)}
               disabled={cartItems.length === 0 || isSubmitting}
               className="w-full py-3 bg-gradient-to-r from-amber-500 to-amber-600 hover:from-amber-400 text-slate-950 font-extrabold rounded-xl text-xs md:text-sm shadow-lg shadow-amber-500/20 flex items-center justify-center space-x-2 transition-all disabled:opacity-50"
@@ -1066,6 +1071,7 @@ export default function BillingModule() {
             </button>
 
             <button
+              type="button"
               onClick={() => handleSubmitInvoice(false)}
               disabled={cartItems.length === 0 || isSubmitting}
               className="w-full py-2.5 bg-slate-800 hover:bg-slate-700 text-slate-200 font-bold rounded-xl text-xs border border-slate-700 transition-colors disabled:opacity-50"
@@ -1085,7 +1091,12 @@ export default function BillingModule() {
                 <UserPlus className="w-5 h-5 text-amber-400" />
                 <h3 className="font-bold text-sm text-slate-100">Add New Customer Party</h3>
               </div>
-              <button onClick={() => setShowAddCustomerModal(false)} className="text-slate-400 hover:text-white">
+              <button
+                type="button"
+                aria-label="Close modal"
+                onClick={() => setShowAddCustomerModal(false)}
+                className="text-slate-400 hover:text-white"
+              >
                 <X className="w-5 h-5" />
               </button>
             </div>

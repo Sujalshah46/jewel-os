@@ -25,6 +25,8 @@ export default function EstimateModal() {
             </h3>
           </div>
           <button
+            type="button"
+            aria-label="Close modal"
             onClick={() => setPreviewEstimate(null)}
             className="text-slate-400 hover:text-white"
           >
@@ -76,14 +78,16 @@ export default function EstimateModal() {
 
         <div className="flex items-center justify-end space-x-3 pt-2">
           <button
+            type="button"
             onClick={() => setPreviewEstimate(null)}
-            className="px-4 py-2 bg-slate-800 hover:bg-slate-700 text-slate-300 rounded-xl text-xs font-bold"
+            className="px-4 py-2 bg-slate-800 hover:bg-slate-700 text-slate-300 rounded-xl text-xs font-bold transition-colors"
           >
             Close
           </button>
           <button
+            type="button"
             onClick={() => window.print()}
-            className="px-4 py-2 bg-amber-500 hover:bg-amber-400 text-slate-950 font-bold rounded-xl text-xs flex items-center space-x-1"
+            className="px-4 py-2 bg-amber-500 hover:bg-amber-400 text-slate-950 font-bold rounded-xl text-xs flex items-center space-x-1 transition-colors"
           >
             <Printer className="w-4 h-4" />
             <span>Print Quotation</span>
