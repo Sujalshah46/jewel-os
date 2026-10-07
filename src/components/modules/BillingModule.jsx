@@ -256,6 +256,20 @@ export default function BillingModule() {
         alert(`Item "${found.itemCode}" is already in your billing cart.`);
         return;
       }
+      // Calculate exact item financials using domain calculation engine
+      const calc = calculateJewelleryItem({
+        grossWeight: found.grossWeight,
+        lessWeight: found.lessWeight,
+        purityPercent: found.purityPercent,
+        ratePerGram: found.ratePerGram,
+        makingChargeType: found.makingChargeType || 'per_gram',
+        makingChargeValue: found.makingChargeValue || 0,
+        stoneValue: found.stoneValue || 0,
+        hallmarkCharge: found.hallmarkCharge || 45,
+        otherCharges: found.otherCharges || 0,
+        itemDiscount: 0
+      });
+
       const newItem = {
         id: 'cart-' + Date.now(),
         itemId: found.id,
@@ -266,27 +280,27 @@ export default function BillingModule() {
         qty: 1,
         grossWeight: found.grossWeight,
         lessWeight: found.lessWeight,
-        netWeight: found.netWeight,
+        netWeight: calc.netWeight,
         purityKarat: found.purityKarat,
         purityPercent: found.purityPercent,
         wastagePercent: found.wastagePercent || 5.0,
         finePurityPercent: found.purityPercent,
         customerWastagePercent: found.wastagePercent || 5.0,
-        fineWeight: found.fineWeight,
+        fineWeight: calc.fineWeight,
         ratePerGram: found.ratePerGram,
         ratePer10Gm: found.ratePerGram * 10,
         makingChargeType: found.makingChargeType,
         makingChargeValue: found.makingChargeValue,
         makingDiscountPercent: 0,
-        totalMakingCharges: (found.grossWeight * found.makingChargeValue),
+        totalMakingCharges: calc.totalMakingCharges,
         stoneValue: found.stoneValue || 0,
         hallmarkCharge: found.hallmarkCharge || 45,
         otherCharges: found.otherCharges || 0,
         itemDiscount: 0,
-        taxableAmount: found.totalPrice * 0.97,
-        cgst: (found.totalPrice * 0.015),
-        sgst: (found.totalPrice * 0.015),
-        finalValue: found.totalPrice,
+        taxableAmount: calc.taxableAmount,
+        cgst: calc.cgst,
+        sgst: calc.sgst,
+        finalValue: calc.finalValue || found.totalPrice,
         status: 'Ready'
       };
       setCartItems(prev => [...prev, newItem]);
@@ -359,6 +373,8 @@ export default function BillingModule() {
 
   // Submit Invoice Handler
   const handleSubmitInvoice = (shouldPrint = false) => {
+    if (isSubmitting) return;
+
     if (cartItems.length === 0) {
       alert('Cart is empty. Please add items to bill.');
       return;

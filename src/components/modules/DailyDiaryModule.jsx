@@ -1,5 +1,5 @@
 import React, { useState } from 'react';
-import { useJewellery } from '../../context/JewelleryContext';
+import { useJewellery, getTodayBusinessDate } from '../../context/JewelleryContext';
 import {
   BookOpen,
   Calendar,
@@ -18,17 +18,46 @@ import {
 import { formatCurrency } from '../../utils/numberToWords';
 
 export default function DailyDiaryModule() {
-  const { dailyDiary, activeFirm, invoices, expenses } = useJewellery();
+  const { dailyDiary, activeFirm, invoices, expenses, udhaarRepayments } = useJewellery();
   
-  // Default business date with clear audit indication
-  const [selectedDate, setSelectedDate] = useState('2024-08-12');
-  const [isHistoricalArchive, setIsHistoricalArchive] = useState(true);
+  // Dynamic business date selector (defaults to current date, supports historical archive)
+  const [selectedDate, setSelectedDate] = useState(() => getTodayBusinessDate());
+  const isHistoricalArchive = selectedDate === '2024-08-12';
 
-  const sellList = dailyDiary.todaySellDetails || [];
+  // Invoices for selected business date & active firm
+  const dateInvoices = (invoices || []).filter(inv =>
+    inv.date === selectedDate &&
+    (!inv.firmId || inv.firmId === activeFirm.id || !inv.firmCode || inv.firmCode === activeFirm.code)
+  );
+
+  const sellList = dateInvoices.length > 0
+    ? dateInvoices.map(inv => ({
+        invNo: inv.invoiceNo,
+        date: inv.date,
+        customer: inv.customerName,
+        city: activeFirm.city,
+        cash: Number(inv.payments?.cash) || 0,
+        bank: Number(inv.payments?.cheque) || 0,
+        card: Number(inv.payments?.card) || 0,
+        online: Number(inv.payments?.online) || 0,
+        discount: Number(inv.discount) || 0,
+        total: Number(inv.totalInvoiceAmount) || 0
+      }))
+    : (isHistoricalArchive ? (dailyDiary.todaySellDetails || []) : []);
   
-  // Physical counter cash movements vs non-cash (Audit P1 Fix)
+  // Physical counter cash movements vs non-cash (Derived from transactions)
   const physicalCashFromSales = sellList.reduce((acc, curr) => acc + (Number(curr.cash) || 0), 0);
-  const physicalCashFromUdhaar = Number(dailyDiary.udhaarMoneyDepositedTotal) || 0;
+
+  // Udhaar cash receipts on this business date
+  const dateRepayments = (udhaarRepayments || []).filter(r =>
+    r.date === selectedDate &&
+    (!r.firmId || r.firmId === activeFirm.id || !r.firmCode || r.firmCode === activeFirm.code)
+  );
+  const physicalCashFromUdhaar = dateRepayments
+    .filter(r => r.paymentMode === 'Cash')
+    .reduce((acc, r) => acc + (Number(r.amount) || 0), 0) +
+    (isHistoricalArchive ? (Number(dailyDiary.udhaarMoneyDepositedTotal) || 0) : 0);
+
   const totalPhysicalCashInward = physicalCashFromSales + physicalCashFromUdhaar;
 
   const totalBankInward = sellList.reduce((acc, curr) => acc + (Number(curr.bank) || 0), 0);
@@ -36,11 +65,18 @@ export default function DailyDiaryModule() {
   const totalOnlineInward = sellList.reduce((acc, curr) => acc + (Number(curr.online) || 0), 0);
   const totalElectronicInward = totalBankInward + totalCardInward + totalOnlineInward;
 
-  const totalCashExpenses = (Number(dailyDiary.expensesTotal) || 13300);
+  // Expenses on this business date
+  const dateExpenses = (expenses || []).filter(e =>
+    e.date === selectedDate &&
+    (!e.firmId || e.firmId === activeFirm.id || !e.firmCode || e.firmCode === activeFirm.code)
+  );
+  const totalCashExpenses = dateExpenses.reduce((acc, e) => acc + (Number(e.amount) || 0), 0) +
+    (isHistoricalArchive ? (Number(dailyDiary.expensesTotal) || 13300) : 0);
 
   // Authoritative physical cash formula: Opening + Physical Inward - Cash Outward = Closing Drawer Cash
-  const openingBalance = dailyDiary.openingBalance || 10000;
+  const openingBalance = Number(dailyDiary.openingBalance) || 10000;
   const closingDrawerCash = openingBalance + totalPhysicalCashInward - totalCashExpenses;
+  const todaySellTotal = sellList.reduce((acc, r) => acc + (Number(r.total) || 0), 0);
 
   return (
     <div className="space-y-6">
@@ -170,7 +206,7 @@ export default function DailyDiaryModule() {
             </h3>
           </div>
           <span className="text-xs font-mono font-bold text-emerald-400">
-            TOTAL SALES: {formatCurrency(dailyDiary.todaySellTotal)}
+            TOTAL SALES: {formatCurrency(todaySellTotal)}
           </span>
         </div>
 
@@ -223,7 +259,7 @@ export default function DailyDiaryModule() {
                 <td className="py-3 px-3 text-right text-blue-300">{formatCurrency(totalBankInward)}</td>
                 <td className="py-3 px-3 text-right text-amber-300">{formatCurrency(totalCardInward)}</td>
                 <td className="py-3 px-3 text-right text-purple-300">{formatCurrency(totalOnlineInward)}</td>
-                <td className="py-3 px-3 text-right text-amber-300">{formatCurrency(dailyDiary.todaySellTotal)}</td>
+                <td className="py-3 px-3 text-right text-amber-300">{formatCurrency(todaySellTotal)}</td>
               </tr>
             </tfoot>
           </table>

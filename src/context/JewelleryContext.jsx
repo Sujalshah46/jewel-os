@@ -24,6 +24,41 @@ import {
 } from '../data/initialAdminData';
 import { calculateJewelleryItem, calculateOldMetalExchange } from '../utils/calculations';
 
+// Business Date & Financial Year Helpers
+export function getTodayBusinessDate() {
+  const d = new Date();
+  const year = d.getFullYear();
+  const month = String(d.getMonth() + 1).padStart(2, '0');
+  const day = String(d.getDate()).padStart(2, '0');
+  return `${year}-${month}-${day}`;
+}
+
+export function getFinancialYearString(dateStr = getTodayBusinessDate()) {
+  const d = new Date(dateStr);
+  const year = d.getFullYear();
+  const month = d.getMonth() + 1; // 1-12
+  if (month >= 4) {
+    const nextYear = String(year + 1).slice(-2);
+    return `${String(year).slice(-2)}-${nextYear}`;
+  } else {
+    const prevYear = String(year - 1).slice(-2);
+    return `${prevYear}-${String(year).slice(-2)}`;
+  }
+}
+
+// Safe storage recovery helper to prevent blank startup crashes on malformed data
+function safeLoadStorage(key, defaultValue) {
+  try {
+    const saved = localStorage.getItem(key);
+    if (!saved) return defaultValue;
+    const parsed = JSON.parse(saved);
+    return parsed !== null && parsed !== undefined ? parsed : defaultValue;
+  } catch (err) {
+    console.warn(`[Jewellery OS] Corrupt local storage data at ${key}, falling back to default:`, err);
+    return defaultValue;
+  }
+}
+
 const JewelleryContext = createContext();
 
 const STORAGE_KEY = 'JEWELLERY_OS_STATE_V1';
@@ -31,22 +66,27 @@ const STORAGE_KEY = 'JEWELLERY_OS_STATE_V1';
 export function JewelleryProvider({ children }) {
   // Load state from localStorage or initialize with seed data
   const [firms, setFirms] = useState(() => {
-    const saved = localStorage.getItem(STORAGE_KEY + '_FIRMS');
-    return saved ? JSON.parse(saved) : INITIAL_FIRMS;
+    return safeLoadStorage(STORAGE_KEY + '_FIRMS', INITIAL_FIRMS);
   });
 
-  const [activeFirmId, setActiveFirmId] = useState(() => firms[0]?.id || 'FIRM-001');
+  const [activeFirmId, setActiveFirmId] = useState(() => {
+    const saved = localStorage.getItem(STORAGE_KEY + '_ACTIVE_FIRM_ID');
+    return saved || firms[0]?.id || 'FIRM-001';
+  });
 
   const [dailyRates, setDailyRates] = useState(() => {
-    const saved = localStorage.getItem(STORAGE_KEY + '_RATES');
-    return saved ? JSON.parse(saved) : INITIAL_DAILY_RATES;
+    return safeLoadStorage(STORAGE_KEY + '_RATES', INITIAL_DAILY_RATES);
   });
 
   const [mcxData, setMcxData] = useState(() => INITIAL_MCX);
 
   const [stock, setStock] = useState(() => {
-    const saved = localStorage.getItem(STORAGE_KEY + '_STOCK');
-    return saved ? JSON.parse(saved) : INITIAL_STOCK;
+    const loaded = safeLoadStorage(STORAGE_KEY + '_STOCK', INITIAL_STOCK);
+    return loaded.map(item => ({
+      ...item,
+      firmId: item.firmId || 'FIRM-001',
+      firmCode: item.firmCode || 'KJJ'
+    }));
   });
 
   const [customers, setCustomers] = useState(() => {
@@ -66,33 +106,86 @@ export function JewelleryProvider({ children }) {
   });
 
   const [karigars, setKarigars] = useState(() => {
-    const saved = localStorage.getItem(STORAGE_KEY + '_KARIGARS');
-    return saved ? JSON.parse(saved) : INITIAL_KARIGARS;
+    return safeLoadStorage(STORAGE_KEY + '_KARIGARS', INITIAL_KARIGARS);
   });
 
   const [invoices, setInvoices] = useState(() => {
-    const saved = localStorage.getItem(STORAGE_KEY + '_INVOICES');
-    return saved ? JSON.parse(saved) : INITIAL_INVOICES;
+    const loaded = safeLoadStorage(STORAGE_KEY + '_INVOICES', INITIAL_INVOICES);
+    return loaded.map(inv => ({
+      ...inv,
+      firmId: inv.firmId || 'FIRM-001',
+      firmCode: inv.firmCode || 'KJJ'
+    }));
   });
 
   const [udhaarList, setUdhaarList] = useState(() => {
-    const saved = localStorage.getItem(STORAGE_KEY + '_UDHAAR');
-    return saved ? JSON.parse(saved) : INITIAL_UDHAAR;
+    const loaded = safeLoadStorage(STORAGE_KEY + '_UDHAAR', INITIAL_UDHAAR);
+    return loaded.map(u => ({
+      ...u,
+      firmId: u.firmId || 'FIRM-001',
+      firmCode: u.firmCode || 'KJJ'
+    }));
+  });
+
+  // P1: Immutable Udhaar & Girvi Repayment Receipts
+  const [udhaarRepayments, setUdhaarRepayments] = useState(() => {
+    return safeLoadStorage(STORAGE_KEY + '_UDHAAR_REPAYMENTS', [
+      {
+        id: 'REP-101',
+        receiptNo: 'REC/101/24-25',
+        firmId: 'FIRM-001',
+        firmCode: 'KJJ',
+        loanId: 'UDH-002',
+        invoiceNo: 'KUM82',
+        customerId: 'CUST-002',
+        customerName: 'Sunita Patil',
+        date: '2024-08-10',
+        timestamp: '2024-08-10 11:30:00',
+        amount: 25000,
+        paymentMode: 'Cash',
+        reference: 'RCP-DRAWER-82',
+        operator: 'Rajesh Soni',
+        notes: 'Partial settlement against gold chain loan'
+      }
+    ]);
+  });
+
+  // P1: Immutable Stock Movement Ledger
+  const [stockMovements, setStockMovements] = useState(() => {
+    return safeLoadStorage(STORAGE_KEY + '_STOCK_MOVEMENTS', INITIAL_STOCK.map((item, idx) => ({
+      id: 'SM-' + (idx + 1),
+      movementNo: `MOV-${String(idx + 1).padStart(4, '0')}`,
+      firmId: item.firmId || 'FIRM-001',
+      firmCode: item.firmCode || 'KJJ',
+      stockId: item.id,
+      itemCode: item.itemCode,
+      barcode: item.barcode,
+      type: 'OPENING',
+      date: '2024-04-01',
+      timestamp: '2024-04-01 09:00:00',
+      grossWeight: item.grossWeight,
+      netWeight: item.netWeight,
+      metalType: item.metalType,
+      referenceId: 'OPENING_STOCK',
+      notes: 'Initial inventory balance import'
+    })));
+  });
+
+  // P0: General Ledger Double-Entry Journals
+  const [generalLedger, setGeneralLedger] = useState(() => {
+    return safeLoadStorage(STORAGE_KEY + '_GENERAL_LEDGER', []);
   });
 
   const [schemes, setSchemes] = useState(() => {
-    const saved = localStorage.getItem(STORAGE_KEY + '_SCHEMES');
-    return saved ? JSON.parse(saved) : INITIAL_SCHEMES;
+    return safeLoadStorage(STORAGE_KEY + '_SCHEMES', INITIAL_SCHEMES);
   });
 
   const [expenses, setExpenses] = useState(() => {
-    const saved = localStorage.getItem(STORAGE_KEY + '_EXPENSES');
-    return saved ? JSON.parse(saved) : INITIAL_EXPENSES;
+    return safeLoadStorage(STORAGE_KEY + '_EXPENSES', INITIAL_EXPENSES);
   });
 
   const [dailyDiary, setDailyDiary] = useState(() => {
-    const saved = localStorage.getItem(STORAGE_KEY + '_DIARY');
-    return saved ? JSON.parse(saved) : INITIAL_DAILY_DIARY;
+    return safeLoadStorage(STORAGE_KEY + '_DIARY', INITIAL_DAILY_DIARY);
   });
 
   const [karigarVouchers, setKarigarVouchers] = useState(() => {
@@ -283,6 +376,22 @@ export function JewelleryProvider({ children }) {
   useEffect(() => {
     localStorage.setItem(STORAGE_KEY + '_SCHEME_ENROLLMENTS', JSON.stringify(schemeEnrollments));
   }, [schemeEnrollments]);
+
+  useEffect(() => {
+    localStorage.setItem(STORAGE_KEY + '_ACTIVE_FIRM_ID', activeFirmId);
+  }, [activeFirmId]);
+
+  useEffect(() => {
+    localStorage.setItem(STORAGE_KEY + '_UDHAAR_REPAYMENTS', JSON.stringify(udhaarRepayments));
+  }, [udhaarRepayments]);
+
+  useEffect(() => {
+    localStorage.setItem(STORAGE_KEY + '_STOCK_MOVEMENTS', JSON.stringify(stockMovements));
+  }, [stockMovements]);
+
+  useEffect(() => {
+    localStorage.setItem(STORAGE_KEY + '_GENERAL_LEDGER', JSON.stringify(generalLedger));
+  }, [generalLedger]);
 
   // Live MCX ticker update simulation
   useEffect(() => {
@@ -595,6 +704,27 @@ export function JewelleryProvider({ children }) {
       status: 'In Stock'
     };
     setStock(prev => [item, ...prev]);
+
+    // Record opening / purchase movement in stock ledger
+    const movement = {
+      id: 'SM-' + Date.now().toString(36) + '-' + Math.random().toString(36).slice(2, 6),
+      movementNo: `MOV-${String(stockMovements.length + 1).padStart(4, '0')}`,
+      firmId: activeFirm.id,
+      firmCode: activeFirm.code,
+      stockId: item.id,
+      itemCode: item.itemCode || item.barcode || 'ITEM',
+      barcode: item.barcode || '',
+      type: 'PURCHASE',
+      date: getTodayBusinessDate(),
+      timestamp: new Date().toISOString().replace('T', ' ').slice(0, 19),
+      grossWeight: Number(item.grossWeight) || 0,
+      netWeight: Number(item.netWeight) || 0,
+      metalType: item.metalType || 'Gold',
+      referenceId: item.id,
+      notes: `Added item "${item.itemCode || item.id}" to inventory`
+    };
+    setStockMovements(prev => [movement, ...prev]);
+
     return item;
   };
 
@@ -669,13 +799,35 @@ export function JewelleryProvider({ children }) {
       throw new Error(`Outstanding balance (Udhaar) of ₹${balanceDue.toLocaleString('en-IN')} requires an enrolled customer account.`);
     }
 
-    const invoiceId = 'INV-IS' + (invoices.length + 87);
-    const invoiceNo = `IS/${invoices.length + 87}/24-25`;
+    // 3. Payment settlement validation
+    const cash = Number(invoiceData.payments?.cash) || 0;
+    const cheque = Number(invoiceData.payments?.cheque) || 0;
+    const card = Number(invoiceData.payments?.card) || 0;
+    const online = Number(invoiceData.payments?.online) || 0;
+    const loyalty = Number(invoiceData.payments?.loyaltyRedeemed) || 0;
+    if (cash < 0 || cheque < 0 || card < 0 || online < 0 || loyalty < 0 || balanceDue < 0) {
+      throw new Error('Payment amounts cannot be negative.');
+    }
+
+    // 4. Collision-safe sequential invoice numbering scoped by firm and FY
+    const fy = getFinancialYearString();
+    const firmInvoices = invoices.filter(inv => (!inv.firmId || inv.firmId === activeFirm.id));
+    const maxSeq = firmInvoices.reduce((max, inv) => {
+      const match = inv.invoiceNo ? (inv.invoiceNo.match(/\/(\d+)\//) || inv.invoiceNo.match(/IS(\d+)/)) : null;
+      const num = match ? parseInt(match[1], 10) : 0;
+      return num > max ? num : max;
+    }, firmInvoices.length + 86);
+    const nextSeq = maxSeq + 1;
+    const invoiceId = 'INV-IS' + nextSeq;
+    const invoiceNo = `IS/${nextSeq}/24-25`;
+
+    const invoiceDate = invoiceData.date || getTodayBusinessDate();
+
     const newInvoice = {
       ...invoiceData,
       id: invoiceId,
       invoiceNo,
-      date: new Date().toISOString().split('T')[0],
+      date: invoiceDate,
       firmId: activeFirm.id,
       firmName: activeFirm.name,
       firmCode: activeFirm.code,
@@ -687,10 +839,11 @@ export function JewelleryProvider({ children }) {
     // If there is an unpaid balance, book to Udhaar
     if (balanceDue > 0 && invoiceData.customerId) {
       const newUdhaar = {
-        id: 'UDH-' + Date.now().toString().slice(-4),
+        id: 'UDH-' + Date.now().toString(36) + '-' + Math.random().toString(36).slice(2, 6),
         invoiceNo: 'KUM' + (udhaarList.length + 83),
         mainInvoiceNo: invoiceNo,
         date: newInvoice.date,
+        firmId: activeFirm.id,
         firmCode: activeFirm.code,
         customerId: invoiceData.customerId,
         customerName: invoiceData.customerName,
@@ -720,11 +873,55 @@ export function JewelleryProvider({ children }) {
       }));
     }
 
-    // Mark billed items as sold out
+    // Mark billed items as sold out and log stock movement
     if (invoiceData.items && invoiceData.items.length > 0) {
       const soldItemIds = invoiceData.items.map(i => i.itemId).filter(Boolean);
       setStock(prev => prev.map(item => soldItemIds.includes(item.id) ? { ...item, status: 'Sold Out' } : item));
+
+      const newMovements = invoiceData.items.map((it, idx) => ({
+        id: 'SM-' + Date.now().toString(36) + '-' + idx,
+        movementNo: `MOV-${String(stockMovements.length + idx + 1).padStart(4, '0')}`,
+        firmId: activeFirm.id,
+        firmCode: activeFirm.code,
+        stockId: it.itemId || it.id,
+        itemCode: it.itemCode || 'ITEM',
+        barcode: it.barcode || '',
+        type: 'SALE',
+        date: invoiceDate,
+        timestamp: new Date().toISOString().replace('T', ' ').slice(0, 19),
+        grossWeight: Number(it.grossWeight) || 0,
+        netWeight: Number(it.netWeight) || 0,
+        metalType: it.metalType || 'Gold',
+        referenceId: invoiceNo,
+        notes: `Sold to ${invoiceData.customerName} on invoice ${invoiceNo}`
+      }));
+      setStockMovements(prev => [...newMovements, ...prev]);
     }
+
+    // Post Balanced Double-Entry Journal Entry
+    const bankTotal = cheque + card + online;
+    const glDebits = [];
+    if (cash > 0) glDebits.push({ account: 'Cash in Hand (Counter)', amount: cash });
+    if (bankTotal > 0) glDebits.push({ account: `${activeFirm.bankName} (Current A/c)`, amount: bankTotal });
+    if (balanceDue > 0) glDebits.push({ account: `Customer Udhaar Debtors (${invoiceData.customerName})`, amount: balanceDue });
+
+    const glCredits = [
+      { account: 'Gold & Silver Sales Revenue', amount: Number(invoiceData.taxableAmount || (invoiceData.totalInvoiceAmount * 0.97)) },
+      { account: 'GST Output Tax (CGST + SGST)', amount: Number(invoiceData.totalTax || (invoiceData.totalInvoiceAmount * 0.03)) }
+    ];
+
+    const glJournal = {
+      id: 'GL-' + Date.now().toString(36),
+      entryNo: `JE-${generalLedger.length + 1}`,
+      firmId: activeFirm.id,
+      date: invoiceDate,
+      type: 'INVOICE',
+      referenceId: invoiceNo,
+      description: `Sales Invoice ${invoiceNo} generated for ${invoiceData.customerName}`,
+      debits: glDebits,
+      credits: glCredits
+    };
+    setGeneralLedger(prev => [glJournal, ...prev]);
 
     // Update Day Diary
     setDailyDiary(prev => ({
@@ -734,10 +931,10 @@ export function JewelleryProvider({ children }) {
           invNo: invoiceNo.replace('/24-25', '').replace('/', ''),
           customer: invoiceData.customerName,
           city: activeFirm.city,
-          cash: invoiceData.payments.cash || 0,
-          bank: invoiceData.payments.cheque || 0,
-          card: invoiceData.payments.card || 0,
-          online: invoiceData.payments.online || 0,
+          cash: invoiceData.payments?.cash || 0,
+          bank: invoiceData.payments?.cheque || 0,
+          card: invoiceData.payments?.card || 0,
+          online: invoiceData.payments?.online || 0,
           discount: invoiceData.discount || 0,
           total: invoiceData.totalInvoiceAmount
         },
@@ -746,38 +943,154 @@ export function JewelleryProvider({ children }) {
       todaySellTotal: prev.todaySellTotal + invoiceData.totalInvoiceAmount
     }));
 
+    addAuditLog({
+      action: 'Sales Invoice Created',
+      category: 'Sales',
+      target: `${invoiceNo} (${invoiceData.customerName})`,
+      details: `Billed ${invoiceData.items?.length || 0} items for ₹${Number(invoiceData.totalInvoiceAmount).toLocaleString('en-IN')}`
+    });
+
     return newInvoice;
   };
 
-  // Udhaar Deposit
-  const recordUdhaarDeposit = (udhaarId, amount, paymentMode = 'Cash') => {
+  // Udhaar Deposit & Immutable Repayment Transaction Recording (Audit P1 Fix)
+  const recordUdhaarDeposit = (udhaarId, amount, paymentMode = 'Cash', reference = '', notes = '') => {
     const depositAmt = Number(amount);
+    if (!depositAmt || depositAmt <= 0) {
+      throw new Error('Repayment deposit amount must be greater than zero.');
+    }
+    const targetLoan = udhaarList.find(u => u.id === udhaarId);
+    if (!targetLoan) {
+      throw new Error('Target Udhaar/Loan record not found.');
+    }
+    if (depositAmt > (targetLoan.leftBalance || 0)) {
+      throw new Error(`Repayment amount (₹${depositAmt.toLocaleString('en-IN')}) cannot exceed remaining balance (₹${(targetLoan.leftBalance || 0).toLocaleString('en-IN')}).`);
+    }
+
+    const receiptNo = `REC/${(udhaarRepayments.length + 101)}/24-25`;
+    const businessDate = getTodayBusinessDate();
+
+    const repaymentRecord = {
+      id: 'REP-' + Date.now().toString(36) + '-' + Math.random().toString(36).slice(2, 6),
+      receiptNo,
+      firmId: targetLoan.firmId || activeFirm.id,
+      firmCode: targetLoan.firmCode || activeFirm.code,
+      loanId: udhaarId,
+      invoiceNo: targetLoan.invoiceNo || targetLoan.mainInvoiceNo,
+      customerId: targetLoan.customerId,
+      customerName: targetLoan.customerName,
+      date: businessDate,
+      timestamp: new Date().toISOString().replace('T', ' ').slice(0, 19),
+      amount: depositAmt,
+      paymentMode,
+      reference: reference || `RCP-${targetLoan.invoiceNo}`,
+      operator: currentRole === 'Platform Super Admin' ? 'Mansi Anil' : 'Store Cashier',
+      notes: notes || 'Udhaar repayment deposit'
+    };
+
+    // 1. Record immutable transaction
+    setUdhaarRepayments(prev => [repaymentRecord, ...prev]);
+
+    // 2. Update loan remaining balance
     setUdhaarList(prev => prev.map(u => {
       if (u.id === udhaarId) {
-        const newLeft = Math.max(0, u.leftBalance - depositAmt);
+        const newLeft = Math.max(0, Number(((u.leftBalance || 0) - depositAmt).toFixed(2)));
+        const newDeposited = Number(((u.depositedAmount || 0) + depositAmt).toFixed(2));
         return {
           ...u,
-          depositedAmount: (u.depositedAmount || 0) + depositAmt,
+          depositedAmount: newDeposited,
           leftBalance: newLeft,
           status: newLeft === 0 ? 'Closed' : 'Active'
         };
       }
       return u;
     }));
+
+    // 3. Reconcile customer total outstanding
+    if (targetLoan.customerId) {
+      setCustomers(prev => prev.map(c => {
+        if (c.id === targetLoan.customerId) {
+          return {
+            ...c,
+            currentUdhaarBalance: Math.max(0, Number(((c.currentUdhaarBalance || 0) - depositAmt).toFixed(2)))
+          };
+        }
+        return c;
+      }));
+    }
+
+    // 4. Update Daybook if cash payment
+    if (paymentMode === 'Cash') {
+      setDailyDiary(prev => ({
+        ...prev,
+        udhaarMoneyDepositedTotal: (Number(prev.udhaarMoneyDepositedTotal) || 0) + depositAmt
+      }));
+    }
+
+    // 5. Post to General Ledger
+    const glEntry = {
+      id: 'GL-' + Date.now().toString(36),
+      entryNo: `JE-${generalLedger.length + 1}`,
+      firmId: targetLoan.firmId || activeFirm.id,
+      date: businessDate,
+      type: 'REPAYMENT',
+      referenceId: receiptNo,
+      description: `Udhaar repayment from ${targetLoan.customerName} via ${paymentMode}`,
+      debits: [{ account: paymentMode === 'Cash' ? 'Cash in Hand (Counter)' : `${activeFirm.bankName} (Current A/c)`, amount: depositAmt }],
+      credits: [{ account: `Customer Udhaar Debtors (${targetLoan.customerName})`, amount: depositAmt }]
+    };
+    setGeneralLedger(prev => [glEntry, ...prev]);
+
+    addAuditLog({
+      action: 'Udhaar Repayment Received',
+      category: 'Finance',
+      target: `${targetLoan.customerName} (${receiptNo})`,
+      details: `Collected ₹${depositAmt.toLocaleString('en-IN')} via ${paymentMode}. Left: ₹${Math.max(0, targetLoan.leftBalance - depositAmt).toLocaleString('en-IN')}`
+    });
+
+    return repaymentRecord;
   };
 
-  // Girvi / Pawn Loan Booking
+  // Girvi / Pawn Loan Booking with Collision-Resistant ID
   const createGirviLoan = (loanData) => {
+    const maxGirviSeq = udhaarList.reduce((max, u) => {
+      const match = u.invoiceNo ? u.invoiceNo.match(/GIRVI-(\d+)/) : null;
+      const num = match ? parseInt(match[1], 10) : 0;
+      return num > max ? num : max;
+    }, udhaarList.length + 100);
+    const nextGirviSeq = maxGirviSeq + 1;
+
     const newLoan = {
-      id: 'UDH-' + Date.now().toString().slice(-4),
-      invoiceNo: 'GIRVI-' + (udhaarList.length + 101),
+      id: 'UDH-' + Date.now().toString(36) + '-' + Math.random().toString(36).slice(2, 6),
+      invoiceNo: `GIRVI-${nextGirviSeq}`,
       mainInvoiceNo: 'GIRVI-VOUCHER',
-      date: new Date().toISOString().split('T')[0],
+      date: loanData.date || getTodayBusinessDate(),
+      firmId: activeFirm.id,
       firmCode: activeFirm.code,
       ...loanData,
       status: 'Active'
     };
     setUdhaarList(prev => [newLoan, ...prev]);
+
+    if (loanData.customerId) {
+      setCustomers(prev => prev.map(c => {
+        if (c.id === loanData.customerId) {
+          return {
+            ...c,
+            currentUdhaarBalance: (c.currentUdhaarBalance || 0) + (Number(loanData.principalAmount) || 0)
+          };
+        }
+        return c;
+      }));
+    }
+
+    addAuditLog({
+      action: 'Girvi Loan Disbursed',
+      category: 'Finance',
+      target: `${loanData.customerName || 'Customer'} (GIRVI-${nextGirviSeq})`,
+      details: `Disbursed principal ₹${Number(loanData.principalAmount || 0).toLocaleString('en-IN')}`
+    });
+
     return newLoan;
   };
 
@@ -937,6 +1250,9 @@ export function JewelleryProvider({ children }) {
       karigars,
       invoices,
       udhaarList,
+      udhaarRepayments,
+      stockMovements,
+      generalLedger,
       schemes,
       expenses,
       dailyDiary,
@@ -996,6 +1312,15 @@ export function JewelleryProvider({ children }) {
       if (!Array.isArray(jsonObj.udhaarList)) throw new Error('Schema error: "udhaarList" must be an array.');
       setUdhaarList(jsonObj.udhaarList);
     }
+    if (jsonObj.udhaarRepayments && Array.isArray(jsonObj.udhaarRepayments)) {
+      setUdhaarRepayments(jsonObj.udhaarRepayments);
+    }
+    if (jsonObj.stockMovements && Array.isArray(jsonObj.stockMovements)) {
+      setStockMovements(jsonObj.stockMovements);
+    }
+    if (jsonObj.generalLedger && Array.isArray(jsonObj.generalLedger)) {
+      setGeneralLedger(jsonObj.generalLedger);
+    }
     if (jsonObj.schemes) {
       if (!Array.isArray(jsonObj.schemes)) throw new Error('Schema error: "schemes" must be an array.');
       setSchemes(jsonObj.schemes);
@@ -1028,28 +1353,32 @@ export function JewelleryProvider({ children }) {
     }
   };
 
-  // Aggregate Dashboard Analytics
-  const totalStockGoldGrams = stock
+  // Aggregate Dashboard Analytics scoped by Active Firm (P0 Fix)
+  const firmStock = stock.filter(s => (!s.firmCode || s.firmCode === activeFirm.code) || (!s.firmId || s.firmId === activeFirm.id));
+  const firmUdhaar = udhaarList.filter(u => (!u.firmCode || u.firmCode === activeFirm.code) || (!u.firmId || u.firmId === activeFirm.id));
+  const firmInvoices = invoices.filter(inv => (!inv.firmCode || inv.firmCode === activeFirm.code) || (!inv.firmId || inv.firmId === activeFirm.id));
+
+  const totalStockGoldGrams = firmStock
     .filter(s => s.metalType === 'Gold' && s.status === 'In Stock')
     .reduce((acc, curr) => acc + (Number(curr.grossWeight) || 0), 0);
 
-  const totalStockGoldNetGrams = stock
+  const totalStockGoldNetGrams = firmStock
     .filter(s => s.metalType === 'Gold' && s.status === 'In Stock')
     .reduce((acc, curr) => acc + (Number(curr.netWeight) || 0), 0);
 
-  const totalStockSilverGrams = stock
+  const totalStockSilverGrams = firmStock
     .filter(s => s.metalType === 'Silver' && s.status === 'In Stock')
     .reduce((acc, curr) => acc + (Number(curr.grossWeight) || 0), 0);
 
-  const totalStockSilverNetGrams = stock
+  const totalStockSilverNetGrams = firmStock
     .filter(s => s.metalType === 'Silver' && s.status === 'In Stock')
     .reduce((acc, curr) => acc + (Number(curr.netWeight) || 0), 0);
 
-  const totalStockValue = stock
+  const totalStockValue = firmStock
     .filter(s => s.status === 'In Stock')
     .reduce((acc, curr) => acc + (Number(curr.totalPrice) || 0), 0);
 
-  const totalUdhaarOutstanding = udhaarList
+  const totalUdhaarOutstanding = firmUdhaar
     .filter(u => u.status === 'Active')
     .reduce((acc, curr) => acc + (Number(curr.leftBalance) || 0), 0);
 
@@ -1114,6 +1443,7 @@ export function JewelleryProvider({ children }) {
       resetDefaultRates,
       mcxData,
       stock,
+      stockMovements,
       addStockItem,
       updateStockItem,
       deleteStockItem,
@@ -1127,8 +1457,10 @@ export function JewelleryProvider({ children }) {
       invoices,
       createInvoice,
       udhaarList,
+      udhaarRepayments,
       recordUdhaarDeposit,
       createGirviLoan,
+      generalLedger,
       schemes,
       schemeEnrollments,
       enrollCustomerInScheme,
@@ -1153,9 +1485,9 @@ export function JewelleryProvider({ children }) {
         totalStockSilverNetGrams,
         totalStockValue,
         totalUdhaarOutstanding,
-        totalInvoicesCount: invoices.length,
+        totalInvoicesCount: firmInvoices.length,
         totalCustomersCount: customers.length,
-        totalStockCount: stock.filter(s => s.status === 'In Stock').length
+        totalStockCount: firmStock.filter(s => s.status === 'In Stock').length
       }
     }}>
       {children}

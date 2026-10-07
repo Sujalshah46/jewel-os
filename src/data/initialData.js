@@ -63,7 +63,7 @@ export const INITIAL_FIRMS = [
     diwaliBannerText: 'FESTIVE WEDDING SEASON BONANZA — FLAT 20% DISCOUNT ON ALL BRIDAL MAKING CHARGES',
     eInvoiceApi: {
       appId: 'SLJ_EINV_4011',
-      apiKey: 'slj_live_sec_78239019231',
+      apiKey: '',
       username: 'shubh_laxmi_admin'
     }
   }

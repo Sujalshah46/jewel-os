@@ -22,6 +22,7 @@ import { calculateGirviInterest } from '../../utils/calculations';
 export default function UdhaarLoanModule() {
   const {
     udhaarList,
+    udhaarRepayments,
     customers,
     activeFirm,
     recordUdhaarDeposit,
@@ -51,7 +52,7 @@ export default function UdhaarLoanModule() {
     dueDate: new Date(Date.now() + 365*24*60*60*1000).toISOString().split('T')[0]
   });
 
-  // Clean, professional tabs (Replaces confusing "ACT. ADV. MONEY" from audit)
+  // Clean, professional tabs
   const tabs = [
     { id: 'ACTIVE UDHAAR', label: 'Active Udhaar & Loans' },
     { id: 'UDHAAR DEPOSIT', label: 'Repayment & Deposit History' },
@@ -59,16 +60,37 @@ export default function UdhaarLoanModule() {
     { id: 'GIRVI LOANS', label: 'Girvi / Pledged Gold Ledger' }
   ];
 
+  // Scoped Udhaar Loans
+  const firmUdhaarList = udhaarList.filter(u => 
+    (!u.firmCode || u.firmCode === activeFirm.code) || 
+    (!u.firmId || u.firmId === activeFirm.id)
+  );
+
+  // Scoped Repayments (P1)
+  const firmRepayments = (udhaarRepayments || []).filter(r =>
+    (!r.firmCode || r.firmCode === activeFirm.code) ||
+    (!r.firmId || r.firmId === activeFirm.id)
+  );
+
   // Filtered List
-  const filteredList = udhaarList.filter(u => {
+  const filteredList = firmUdhaarList.filter(u => {
     const matches = u.customerName?.toLowerCase().includes(searchTerm.toLowerCase()) ||
       u.invoiceNo?.toLowerCase().includes(searchTerm.toLowerCase()) ||
       u.mainInvoiceNo?.toLowerCase().includes(searchTerm.toLowerCase()) ||
       u.mobile?.includes(searchTerm);
     if (activeTab === 'ACTIVE UDHAAR') return matches && u.status === 'Active';
-    if (activeTab === 'UDHAAR DEPOSIT') return matches && u.depositedAmount > 0;
-    if (activeTab === 'GIRVI LOANS') return matches && u.transType.toLowerCase().includes('girvi');
+    if (activeTab === 'UDHAAR DEPOSIT') return matches && (u.depositedAmount > 0 || true);
+    if (activeTab === 'GIRVI LOANS') return matches && u.transType?.toLowerCase().includes('girvi');
     return matches;
+  });
+
+  const filteredRepayments = firmRepayments.filter(r => {
+    return (
+      r.customerName?.toLowerCase().includes(searchTerm.toLowerCase()) ||
+      r.receiptNo?.toLowerCase().includes(searchTerm.toLowerCase()) ||
+      r.invoiceNo?.toLowerCase().includes(searchTerm.toLowerCase()) ||
+      r.reference?.toLowerCase().includes(searchTerm.toLowerCase())
+    );
   });
 
   // Calculate Column Totals
@@ -79,9 +101,19 @@ export default function UdhaarLoanModule() {
   const handleDepositSubmit = (e) => {
     e.preventDefault();
     if (!selectedUdhaarForDeposit || !depositAmount) return;
-    recordUdhaarDeposit(selectedUdhaarForDeposit.id, Number(depositAmount), depositMode);
-    setShowDepositModal(false);
-    setDepositAmount('');
+    try {
+      recordUdhaarDeposit(
+        selectedUdhaarForDeposit.id,
+        Number(depositAmount),
+        depositMode,
+        `DEP-${selectedUdhaarForDeposit.invoiceNo}`,
+        'Counter collection receipt'
+      );
+      setShowDepositModal(false);
+      setDepositAmount('');
+    } catch (err) {
+      alert(err.message);
+    }
   };
 
   const handleGirviSubmit = (e) => {
@@ -208,7 +240,54 @@ export default function UdhaarLoanModule() {
         </div>
       </div>
 
-      {/* Active Loans & Credit Table */}
+      {/* Active Loans or Repayments Table */}
+      {activeTab === 'UDHAAR DEPOSIT' ? (
+        <div className="bg-slate-900 border border-slate-800 rounded-2xl p-4 md:p-5 shadow-xl space-y-3">
+          <div className="flex items-center justify-between border-b border-slate-800 pb-2">
+            <span className="text-xs font-bold text-amber-400 uppercase tracking-wider">
+              Immutable Repayment Receipts Ledger ({filteredRepayments.length} Receipts)
+            </span>
+          </div>
+          <div className="overflow-x-auto rounded-xl border border-slate-800">
+            <table className="w-full text-xs text-left">
+              <thead className="text-[11px] uppercase bg-slate-950 text-slate-400 border-b border-slate-800 sticky top-0 font-mono whitespace-nowrap">
+                <tr>
+                  <th className="py-3 px-3">#</th>
+                  <th className="py-3 px-3">Receipt No</th>
+                  <th className="py-3 px-3">Date</th>
+                  <th className="py-3 px-3">Customer Party</th>
+                  <th className="py-3 px-3">Loan Ref</th>
+                  <th className="py-3 px-3">Payment Mode</th>
+                  <th className="py-3 px-3">Reference</th>
+                  <th className="py-3 px-3 text-right">Repayment Amount (₹)</th>
+                  <th className="py-3 px-3">Operator</th>
+                  <th className="py-3 px-3 text-center">Status</th>
+                </tr>
+              </thead>
+              <tbody className="divide-y divide-slate-800/80 font-mono text-xs">
+                {filteredRepayments.map((rep, idx) => (
+                  <tr key={rep.id} className="hover:bg-slate-800/40 transition-colors">
+                    <td className="py-3 px-3 text-slate-500">{idx + 1}</td>
+                    <td className="py-3 px-3 font-bold text-emerald-300">{rep.receiptNo}</td>
+                    <td className="py-3 px-3 text-slate-400">{rep.date}</td>
+                    <td className="py-3 px-3 font-sans font-bold text-slate-100">{rep.customerName}</td>
+                    <td className="py-3 px-3 text-amber-300">{rep.invoiceNo}</td>
+                    <td className="py-3 px-3 text-slate-300">{rep.paymentMode}</td>
+                    <td className="py-3 px-3 text-slate-400">{rep.reference || '—'}</td>
+                    <td className="py-3 px-3 font-bold text-emerald-400 text-right">{formatCurrency(rep.amount)}</td>
+                    <td className="py-3 px-3 font-sans text-slate-300">{rep.operator || 'Store Cashier'}</td>
+                    <td className="py-3 px-3 text-center">
+                      <span className="px-2 py-0.5 rounded text-[10px] font-bold bg-emerald-950 text-emerald-300 border border-emerald-800">
+                        Recorded
+                      </span>
+                    </td>
+                  </tr>
+                ))}
+              </tbody>
+            </table>
+          </div>
+        </div>
+      ) : (
       <div className="bg-slate-900 border border-slate-800 rounded-2xl p-4 md:p-5 shadow-xl">
         <div className="overflow-x-auto rounded-xl border border-slate-800">
           <table className="w-full text-xs text-left">
@@ -282,6 +361,7 @@ export default function UdhaarLoanModule() {
           </table>
         </div>
       </div>
+      )}
 
       {/* Record Deposit Modal */}
       {showDepositModal && selectedUdhaarForDeposit && (
