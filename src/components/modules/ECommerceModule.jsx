@@ -41,7 +41,7 @@ export default function ECommerceModule() {
             </h2>
           </div>
           <p className="text-xs text-amber-400 font-medium mt-0.5">
-            Digital Showroom with Live Bullion Pricing, Making Charge Breakdown & Instant Billing
+            Digital showroom using stored bullion rates, making charge breakdown and local billing
           </p>
         </div>
 

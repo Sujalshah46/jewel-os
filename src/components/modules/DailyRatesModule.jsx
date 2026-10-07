@@ -121,7 +121,7 @@ export default function DailyRatesModule() {
             JEWELLERY OS CONTROL PANEL — MASTER DATA
           </h2>
           <p className="text-xs text-amber-400/90 font-medium mt-0.5">
-            (*) Required Fields • Live Bullion Matrix & Digital Rate Board Configuration
+            (*) Required Fields • Locally stored bullion matrix &amp; digital rate board configuration
           </p>
         </div>
 
@@ -177,7 +177,7 @@ export default function DailyRatesModule() {
                 <TrendingUp className="w-6 h-6" />
               </div>
               <div>
-                <h3 className="font-bold text-sm text-slate-100">Live 24K Gold Base Setter</h3>
+                <h3 className="font-bold text-sm text-slate-100">24K Gold Base Rate</h3>
                 <p className="text-xs text-slate-400">Changing base rate automatically updates 22K, 20K, 18K, 16K, 14K purities</p>
               </div>
             </div>
@@ -211,7 +211,7 @@ export default function DailyRatesModule() {
                 <h3 className="font-bold text-sm text-slate-100 uppercase tracking-wider">
                   TODAY'S RATES MASTER TABLE
                 </h3>
-                <p className="text-xs text-slate-400">Live active metal price list used for POS billing & valuations</p>
+                <p className="text-xs text-slate-400">Locally active metal price list used for POS billing &amp; valuations</p>
               </div>
 
               {/* Action Toolbar: Copy, Csv, Excel, Pdf, Print, Delete All */}

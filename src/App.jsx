@@ -98,19 +98,19 @@ function MainApp() {
   // =========================================================================
   if (currentPortal === 'admin') {
     return (
-      <div className="min-h-screen bg-[#070A12] text-slate-100 flex flex-col font-sans">
-        <main className="flex-1 w-full max-w-7xl mx-auto p-4 md:p-6 lg:p-8">
+      <div className="jos-app jos-light-module jos-admin-portal min-h-screen flex flex-col font-sans">
+        <main className="jos-main flex-1 w-full">
           <AdminPanel onSwitchToRetail={() => switchPortal('retail')} />
         </main>
 
         {/* Dedicated Admin Console Footer */}
-        <footer className="no-print bg-[#04060b] border-t border-slate-800/80 py-2.5 px-6 text-xs text-slate-400 flex flex-wrap items-center justify-between gap-2">
+        <footer className="no-print jos-footer">
           <div className="flex items-center space-x-3">
-            <span className="font-serif font-bold text-amber-400">JEWELLERY OS</span>
+            <span className="font-bold">Jewellery OS</span>
             <span>•</span>
-            <span>SaaS Platform &amp; Multi-Tenant Enterprise Admin</span>
+            <span>Local SaaS administration demonstration</span>
             <span>•</span>
-            <span className="font-mono text-emerald-400">System Healthy</span>
+            <span>No server-side tenant enforcement</span>
           </div>
           <div className="flex items-center space-x-3">
             <button
@@ -199,7 +199,7 @@ function MainApp() {
   };
 
   return (
-    <div className="min-h-screen bg-[#0B0F19] text-slate-100 flex flex-col font-sans">
+    <div className="jos-app min-h-screen flex flex-col font-sans">
       <AppShell
         sidebarCollapsed={sidebarCollapsed}
         setSidebarCollapsed={setSidebarCollapsed}
@@ -220,32 +220,36 @@ function MainApp() {
         />
 
         {/* Main Content Area */}
-        <main className="flex-1 overflow-y-auto w-full p-4 md:p-6 lg:p-8 max-w-7xl mx-auto">
-          {renderActiveModule()}
+        <main className="jos-main flex-1 overflow-y-auto w-full">
+          <div className="jos-light-module jos-module-frame">
+            {renderActiveModule()}
+          </div>
         </main>
       </div>
 
       {/* Floating Modals */}
-      <CalculatorModal isOpen={calculatorOpen} onClose={() => setCalculatorOpen(false)} />
-      <InvoiceViewModal />
-      <EstimateModal />
+      <div className="jos-light-module">
+        <CalculatorModal isOpen={calculatorOpen} onClose={() => setCalculatorOpen(false)} />
+        <InvoiceViewModal />
+        <EstimateModal />
+      </div>
 
       {/* Bottom Footer with Status */}
-      <footer className="no-print bg-[#080c14] border-t border-slate-800/80 py-2.5 px-6 text-xs text-slate-400 flex flex-wrap items-center justify-between gap-2">
+      <footer className="no-print jos-footer">
         <div className="flex items-center space-x-3">
-          <span className="font-serif font-bold text-amber-400">JEWELLERY OS</span>
+          <span className="font-bold">Jewellery OS</span>
           <span>•</span>
           <span>Jewellery Store POS &amp; Showroom Portal</span>
           <span>•</span>
-          <span>Multi-Firm Cloud Sync Active</span>
+          <span>Local demonstration workspace</span>
         </div>
-        <div className="flex items-center space-x-3 font-mono text-[11px]">
+        <div className="flex items-center space-x-3 text-xs">
           <span className="flex items-center gap-1.5">
-            <span className="w-2 h-2 rounded-full bg-emerald-400"></span>
-            <span>Store Online</span>
+            <span className="jos-status-dot warning"></span>
+            <span>No live payments, messaging or cloud sync</span>
           </span>
           <span>•</span>
-          <span>Shortcut: <kbd className="bg-slate-800 text-amber-300 px-1.5 py-0.5 rounded border border-slate-700">F2</kbd> (New Bill)</span>
+          <span>Shortcut: <kbd>F2</kbd> New Bill</span>
         </div>
       </footer>
     </div>

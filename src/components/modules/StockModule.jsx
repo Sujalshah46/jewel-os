@@ -392,7 +392,7 @@ export default function StockModule() {
   };
 
   return (
-    <div className="space-y-6">
+    <div className="jos-light-module inventory-workspace space-y-6">
       {/* Top Header & Actions */}
       <div className="flex flex-wrap items-center justify-between gap-4 pb-3 border-b border-slate-800">
         <div>
@@ -403,7 +403,7 @@ export default function StockModule() {
             </h2>
           </div>
           <p className="text-xs text-slate-400 mt-1">
-            Firm: <strong className="text-slate-200">{activeFirm.name}</strong> • Real-time Gold &amp; Silver Stock Register
+            Firm: <strong className="text-slate-200">{activeFirm.name}</strong> • Locally stored Gold &amp; Silver Stock Register
           </p>
         </div>
 

@@ -574,7 +574,7 @@ export default function SmsWhatsappModule() {
                       <p className="text-[11px] font-bold text-slate-200 group-hover:text-amber-300 leading-tight">
                         Rate Board
                       </p>
-                      <p className="text-[9px] text-slate-500">Live 22K/24K</p>
+                      <p className="text-[9px] text-slate-500">Stored 22K/24K rates</p>
                     </button>
 
                     <button

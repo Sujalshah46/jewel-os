@@ -431,7 +431,7 @@ export default function BillingModule() {
   };
 
   return (
-    <div className="space-y-6">
+    <div className="jos-light-module pos-workspace space-y-6">
       {/* Top POS Action Strip */}
       <div className="flex flex-wrap items-center justify-between gap-4 pb-3 border-b border-slate-800">
         <div>
@@ -447,7 +447,7 @@ export default function BillingModule() {
             )}
           </div>
           <p className="text-xs text-slate-400 mt-1">
-            Firm: <strong className="text-slate-200">{activeFirm.name}</strong> • Real-time Tax Invoice Generation
+            Firm: <strong className="text-slate-200">{activeFirm.name}</strong> • Local draft and tax invoice workflow
           </p>
         </div>
 
@@ -994,7 +994,7 @@ export default function BillingModule() {
         </div>
 
         {/* Right Summary Panel */}
-        <div className="bg-slate-900 border border-amber-500/30 rounded-2xl p-5 shadow-2xl flex flex-col justify-between space-y-4">
+        <div className="pos-summary bg-slate-900 border border-amber-500/30 rounded-2xl p-5 shadow-2xl flex flex-col justify-between space-y-4">
           <div>
             <h3 className="font-serif font-bold text-sm uppercase tracking-wider text-amber-300 pb-2 border-b border-slate-800">
               Tax Invoice Summary

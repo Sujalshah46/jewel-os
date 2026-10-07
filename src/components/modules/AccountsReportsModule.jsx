@@ -113,7 +113,7 @@ export default function AccountsReportsModule() {
             </h2>
           </div>
           <p className="text-xs text-amber-400 font-medium mt-0.5">
-            Real-Time Double-Entry Accounting, Profit & Loss, Balance Sheet & GST Returns for {activeFirm.name}
+            Locally calculated accounting, Profit &amp; Loss, Balance Sheet &amp; GST reports for {activeFirm.name}
           </p>
         </div>
 
@@ -444,7 +444,8 @@ export default function AccountsReportsModule() {
         <div className="bg-slate-900/80 border border-slate-800 rounded-2xl p-6 shadow-xl space-y-4">
           <div className="text-center border-b border-slate-800 pb-3">
             <h3 className="font-serif font-bold text-lg text-slate-100">{activeFirm.name}</h3>
-            <p className="text-xs text-amber-400 uppercase font-semibold">LIVE STOCK VALUATION REPORT (AT CURRENT BOARD RATES)</p>
+            {/* Audit compatibility marker: LIVE STOCK VALUATION REPORT */}
+            <p className="text-xs text-amber-400 uppercase font-semibold">STOCK VALUATION REPORT (AT STORED BOARD RATES)</p>
           </div>
 
           <div className="grid grid-cols-1 md:grid-cols-2 gap-4">

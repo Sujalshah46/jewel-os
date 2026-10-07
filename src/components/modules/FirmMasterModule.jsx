@@ -401,7 +401,7 @@ export default function FirmMasterModule() {
               </label>
               <div className="bg-emerald-950/60 border border-emerald-500/40 px-3 py-1.5 rounded-lg text-emerald-300 text-xs font-bold flex items-center gap-1.5">
                 <CheckCircle className="w-3.5 h-3.5" />
-                <span>API Authenticated (Live)</span>
+                <span>Demo credentials stored locally</span>
               </div>
             </div>
           </div>

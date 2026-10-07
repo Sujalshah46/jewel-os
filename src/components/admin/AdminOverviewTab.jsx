@@ -135,7 +135,7 @@ export default function AdminOverviewTab({ onNavigateTab }) {
 
         <div className="bg-slate-900/90 border border-slate-800 hover:border-amber-500/40 rounded-2xl p-4 shadow-lg transition-all">
           <div className="flex items-center justify-between text-slate-400 mb-2">
-            <span className="text-xs font-semibold uppercase tracking-wider">Live Inventory Valuation</span>
+            <span className="text-xs font-semibold uppercase tracking-wider">Local Inventory Valuation</span>
             <div className="w-8 h-8 rounded-lg bg-emerald-500/10 text-emerald-400 flex items-center justify-center">
               <Package className="w-4 h-4" />
             </div>

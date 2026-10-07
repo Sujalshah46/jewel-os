@@ -92,7 +92,7 @@ export default function AdminPanel({ onSwitchToRetail }) {
   const currentTabObj = adminTabs.find(t => t.id === activeTab) || adminTabs[0];
 
   return (
-    <div className="space-y-6">
+    <div className="jos-admin-panel space-y-6">
       {/* Top Admin Control Header */}
       <div className="bg-[#0B0F19] border border-amber-500/30 rounded-2xl p-4 md:p-5 shadow-2xl flex flex-col md:flex-row md:items-center justify-between gap-4">
         <div className="flex items-center space-x-3.5">
@@ -110,7 +110,7 @@ export default function AdminPanel({ onSwitchToRetail }) {
               <span className="text-xs text-slate-400 font-mono hidden sm:inline">Multi-Tenant Node</span>
             </div>
             <h1 className="text-lg md:text-xl font-serif font-bold text-slate-100 uppercase tracking-wider mt-0.5">
-              JEWELLERY OS — PRODUCTION ADMIN PANEL
+              Jewellery OS — Demo Admin Control Plane
             </h1>
           </div>
         </div>
