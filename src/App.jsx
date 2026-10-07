@@ -98,8 +98,8 @@ function MainApp() {
   // =========================================================================
   if (currentPortal === 'admin') {
     return (
-      <div className="jos-app jos-light-module jos-admin-portal min-h-screen flex flex-col font-sans">
-        <main className="jos-main flex-1 w-full">
+      <div className="jos-app jos-light-module jos-admin-portal h-screen max-h-screen flex flex-col font-sans overflow-hidden">
+        <main className="jos-main flex-1 min-h-0 overflow-y-auto w-full">
           <AdminPanel onSwitchToRetail={() => switchPortal('retail')} />
         </main>
 
@@ -199,7 +199,7 @@ function MainApp() {
   };
 
   return (
-    <div className="jos-app min-h-screen flex flex-col font-sans">
+    <div className="jos-app h-screen max-h-screen flex flex-col font-sans overflow-hidden">
       <AppShell
         sidebarCollapsed={sidebarCollapsed}
         setSidebarCollapsed={setSidebarCollapsed}
@@ -209,7 +209,7 @@ function MainApp() {
         onSwitchToAdmin={() => switchPortal('admin')}
       />
 
-      <div className="flex-1 flex overflow-hidden">
+      <div className="flex-1 min-h-0 flex overflow-hidden">
         {/* Unified Left Sidebar for Desktop Store Operations */}
         <DesktopSidebar
           collapsed={sidebarCollapsed}
@@ -220,7 +220,7 @@ function MainApp() {
         />
 
         {/* Main Content Area */}
-        <main className="jos-main flex-1 overflow-y-auto w-full">
+        <main className="jos-main flex-1 min-h-0 overflow-y-auto w-full">
           <div className="jos-light-module jos-module-frame">
             {renderActiveModule()}
           </div>
