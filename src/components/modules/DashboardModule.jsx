@@ -7,7 +7,7 @@ import {
   ChevronDown, ChevronUp, Briefcase, Play, Pause, RotateCcw,
   Search, X, Bell, Calendar as CalendarIcon, Download, Sparkles,
   Phone, Mail, MapPin, Award, CheckCircle2, Shield, Eye, ArrowRight,
-  TrendingUp, AlertCircle
+  TrendingUp, AlertCircle, Sun, Moon
 } from 'lucide-react';
 
 // --- Custom Hooks for Animations ---
@@ -51,7 +51,7 @@ const useProgress = (target, duration = 1400) => {
   return progress;
 };
 
-// --- Reusable Subcomponents with Figma Colors ---
+// --- Reusable Subcomponents with Theme Awareness ---
 
 const AnimatedNumber = ({ value, prefix = '', suffix = '', duration = 1400, format = false, isCurrency = false, isWeight = false }) => {
   const numericValue = typeof value === 'number' ? value : parseFloat(value) || 0;
@@ -65,17 +65,19 @@ const AnimatedNumber = ({ value, prefix = '', suffix = '', duration = 1400, form
   return <span>{prefix}{displayValue}{suffix}</span>;
 };
 
-const AnimatedProgressBar = ({ label, target, color, bgClass, labelColor, striped = false }) => {
+const AnimatedProgressBar = ({ label, target, color, bgClass, labelColor, striped = false, isDark = true }) => {
   const progress = useProgress(target);
   return (
     <div className="flex flex-col gap-1.5 flex-1 min-w-[130px]">
       <div className="flex justify-between items-center text-xs font-semibold">
-        <span className="text-stone-300">{label}</span>
+        <span className={isDark ? 'text-stone-300' : 'text-stone-600'}>{label}</span>
         <span className={`px-2 py-0.5 rounded-full ${bgClass} ${labelColor} font-mono text-[11px] font-bold`}>
           <AnimatedNumber value={target} suffix="%" duration={1200} />
         </span>
       </div>
-      <div className="h-2 w-full bg-stone-800/90 rounded-full overflow-hidden p-0.5 border border-stone-700/60">
+      <div className={`h-2 w-full rounded-full overflow-hidden p-0.5 border ${
+        isDark ? 'bg-stone-800/90 border-stone-700/60' : 'bg-stone-100 border-stone-200/60'
+      }`}>
         <div 
           className={`h-full rounded-full transition-all duration-300 ease-out ${striped ? 'bg-stripes' : ''}`}
           style={{ 
@@ -89,13 +91,15 @@ const AnimatedProgressBar = ({ label, target, color, bgClass, labelColor, stripe
   );
 };
 
-// Figma High-Contrast Bento Cards
-const BentoCard = ({ children, className = '', index = 0, isDark = false }) => (
+// Bento Card matching Figma styling
+const BentoCard = ({ children, className = '', index = 0, isDarkCard = false, isGlobalDark = true }) => (
   <div 
-    className={`stagger-card bento-hover rounded-3xl p-6 shadow-xl relative overflow-hidden ${
-      isDark 
-        ? 'bg-[#121624] border border-[#1E2538] text-white' 
-        : 'bg-white border border-stone-200/80 text-stone-900'
+    className={`stagger-card bento-hover rounded-3xl p-6 shadow-xl relative overflow-hidden transition-colors ${
+      isDarkCard || isGlobalDark
+        ? isDarkCard
+          ? 'bg-[#121624] border border-[#1E2538] text-white' 
+          : 'bg-white border border-stone-200/80 text-stone-900'
+        : 'bg-white border border-[#E9DFCB] text-stone-900 shadow-sm'
     } ${className}`}
     style={{ animationDelay: `${index * 80}ms` }}
   >
@@ -106,7 +110,7 @@ const BentoCard = ({ children, className = '', index = 0, isDark = false }) => (
 // --- 1. OVERVIEW TAB COMPONENTS ---
 
 // Live Interactive Time Tracker matching Coterie & Figma stopwatch
-const InteractiveTimeTracker = () => {
+const InteractiveTimeTracker = ({ isDark = true }) => {
   const [isRunning, setIsRunning] = useState(true);
   const [seconds, setSeconds] = useState(15);
   const [minutes, setMinutes] = useState(2);
@@ -142,9 +146,9 @@ const InteractiveTimeTracker = () => {
   };
 
   const totalSecs = hours * 3600 + minutes * 60 + seconds;
-  const targetSecs = 180; // 3 min visual loop
+  const targetSecs = 180;
   const progressRatio = Math.min((totalSecs % targetSecs) / targetSecs, 1);
-  const circumference = 2 * Math.PI * 48; // radius 48
+  const circumference = 2 * Math.PI * 48;
   const strokeDashoffset = circumference - progressRatio * circumference;
 
   return (
@@ -160,16 +164,14 @@ const InteractiveTimeTracker = () => {
       <div className="relative flex flex-col items-center justify-center my-3">
         <div className="relative w-44 h-44 flex items-center justify-center">
           <svg className="w-full h-full -rotate-90 transform" viewBox="0 0 120 120">
-            {/* Background circle track */}
             <circle
               cx="60"
               cy="60"
               r="48"
               fill="none"
-              stroke="#F0EDE6"
+              stroke={isDark ? '#F0EDE6' : '#F5EFE6'}
               strokeWidth="7"
             />
-            {/* Animated gold track matching Figma #D4AF37 */}
             <circle
               cx="60"
               cy="60"
@@ -184,10 +186,8 @@ const InteractiveTimeTracker = () => {
             />
           </svg>
 
-          {/* Tick lines overlay */}
           <div className="absolute inset-2 rounded-full border border-dashed border-stone-300/60 pointer-events-none" />
 
-          {/* Digital Time Center */}
           <div className="absolute inset-0 flex flex-col items-center justify-center text-center">
             <span className="text-3xl font-extrabold tracking-tight text-[#0C0F17] font-mono">
               {String(minutes).padStart(2, '0')}:{String(seconds).padStart(2, '0')}
@@ -237,7 +237,7 @@ const InteractiveTimeTracker = () => {
 };
 
 // Interactive Onboarding & Daily Checklist matching Figma dark card
-const InteractiveOnboardingCard = () => {
+const InteractiveOnboardingCard = ({ isDark = true }) => {
   const [tasks, setTasks] = useState([
     { id: 1, title: 'Verify Gold 24K MCX Rate', time: '09:00 AM', completed: true },
     { id: 2, title: 'Physical Drawer Cash Audit', time: '09:30 AM', completed: true },
@@ -276,7 +276,11 @@ const InteractiveOnboardingCard = () => {
   };
 
   return (
-    <div className="flex flex-col h-full bg-[#121624] text-white rounded-3xl p-6 relative overflow-hidden border border-[#1E2538] shadow-xl">
+    <div className={`flex flex-col h-full rounded-3xl p-6 relative overflow-hidden shadow-xl transition-colors ${
+      isDark 
+        ? 'bg-[#121624] text-white border border-[#1E2538]' 
+        : 'bg-[#1C1917] text-white border border-stone-800'
+    }`}>
       {/* Top Header */}
       <div className="flex justify-between items-center mb-4">
         <div>
@@ -362,7 +366,7 @@ const InteractiveOnboardingCard = () => {
   );
 };
 
-// Interactive Weekly Calendar with navigation buttons
+// Interactive Weekly Calendar
 const InteractiveWeeklyCalendar = () => {
   const [weekOffset, setWeekOffset] = useState(0);
 
@@ -469,7 +473,7 @@ const InteractiveWeeklyCalendar = () => {
 };
 
 // Accordion Details with Figma typography
-const InteractiveDetailsAccordion = ({ dailyRates, activeFirm, analytics }) => {
+const InteractiveDetailsAccordion = ({ dailyRates, activeFirm }) => {
   const [openSection, setOpenSection] = useState('rates');
 
   return (
@@ -566,7 +570,7 @@ const InteractiveDetailsAccordion = ({ dailyRates, activeFirm, analytics }) => {
 };
 
 // --- 2. PEOPLE TAB (STAFF & KARIGARS DIRECTORY) ---
-const PeopleDirectoryView = () => {
+const PeopleDirectoryView = ({ isDark = true }) => {
   const [filterRole, setFilterRole] = useState('All');
   const [searchQuery, setSearchQuery] = useState('');
   const [selectedIds, setSelectedIds] = useState([1]);
@@ -616,8 +620,12 @@ const PeopleDirectoryView = () => {
     <div className="space-y-6">
       <div className="flex flex-col sm:flex-row items-start sm:items-center justify-between gap-4">
         <div>
-          <h2 className="text-3xl font-extrabold text-white tracking-tight">People & Karigars</h2>
-          <p className="text-sm text-stone-400 mt-1">Manage showroom staff, sales associates, and workshop goldsmiths</p>
+          <h2 className={`text-3xl font-extrabold tracking-tight ${isDark ? 'text-white' : 'text-stone-900'}`}>
+            People & Karigars
+          </h2>
+          <p className={`text-sm mt-1 ${isDark ? 'text-stone-400' : 'text-stone-500'}`}>
+            Manage showroom staff, sales associates, and workshop goldsmiths
+          </p>
         </div>
 
         <div className="flex items-center gap-3 w-full sm:w-auto">
@@ -628,7 +636,11 @@ const PeopleDirectoryView = () => {
               placeholder="Search by name or role..."
               value={searchQuery}
               onChange={(e) => setSearchQuery(e.target.value)}
-              className="w-full pl-9 pr-8 py-2 text-xs bg-[#161D2E] text-white rounded-full border border-[#232D45] focus:outline-none focus:border-amber-500 transition-colors"
+              className={`w-full pl-9 pr-8 py-2 text-xs rounded-full border focus:outline-none focus:border-amber-500 transition-colors ${
+                isDark 
+                  ? 'bg-[#161D2E] text-white border-[#232D45]' 
+                  : 'bg-white text-stone-900 border-stone-200'
+              }`}
             />
             {searchQuery && (
               <button onClick={() => setSearchQuery('')} className="absolute right-3 top-1/2 -translate-y-1/2 text-stone-400 hover:text-white">
@@ -654,7 +666,9 @@ const PeopleDirectoryView = () => {
             className={`px-4 py-1.5 rounded-full text-xs font-bold transition-all ${
               filterRole === pill 
                 ? 'bg-amber-500 text-stone-950 shadow-sm' 
-                : 'bg-[#161D2E] hover:bg-[#1E273D] text-stone-300 border border-[#232D45]'
+                : isDark 
+                ? 'bg-[#161D2E] hover:bg-[#1E273D] text-stone-300 border border-[#232D45]'
+                : 'bg-white hover:bg-stone-100 text-stone-600 border border-stone-200'
             }`}
           >
             {pill === 'All' ? `All ${members.length}` : pill}
@@ -732,10 +746,12 @@ const PeopleDirectoryView = () => {
 
       {showAddModal && (
         <div className="fixed inset-0 z-50 bg-black/60 backdrop-blur-sm flex items-center justify-center p-4">
-          <div className="bg-[#121624] text-white rounded-3xl p-6 max-w-md w-full shadow-2xl border border-[#1E2538]">
+          <div className={`rounded-3xl p-6 max-w-md w-full shadow-2xl border ${
+            isDark ? 'bg-[#121624] text-white border-[#1E2538]' : 'bg-white text-stone-900 border-stone-200'
+          }`}>
             <div className="flex justify-between items-center mb-4">
-              <h3 className="font-bold text-lg text-white">Add Staff or Karigar</h3>
-              <button onClick={() => setShowAddModal(false)} className="text-stone-400 hover:text-white">
+              <h3 className="font-bold text-lg">Add Staff or Karigar</h3>
+              <button onClick={() => setShowAddModal(false)} className="text-stone-400 hover:text-amber-500">
                 <X size={18} />
               </button>
             </div>
@@ -748,7 +764,9 @@ const PeopleDirectoryView = () => {
                   placeholder="e.g. Anand Soni"
                   value={newMember.name}
                   onChange={(e) => setNewMember({ ...newMember, name: e.target.value })}
-                  className="w-full mt-1 p-2.5 text-xs bg-[#181F30] rounded-xl border border-[#232D45] text-white focus:outline-none focus:border-amber-500"
+                  className={`w-full mt-1 p-2.5 text-xs rounded-xl border focus:outline-none focus:border-amber-500 ${
+                    isDark ? 'bg-[#181F30] border-[#232D45] text-white' : 'bg-stone-50 border-stone-200 text-stone-900'
+                  }`}
                 />
               </div>
               <div className="grid grid-cols-2 gap-3">
@@ -758,7 +776,9 @@ const PeopleDirectoryView = () => {
                     type="text"
                     value={newMember.role}
                     onChange={(e) => setNewMember({ ...newMember, role: e.target.value })}
-                    className="w-full mt-1 p-2.5 text-xs bg-[#181F30] rounded-xl border border-[#232D45] text-white"
+                    className={`w-full mt-1 p-2.5 text-xs rounded-xl border ${
+                      isDark ? 'bg-[#181F30] border-[#232D45] text-white' : 'bg-stone-50 border-stone-200 text-stone-900'
+                    }`}
                   />
                 </div>
                 <div>
@@ -767,7 +787,9 @@ const PeopleDirectoryView = () => {
                     type="text"
                     value={newMember.team}
                     onChange={(e) => setNewMember({ ...newMember, team: e.target.value })}
-                    className="w-full mt-1 p-2.5 text-xs bg-[#181F30] rounded-xl border border-[#232D45] text-white"
+                    className={`w-full mt-1 p-2.5 text-xs rounded-xl border ${
+                      isDark ? 'bg-[#181F30] border-[#232D45] text-white' : 'bg-stone-50 border-stone-200 text-stone-900'
+                    }`}
                   />
                 </div>
               </div>
@@ -777,7 +799,9 @@ const PeopleDirectoryView = () => {
                   type="text"
                   value={newMember.location}
                   onChange={(e) => setNewMember({ ...newMember, location: e.target.value })}
-                  className="w-full mt-1 p-2.5 text-xs bg-[#181F30] rounded-xl border border-[#232D45] text-white"
+                  className={`w-full mt-1 p-2.5 text-xs rounded-xl border ${
+                    isDark ? 'bg-[#181F30] border-[#232D45] text-white' : 'bg-stone-50 border-stone-200 text-stone-900'
+                  }`}
                 />
               </div>
               <div className="flex justify-end gap-2 pt-2">
@@ -810,7 +834,6 @@ const PayrollAccountsView = () => {
 
   return (
     <div className="grid grid-cols-1 lg:grid-cols-12 gap-6">
-      {/* Left Team Members Sidebar */}
       <div className="lg:col-span-3 bg-white rounded-3xl p-5 border border-stone-200/80 shadow-xl flex flex-col justify-between">
         <div>
           <h3 className="text-sm font-bold uppercase tracking-wider text-stone-500 mb-3 px-1">Staff & Karigars</h3>
@@ -842,7 +865,6 @@ const PayrollAccountsView = () => {
         </div>
       </div>
 
-      {/* Center - Monthly Hours & Wages Grid */}
       <div className="lg:col-span-6 bg-white rounded-3xl p-6 border border-stone-200/80 shadow-xl flex flex-col justify-between">
         <div>
           <div className="flex justify-between items-start mb-6">
@@ -908,7 +930,6 @@ const PayrollAccountsView = () => {
         </div>
       </div>
 
-      {/* Right Sidebar - Staff Detail Card */}
       <div className="lg:col-span-3 bg-white rounded-3xl p-6 border border-stone-200/80 shadow-xl flex flex-col justify-between">
         <div>
           <div className="flex flex-col items-center text-center pb-5 border-b border-stone-100">
@@ -965,7 +986,7 @@ const PayrollAccountsView = () => {
   );
 };
 
-// --- MAIN DASHBOARD MODULE (EXACT FIGMA COLORS & TYPOGRAPHY) ---
+// --- MAIN DASHBOARD MODULE (WITH FIGMA DARK/LIGHT THEME TOGGLE) ---
 export default function DashboardModule() {
   const { 
     activeFirm, 
@@ -976,9 +997,28 @@ export default function DashboardModule() {
     analytics 
   } = useJewellery();
 
+  // Dark/Light Theme state saved in localStorage (Default: true / Dark mode from Figma)
+  const [isDarkMode, setIsDarkMode] = useState(() => {
+    if (typeof window !== 'undefined') {
+      const saved = localStorage.getItem('JEWELLERY_THEME_DARK');
+      if (saved !== null) return saved === 'true';
+    }
+    return true;
+  });
+
   const [activeTab, setActiveTab] = useState('Overview');
   const [mousePos, setMousePos] = useState({ x: 300, y: 300 });
   const containerRef = useRef(null);
+
+  const toggleTheme = () => {
+    setIsDarkMode((prev) => {
+      const next = !prev;
+      if (typeof window !== 'undefined') {
+        localStorage.setItem('JEWELLERY_THEME_DARK', String(next));
+      }
+      return next;
+    });
+  };
 
   const handleMouseMove = (e) => {
     if (!containerRef.current) return;
@@ -995,9 +1035,15 @@ export default function DashboardModule() {
     <div 
       ref={containerRef}
       onMouseMove={handleMouseMove}
-      className="min-h-full bg-[#0C0F17] -mx-6 -mt-6 p-6 md:p-8 font-sans text-stone-100 relative overflow-y-auto transition-colors selection:bg-amber-500 selection:text-stone-950"
+      className={`min-h-full -mx-6 -mt-6 p-6 md:p-8 font-sans relative overflow-y-auto transition-colors duration-300 selection:bg-amber-500 selection:text-stone-950 ${
+        isDarkMode 
+          ? 'bg-[#0C0F17] text-stone-100' 
+          : 'bg-[#FAF6EE] text-stone-900'
+      }`}
       style={{
-        backgroundImage: `radial-gradient(circle 800px at ${mousePos.x}px ${mousePos.y}px, rgba(212, 175, 55, 0.08), transparent 80%)`
+        backgroundImage: isDarkMode
+          ? `radial-gradient(circle 800px at ${mousePos.x}px ${mousePos.y}px, rgba(212, 175, 55, 0.08), transparent 80%)`
+          : `radial-gradient(circle 800px at ${mousePos.x}px ${mousePos.y}px, rgba(230, 185, 90, 0.12), transparent 75%)`
       }}
     >
       <style>{`
@@ -1014,7 +1060,7 @@ export default function DashboardModule() {
         }
         .bento-hover:hover {
           transform: translateY(-3px);
-          box-shadow: 0 20px 35px -10px rgba(0, 0, 0, 0.4), 0 0 25px -5px rgba(212, 175, 55, 0.12);
+          box-shadow: 0 20px 35px -10px rgba(0, 0, 0, 0.25), 0 0 25px -5px rgba(212, 175, 55, 0.12);
         }
         .hide-scrollbar::-webkit-scrollbar {
           display: none;
@@ -1027,28 +1073,32 @@ export default function DashboardModule() {
 
       <div className="max-w-[1440px] mx-auto space-y-7 pb-12 relative z-10">
 
-        {/* 1. TOP HEADER & BREADCRUMB (EXACT FIGMA THEME) */}
+        {/* 1. TOP HEADER & BREADCRUMB (EXACT FIGMA THEME WITH DARK/LIGHT TOGGLE) */}
         <div className="flex flex-col lg:flex-row justify-between items-start lg:items-end gap-6 stagger-card" style={{ animationDelay: '0ms' }}>
           <div className="flex flex-col gap-3">
             
             {/* Top Breadcrumb & Live Ticker Bar matching Figma */}
             <div className="flex flex-wrap items-center gap-3">
-              <span className="text-[11px] font-bold tracking-wider text-amber-400 uppercase flex items-center gap-1.5">
+              <span className="text-[11px] font-bold tracking-wider text-amber-500 uppercase flex items-center gap-1.5">
                 <span>✦</span> DASHBOARD / {activeFirm?.name ? activeFirm.name.toUpperCase() : 'AURIC HOUSE'}
               </span>
 
               {/* Live Gold Ticker Pill */}
-              <div className="flex items-center gap-2 bg-[#131724] border border-[#1E2538] px-3 py-1 rounded-full shadow-inner">
-                <span className="bg-amber-500/20 text-amber-300 border border-amber-500/30 text-[9px] font-extrabold px-1.5 py-0.5 rounded uppercase tracking-wider">
+              <div className={`flex items-center gap-2 px-3 py-1 rounded-full shadow-inner border transition-colors ${
+                isDarkMode 
+                  ? 'bg-[#131724] border-[#1E2538]' 
+                  : 'bg-white border-[#E9DFCB]'
+              }`}>
+                <span className="bg-amber-500/20 text-amber-500 border border-amber-500/30 text-[9px] font-extrabold px-1.5 py-0.5 rounded uppercase tracking-wider">
                   DEMO FEED
                 </span>
-                <span className="text-[10px] text-stone-400 font-mono uppercase tracking-wider">
+                <span className={`text-[10px] font-mono uppercase tracking-wider ${isDarkMode ? 'text-stone-400' : 'text-stone-500'}`}>
                   24K PURE GOLD
                 </span>
-                <span className="text-xs font-bold text-amber-400 font-mono">
+                <span className="text-xs font-bold text-amber-500 font-mono">
                   ₹{goldRateVal.toLocaleString('en-IN')}/g
                 </span>
-                <span className="text-[9px] font-bold text-emerald-400 bg-emerald-500/10 px-1.5 py-0.5 rounded border border-emerald-500/20">
+                <span className="text-[9px] font-bold text-emerald-500 bg-emerald-500/10 px-1.5 py-0.5 rounded border border-emerald-500/20">
                   +1.2%
                 </span>
               </div>
@@ -1056,16 +1106,22 @@ export default function DashboardModule() {
 
             {/* Main Title & Subtitle */}
             <div>
-              <h1 className="text-3xl md:text-4xl font-extrabold tracking-tight text-white flex items-center gap-3">
+              <h1 className={`text-3xl md:text-4xl font-extrabold tracking-tight flex items-center gap-3 ${
+                isDarkMode ? 'text-white' : 'text-stone-900'
+              }`}>
                 Executive Overview
               </h1>
-              <p className="text-stone-400 mt-1 text-xs font-medium">
+              <p className={`mt-1 text-xs font-medium ${isDarkMode ? 'text-stone-400' : 'text-stone-500'}`}>
                 Live snapshot across every branch (demo data).
               </p>
             </div>
 
-            {/* Pill Tabs with Figma dark container & gold active pill */}
-            <div className="flex items-center gap-1.5 bg-[#131724]/90 backdrop-blur-md p-1.5 rounded-full shadow-lg border border-[#1E2538] w-fit mt-1">
+            {/* Pill Tabs with Figma theme */}
+            <div className={`flex items-center gap-1.5 p-1.5 rounded-full shadow-lg border w-fit mt-1 transition-colors ${
+              isDarkMode 
+                ? 'bg-[#131724]/90 border-[#1E2538]' 
+                : 'bg-white/90 border-[#E9DFCB]'
+            }`}>
               {['Overview', 'People', 'Payroll', 'Settings'].map((tab) => {
                 const isActive = activeTab === tab;
                 return (
@@ -1081,7 +1137,9 @@ export default function DashboardModule() {
                     className={`px-5 py-2 rounded-full text-xs font-bold transition-all duration-300 ${
                       isActive 
                         ? 'bg-amber-500 text-stone-950 shadow-md shadow-amber-500/30' 
-                        : 'text-stone-400 hover:text-white hover:bg-stone-800/60'
+                        : isDarkMode
+                        ? 'text-stone-400 hover:text-white hover:bg-stone-800/60'
+                        : 'text-stone-500 hover:text-stone-900 hover:bg-stone-100'
                     }`}
                   >
                     {tab}
@@ -1091,108 +1149,169 @@ export default function DashboardModule() {
             </div>
           </div>
 
-          {/* Top Right Big Metric Stats Bar (Figma dark luxury card) */}
-          <div className="flex items-center gap-6 sm:gap-8 bg-[#131724]/90 backdrop-blur-md px-6 py-4 rounded-[2rem] border border-[#1E2538] shadow-xl">
-            <div 
-              onClick={() => setActiveModule('stock')}
-              className="flex flex-col items-end cursor-pointer group"
+          {/* Top Right Controls & Big Metric Stats Bar */}
+          <div className="flex items-center gap-4">
+            
+            {/* FIGMA THEME TOGGLE (Sun/Moon Button) */}
+            <button
+              onClick={toggleTheme}
+              className={`w-11 h-11 rounded-2xl flex items-center justify-center border transition-all duration-300 hover:scale-105 active:scale-95 shadow-md ${
+                isDarkMode 
+                  ? 'bg-[#131724] border-[#1E2538] text-amber-400 hover:bg-[#1A2033] hover:border-amber-400/40' 
+                  : 'bg-white border-[#E9DFCB] text-stone-700 hover:bg-amber-50 hover:text-amber-600'
+              }`}
+              title={isDarkMode ? 'Switch to Light Mode' : 'Switch to Dark Mode'}
             >
-              <span className="text-3xl font-extrabold text-white font-mono tracking-tight group-hover:text-amber-400 transition-colors">
-                <AnimatedNumber value={analytics?.totalStockCount || 84} />
-              </span>
-              <span className="text-[10px] font-bold text-amber-400 uppercase tracking-wider mt-0.5">Stock Items</span>
-            </div>
-            <div className="w-px h-10 bg-[#1E2538]" />
-            <div 
-              onClick={() => setActiveModule('billing')}
-              className="flex flex-col items-end cursor-pointer group"
-            >
-              <span className="text-3xl font-extrabold text-white font-mono tracking-tight group-hover:text-amber-400 transition-colors">
-                <AnimatedNumber value={analytics?.totalInvoicesCount || 37} />
-              </span>
-              <span className="text-[10px] font-bold text-amber-400 uppercase tracking-wider mt-0.5">Bills Today</span>
-            </div>
-            <div className="w-px h-10 bg-[#1E2538]" />
-            <div 
-              onClick={() => setActiveModule('customers')}
-              className="flex flex-col items-end cursor-pointer group"
-            >
-              <span className="text-3xl font-extrabold text-white font-mono tracking-tight group-hover:text-amber-400 transition-colors">
-                <AnimatedNumber value={analytics?.totalCustomersCount || 212} />
-              </span>
-              <span className="text-[10px] font-bold text-amber-400 uppercase tracking-wider mt-0.5">Customers</span>
+              {isDarkMode ? <Sun size={20} className="animate-spin-slow" /> : <Moon size={20} />}
+            </button>
+
+            {/* Stats Bar */}
+            <div className={`flex items-center gap-6 sm:gap-8 px-6 py-4 rounded-[2rem] border shadow-xl transition-colors ${
+              isDarkMode 
+                ? 'bg-[#131724]/90 border-[#1E2538]' 
+                : 'bg-white/90 border-[#E9DFCB]'
+            }`}>
+              <div 
+                onClick={() => setActiveModule('stock')}
+                className="flex flex-col items-end cursor-pointer group"
+              >
+                <span className={`text-3xl font-extrabold font-mono tracking-tight transition-colors ${
+                  isDarkMode ? 'text-white group-hover:text-amber-400' : 'text-stone-900 group-hover:text-amber-600'
+                }`}>
+                  <AnimatedNumber value={analytics?.totalStockCount || 84} />
+                </span>
+                <span className="text-[10px] font-bold text-amber-500 uppercase tracking-wider mt-0.5">Stock Items</span>
+              </div>
+              <div className={`w-px h-10 ${isDarkMode ? 'bg-[#1E2538]' : 'bg-stone-200'}`} />
+              <div 
+                onClick={() => setActiveModule('billing')}
+                className="flex flex-col items-end cursor-pointer group"
+              >
+                <span className={`text-3xl font-extrabold font-mono tracking-tight transition-colors ${
+                  isDarkMode ? 'text-white group-hover:text-amber-400' : 'text-stone-900 group-hover:text-amber-600'
+                }`}>
+                  <AnimatedNumber value={analytics?.totalInvoicesCount || 37} />
+                </span>
+                <span className="text-[10px] font-bold text-amber-500 uppercase tracking-wider mt-0.5">Bills Today</span>
+              </div>
+              <div className={`w-px h-10 ${isDarkMode ? 'bg-[#1E2538]' : 'bg-stone-200'}`} />
+              <div 
+                onClick={() => setActiveModule('customers')}
+                className="flex flex-col items-end cursor-pointer group"
+              >
+                <span className={`text-3xl font-extrabold font-mono tracking-tight transition-colors ${
+                  isDarkMode ? 'text-white group-hover:text-amber-400' : 'text-stone-900 group-hover:text-amber-600'
+                }`}>
+                  <AnimatedNumber value={analytics?.totalCustomersCount || 212} />
+                </span>
+                <span className="text-[10px] font-bold text-amber-500 uppercase tracking-wider mt-0.5">Customers</span>
+              </div>
             </div>
           </div>
         </div>
 
         {/* 2. TAB ROUTING */}
-        {activeTab === 'People' && <PeopleDirectoryView />}
-        {activeTab === 'Payroll' && <PayrollAccountsView />}
+        {activeTab === 'People' && <PeopleDirectoryView isDark={isDarkMode} />}
+        {activeTab === 'Payroll' && <PayrollAccountsView isDark={isDarkMode} />}
         {activeTab === 'Overview' && (
           <div className="space-y-7">
 
             {/* ACTION REQUIRED / SYNTHETIC DEMO ALERT STACK (MATCHING FIGMA) */}
-            <div className="bg-[#111624] border border-[#1C2337] rounded-3xl p-5 shadow-xl space-y-3 stagger-card" style={{ animationDelay: '50ms' }}>
+            <div className={`border rounded-3xl p-5 shadow-xl space-y-3 stagger-card transition-colors ${
+              isDarkMode 
+                ? 'bg-[#111624] border-[#1C2337]' 
+                : 'bg-amber-50/60 border-amber-200/70'
+            }`} style={{ animationDelay: '50ms' }}>
               <div className="flex justify-between items-center px-1">
-                <span className="text-[11px] font-bold tracking-wider text-amber-400 uppercase flex items-center gap-2">
+                <span className="text-[11px] font-bold tracking-wider text-amber-500 uppercase flex items-center gap-2">
                   <AlertCircle size={14} /> ACTION REQUIRED · SYNTHETIC DEMO
                 </span>
-                <span className="text-[10px] font-mono text-stone-500">4 Alerts Pending</span>
+                <span className={`text-[10px] font-mono ${isDarkMode ? 'text-stone-500' : 'text-stone-400'}`}>
+                  4 Alerts Pending
+                </span>
               </div>
 
               <div className="space-y-2">
                 <div 
                   onClick={() => setActiveModule('karigars')}
-                  className="bg-[#161D2E]/80 border border-[#232D45] hover:border-amber-500/50 rounded-xl p-3 flex items-center justify-between transition-all cursor-pointer group"
+                  className={`rounded-xl p-3 flex items-center justify-between transition-all cursor-pointer group border ${
+                    isDarkMode 
+                      ? 'bg-[#161D2E]/80 border-[#232D45] hover:border-amber-500/50' 
+                      : 'bg-white border-amber-100/80 hover:border-amber-400 shadow-sm'
+                  }`}
                 >
-                  <span className="text-xs font-semibold text-stone-200 group-hover:text-amber-300 transition-colors">
+                  <span className={`text-xs font-semibold transition-colors ${
+                    isDarkMode ? 'text-stone-200 group-hover:text-amber-300' : 'text-stone-800 group-hover:text-amber-900'
+                  }`}>
                     Overdue memo JG-DEMO-411 • 3 days overdue
                   </span>
-                  <ArrowRight size={14} className="text-amber-400 group-hover:translate-x-1 transition-transform" />
+                  <ArrowRight size={14} className="text-amber-500 group-hover:translate-x-1 transition-transform" />
                 </div>
 
                 <div 
                   onClick={() => setActiveModule('udhaar')}
-                  className="bg-[#161D2E]/80 border border-[#232D45] hover:border-amber-500/50 rounded-xl p-3 flex items-center justify-between transition-all cursor-pointer group"
+                  className={`rounded-xl p-3 flex items-center justify-between transition-all cursor-pointer group border ${
+                    isDarkMode 
+                      ? 'bg-[#161D2E]/80 border-[#232D45] hover:border-amber-500/50' 
+                      : 'bg-white border-amber-100/80 hover:border-amber-400 shadow-sm'
+                  }`}
                 >
-                  <span className="text-xs font-semibold text-stone-200 group-hover:text-amber-300 transition-colors">
+                  <span className={`text-xs font-semibold transition-colors ${
+                    isDarkMode ? 'text-stone-200 group-hover:text-amber-300' : 'text-stone-800 group-hover:text-amber-900'
+                  }`}>
                     Outstanding collections • ₹3,12,400.00
                   </span>
-                  <ArrowRight size={14} className="text-amber-400 group-hover:translate-x-1 transition-transform" />
+                  <ArrowRight size={14} className="text-amber-500 group-hover:translate-x-1 transition-transform" />
                 </div>
 
                 <div 
                   onClick={() => setActiveModule('stock')}
-                  className="bg-[#161D2E]/80 border border-[#232D45] hover:border-amber-500/50 rounded-xl p-3 flex items-center justify-between transition-all cursor-pointer group"
+                  className={`rounded-xl p-3 flex items-center justify-between transition-all cursor-pointer group border ${
+                    isDarkMode 
+                      ? 'bg-[#161D2E]/80 border-[#232D45] hover:border-amber-500/50' 
+                      : 'bg-white border-amber-100/80 hover:border-amber-400 shadow-sm'
+                  }`}
                 >
-                  <span className="text-xs font-semibold text-stone-200 group-hover:text-amber-300 transition-colors">
+                  <span className={`text-xs font-semibold transition-colors ${
+                    isDarkMode ? 'text-stone-200 group-hover:text-amber-300' : 'text-stone-800 group-hover:text-amber-900'
+                  }`}>
                     Stock discrepancy • 1 missing tag / 21.400 g
                   </span>
-                  <ArrowRight size={14} className="text-amber-400 group-hover:translate-x-1 transition-transform" />
+                  <ArrowRight size={14} className="text-amber-500 group-hover:translate-x-1 transition-transform" />
                 </div>
 
                 <div 
                   onClick={() => setActiveModule('karigars')}
-                  className="bg-[#161D2E]/80 border border-[#232D45] hover:border-amber-500/50 rounded-xl p-3 flex items-center justify-between transition-all cursor-pointer group"
+                  className={`rounded-xl p-3 flex items-center justify-between transition-all cursor-pointer group border ${
+                    isDarkMode 
+                      ? 'bg-[#161D2E]/80 border-[#232D45] hover:border-amber-500/50' 
+                      : 'bg-white border-amber-100/80 hover:border-amber-400 shadow-sm'
+                  }`}
                 >
-                  <span className="text-xs font-semibold text-stone-200 group-hover:text-amber-300 transition-colors">
+                  <span className={`text-xs font-semibold transition-colors ${
+                    isDarkMode ? 'text-stone-200 group-hover:text-amber-300' : 'text-stone-800 group-hover:text-amber-900'
+                  }`}>
                     Delayed job JC-DEMO-7702 • 2 days
                   </span>
-                  <ArrowRight size={14} className="text-amber-400 group-hover:translate-x-1 transition-transform" />
+                  <ArrowRight size={14} className="text-amber-500 group-hover:translate-x-1 transition-transform" />
                 </div>
               </div>
             </div>
 
             {/* MINI PROGRESS BARS ROW */}
             <div className="stagger-card" style={{ animationDelay: '80ms' }}>
-              <div className="bg-[#131724]/90 backdrop-blur-md p-5 rounded-[2rem] shadow-xl border border-[#1E2538] flex flex-wrap items-center gap-6 lg:gap-8">
-                <AnimatedProgressBar label="24K Gold Stock" target={78} color="#D4AF37" bgClass="bg-amber-500/20" labelColor="text-amber-300" />
-                <div className="w-px h-8 bg-stone-800 hidden sm:block" />
-                <AnimatedProgressBar label="Silver 925 Stock" target={45} color="#94A3B8" bgClass="bg-slate-500/20" labelColor="text-slate-300" />
-                <div className="w-px h-8 bg-stone-800 hidden md:block" />
-                <AnimatedProgressBar label="Sales Target (Monthly)" target={62} color="#10B981" bgClass="bg-emerald-500/20" labelColor="text-emerald-300" striped />
-                <div className="w-px h-8 bg-stone-800 hidden lg:block" />
-                <AnimatedProgressBar label="Udhaar Collections" target={89} color="#A855F7" bgClass="bg-purple-500/20" labelColor="text-purple-300" />
+              <div className={`p-5 rounded-[2rem] shadow-xl border flex flex-wrap items-center gap-6 lg:gap-8 transition-colors ${
+                isDarkMode 
+                  ? 'bg-[#131724]/90 border-[#1E2538]' 
+                  : 'bg-white/90 border-[#E9DFCB]'
+              }`}>
+                <AnimatedProgressBar label="24K Gold Stock" target={78} color="#D4AF37" bgClass="bg-amber-500/20" labelColor="text-amber-500" isDark={isDarkMode} />
+                <div className={`w-px h-8 hidden sm:block ${isDarkMode ? 'bg-stone-800' : 'bg-stone-200'}`} />
+                <AnimatedProgressBar label="Silver 925 Stock" target={45} color="#94A3B8" bgClass="bg-slate-500/20" labelColor="text-slate-500" isDark={isDarkMode} />
+                <div className={`w-px h-8 hidden md:block ${isDarkMode ? 'bg-stone-800' : 'bg-stone-200'}`} />
+                <AnimatedProgressBar label="Sales Target (Monthly)" target={62} color="#10B981" bgClass="bg-emerald-500/20" labelColor="text-emerald-500" striped isDark={isDarkMode} />
+                <div className={`w-px h-8 hidden lg:block ${isDarkMode ? 'bg-stone-800' : 'bg-stone-200'}`} />
+                <AnimatedProgressBar label="Udhaar Collections" target={89} color="#A855F7" bgClass="bg-purple-500/20" labelColor="text-purple-500" isDark={isDarkMode} />
               </div>
             </div>
 
@@ -1254,11 +1373,11 @@ export default function DashboardModule() {
               </div>
             </div>
 
-            {/* BENTO MIDDLE SECTION: Profile Card, Weekly Chart, Time Tracker, Tasks */}
+            {/* BENTO MIDDLE SECTION */}
             <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-12 gap-6">
               
-              {/* Profile Card (Dark luxury card) */}
-              <BentoCard className="lg:col-span-3 flex flex-col justify-between !p-0 bg-[#121624] text-white border border-[#1E2538] shadow-xl" index={1} isDark>
+              {/* Profile Card */}
+              <BentoCard className="lg:col-span-3 flex flex-col justify-between !p-0 bg-[#121624] text-white border border-[#1E2538] shadow-xl" index={1} isDarkCard>
                 <div className="p-6 relative z-10">
                   <div className="flex justify-between items-start mb-6">
                     <div className="w-16 h-16 rounded-2xl bg-gradient-to-tr from-amber-600 to-amber-300 flex items-center justify-center shadow-lg shadow-amber-500/20 ring-4 ring-white/10">
@@ -1299,8 +1418,8 @@ export default function DashboardModule() {
                 <div className="absolute -top-24 -right-24 w-60 h-60 bg-amber-500/10 rounded-full blur-3xl pointer-events-none" />
               </BentoCard>
 
-              {/* Weekly Performance Bar Chart (White Luxury Card) */}
-              <BentoCard className="lg:col-span-3 flex flex-col justify-between" index={2}>
+              {/* Weekly Performance Bar Chart */}
+              <BentoCard className="lg:col-span-3 flex flex-col justify-between" index={2} isGlobalDark={isDarkMode}>
                 <div>
                   <div className="flex justify-between items-start mb-4">
                     <div>
@@ -1351,23 +1470,23 @@ export default function DashboardModule() {
                 </div>
               </BentoCard>
 
-              {/* Time Tracker Stopwatch Card (White Luxury Card) */}
-              <BentoCard className="lg:col-span-3 flex flex-col justify-between" index={3}>
-                <InteractiveTimeTracker />
+              {/* Time Tracker Stopwatch Card */}
+              <BentoCard className="lg:col-span-3 flex flex-col justify-between" index={3} isGlobalDark={isDarkMode}>
+                <InteractiveTimeTracker isDark={isDarkMode} />
               </BentoCard>
 
               {/* Onboarding & Protocol Dark Tasks Card */}
               <BentoCard className="lg:col-span-3 !p-0 border-0 overflow-visible" index={4}>
-                <InteractiveOnboardingCard />
+                <InteractiveOnboardingCard isDark={isDarkMode} />
               </BentoCard>
             </div>
 
-            {/* BOTTOM ROW: Quick info, Showroom Schedule, Recent Activity & Quick Actions */}
+            {/* BOTTOM ROW */}
             <div className="grid grid-cols-1 lg:grid-cols-12 gap-6">
               
-              {/* Left Accordion (4 cols) */}
+              {/* Left Accordion */}
               <div className="lg:col-span-4 space-y-4">
-                <BentoCard index={5}>
+                <BentoCard index={5} isGlobalDark={isDarkMode}>
                   <div className="mb-4">
                     <h3 className="text-base font-bold text-stone-900">Store Quick Info</h3>
                     <p className="text-xs text-stone-500 mt-0.5">Rates, Scales, and Cash Drawer</p>
@@ -1375,13 +1494,12 @@ export default function DashboardModule() {
                   <InteractiveDetailsAccordion 
                     dailyRates={dailyRates} 
                     activeFirm={activeFirm} 
-                    analytics={analytics} 
                   />
                 </BentoCard>
               </div>
 
-              {/* Weekly Calendar (4 cols) */}
-              <BentoCard className="lg:col-span-4 flex flex-col justify-between" index={6}>
+              {/* Weekly Calendar */}
+              <BentoCard className="lg:col-span-4 flex flex-col justify-between" index={6} isGlobalDark={isDarkMode}>
                 <div>
                   <div className="flex justify-between items-start mb-4">
                     <div>
@@ -1397,11 +1515,11 @@ export default function DashboardModule() {
                 </div>
               </BentoCard>
 
-              {/* Recent Activity & Quick Actions (4 cols) matching Figma bottom layout */}
+              {/* Recent Activity & Quick Actions */}
               <div className="lg:col-span-4 space-y-4">
                 
                 {/* Recent Activity Card */}
-                <BentoCard index={7}>
+                <BentoCard index={7} isGlobalDark={isDarkMode}>
                   <div className="flex justify-between items-center mb-3">
                     <div>
                       <h3 className="text-base font-bold text-stone-900">Recent activity</h3>
