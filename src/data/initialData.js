@@ -1,3 +1,5 @@
+import { getProductImage } from '../utils/productImages';
+
 // Initial Seed Data for Jewellery OS
 
 export const INITIAL_FIRMS = [
@@ -672,7 +674,7 @@ export const INITIAL_STOCK = [
     brand: 'Krishna Heritage',
     gender: 'Female',
     status: 'In Stock',
-    image: 'https://images.unsplash.com/photo-1605100804763-247f67b3557e?w=400&auto=format&fit=crop&q=80'
+    image: getProductImage({ category: 'Ring' })
   },
   {
     id: 'STK-002',
@@ -707,7 +709,7 @@ export const INITIAL_STOCK = [
     brand: 'Krishna Solitaires',
     gender: 'Female',
     status: 'In Stock',
-    image: 'https://images.unsplash.com/photo-1603561591411-07134e71a2a9?w=400&auto=format&fit=crop&q=80'
+    image: getProductImage({ category: 'Ring', subCategory: 'Solitaire Diamond Gold Ring' })
   },
   {
     id: 'STK-003',
@@ -742,7 +744,7 @@ export const INITIAL_STOCK = [
     brand: 'Krishna Heritage',
     gender: 'Female',
     status: 'In Stock',
-    image: 'https://images.unsplash.com/photo-1598560917505-59a3ad559071?w=400&auto=format&fit=crop&q=80'
+    image: getProductImage({ category: 'Ring', subCategory: 'Traditional Floral Embossed Ring' })
   },
   {
     id: 'STK-004',
@@ -777,7 +779,7 @@ export const INITIAL_STOCK = [
     brand: 'Royal Pune Collection',
     gender: 'Female',
     status: 'In Stock',
-    image: 'https://images.unsplash.com/photo-1630019852942-f89202989a59?w=400&auto=format&fit=crop&q=80'
+    image: getProductImage({ category: 'Earring' })
   },
   {
     id: 'STK-005',
@@ -812,7 +814,7 @@ export const INITIAL_STOCK = [
     brand: 'Krishna Men',
     gender: 'Male',
     status: 'In Stock',
-    image: 'https://images.unsplash.com/photo-1515562141207-7a88fb7ce338?w=400&auto=format&fit=crop&q=80'
+    image: getProductImage({ category: 'Ring', subCategory: "Men's Signet Gold Ring" })
   },
   {
     id: 'STK-006',
@@ -847,7 +849,7 @@ export const INITIAL_STOCK = [
     brand: 'Maharani Wedding',
     gender: 'Female',
     status: 'In Stock',
-    image: 'https://images.unsplash.com/photo-1599643478518-a784e5dc4c8f?w=400&auto=format&fit=crop&q=80'
+    image: getProductImage({ category: 'Necklace' })
   },
   {
     id: 'STK-007',
@@ -882,7 +884,7 @@ export const INITIAL_STOCK = [
     brand: 'Krishna Silver',
     gender: 'Female',
     status: 'In Stock',
-    image: 'https://images.unsplash.com/photo-1535632066927-ab7c9ab60908?w=400&auto=format&fit=crop&q=80'
+    image: getProductImage({ category: 'Anklet / Payal', metalType: 'Silver' })
   },
   {
     id: 'STK-008',
@@ -920,7 +922,7 @@ export const INITIAL_STOCK = [
     brand: 'MMTC-PAMP / Krishna Mint',
     gender: 'Unisex',
     status: 'In Stock',
-    image: 'https://images.unsplash.com/photo-1610375461246-83df859d849d?w=400&auto=format&fit=crop&q=80'
+    image: getProductImage({ category: 'Bullion Bar', subCategory: '24K 999 Fine Gold Minted Bar' })
   },
   {
     id: 'STK-RAW-002',
@@ -958,7 +960,7 @@ export const INITIAL_STOCK = [
     brand: 'Silver Touch Refinery',
     gender: 'Unisex',
     status: 'In Stock',
-    image: 'https://images.unsplash.com/photo-1599643477877-530eb83abc8e?w=400&auto=format&fit=crop&q=80'
+    image: getProductImage({ category: 'Bullion Bar', subCategory: '999 Fine Silver Minted Ingot', metalType: 'Silver' })
   },
   {
     id: 'STK-IM-001',
@@ -996,7 +998,7 @@ export const INITIAL_STOCK = [
     brand: 'Fashion Gold',
     gender: 'Female',
     status: 'In Stock',
-    image: 'https://images.unsplash.com/photo-1599643478518-a784e5dc4c8f?w=400&auto=format&fit=crop&q=80'
+    image: getProductImage({ category: 'Necklace', stockType: 'Imitation Jewellery' })
   },
   {
     id: 'STK-IM-002',
@@ -1034,7 +1036,7 @@ export const INITIAL_STOCK = [
     brand: 'Temple Craft',
     gender: 'Female',
     status: 'In Stock',
-    image: 'https://images.unsplash.com/photo-1611591475874-884803975d9e?w=400&auto=format&fit=crop&q=80'
+    image: getProductImage({ category: 'Bangles', subCategory: 'Temple Antique Matte Finished Kada Pair' })
   },
   {
     id: 'STK-STN-001',
@@ -1072,7 +1074,7 @@ export const INITIAL_STOCK = [
     brand: 'GIA Certified Solitaires',
     gender: 'Unisex',
     status: 'In Stock',
-    image: 'https://images.unsplash.com/photo-1603561591411-07134e71a2a9?w=400&auto=format&fit=crop&q=80'
+    image: getProductImage({ category: 'Loose Diamond', stockType: 'Stone Stock' })
   },
   {
     id: 'STK-STN-002',
@@ -1110,7 +1112,7 @@ export const INITIAL_STOCK = [
     brand: 'IGI Certified Emeralds',
     gender: 'Unisex',
     status: 'In Stock',
-    image: 'https://images.unsplash.com/photo-1598560917505-59a3ad559071?w=400&auto=format&fit=crop&q=80'
+    image: getProductImage({ category: 'Precious Gemstone', metalType: 'Emerald' })
   }
 ];
 

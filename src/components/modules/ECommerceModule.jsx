@@ -15,6 +15,7 @@ import {
   X
 } from 'lucide-react';
 import { formatCurrency, formatWeight } from '../../utils/numberToWords';
+import { getProductImage } from '../../utils/productImages';
 
 export default function ECommerceModule() {
   const { stock, activeFirm, setActiveModule, setPreviewEstimate } = useJewellery();
@@ -66,8 +67,8 @@ export default function ECommerceModule() {
           >
             <div className="relative aspect-square overflow-hidden bg-slate-950">
               <img
-                src={item.image}
-                alt={item.itemCode}
+                src={getProductImage(item)}
+                alt={`${item.subCategory || item.category} product photograph`}
                 className="w-full h-full object-cover group-hover:scale-105 transition-transform duration-500"
               />
               <div className="absolute top-2 left-2 bg-slate-950/80 backdrop-blur-md px-2 py-0.5 rounded text-[10px] font-bold text-amber-300 border border-amber-500/30">
@@ -135,8 +136,8 @@ export default function ECommerceModule() {
             <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
               <div>
                 <img
-                  src={selectedItemDetails.image}
-                  alt={selectedItemDetails.itemCode}
+                  src={getProductImage(selectedItemDetails)}
+                  alt={`${selectedItemDetails.subCategory || selectedItemDetails.category} product photograph`}
                   className="w-full h-64 object-cover rounded-xl border border-slate-700 shadow-xl"
                 />
               </div>

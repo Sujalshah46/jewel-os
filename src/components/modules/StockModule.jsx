@@ -1,5 +1,6 @@
 import React, { useState, useMemo } from 'react';
 import { useJewellery } from '../../context/JewelleryContext';
+import { getProductImage } from '../../utils/productImages';
 import {
   Package,
   PlusCircle,
@@ -111,7 +112,7 @@ export default function StockModule() {
     counter: 'Counter 1 (Gold Ornaments)',
     brand: 'Krishna Signature',
     gender: 'Female',
-    image: 'https://images.unsplash.com/photo-1605100804763-247f67b3557e?w=400&auto=format&fit=crop&q=80'
+    image: getProductImage({ category: 'Ring' })
   });
 
   const [formValidationErrors, setFormValidationErrors] = useState({});
@@ -236,7 +237,7 @@ export default function StockModule() {
       counter: defaultCounter,
       brand: 'Krishna Signature',
       gender: 'Female',
-      image: 'https://images.unsplash.com/photo-1605100804763-247f67b3557e?w=400&auto=format&fit=crop&q=80'
+      image: getProductImage({ category: defaultCategory, subCategory: defaultSubCategory, stockType: defaultStockType, metalType: defaultMetal })
     });
     setFormValidationErrors({});
     setShowAddStockModal(true);
@@ -771,8 +772,8 @@ export default function StockModule() {
                       <td className="py-3 px-3 font-mono text-slate-500">{idx + 1}</td>
                       <td className="py-3 px-3">
                         <img
-                          src={item.image}
-                          alt={item.itemCode}
+                          src={getProductImage(item)}
+                          alt={`${item.subCategory || item.category} product photograph`}
                           className="w-10 h-10 object-cover rounded-lg border border-slate-700 shadow"
                         />
                       </td>
@@ -1200,8 +1201,8 @@ export default function StockModule() {
 
             <div className="flex items-center space-x-4">
               <img
-                src={inspectItem.image}
-                alt={inspectItem.itemCode}
+                src={getProductImage(inspectItem)}
+                alt={`${inspectItem.subCategory || inspectItem.category} product photograph`}
                 className="w-24 h-24 object-cover rounded-xl border border-slate-700 shadow"
               />
               <div className="text-xs space-y-1">
