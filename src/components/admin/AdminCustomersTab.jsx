@@ -5,10 +5,7 @@ import {
   Award,
   Shield,
   Save,
-  CheckCircle,
-  EyeOff,
-  Coins,
-  CreditCard
+  CheckCircle
 } from 'lucide-react';
 
 export default function AdminCustomersTab() {
@@ -18,8 +15,7 @@ export default function AdminCustomersTab() {
     spendPerPoint: 500,
     pointRedemptionValue: 1.0,
     minPointsToRedeem: 100,
-    defaultCreditLimit: 50000,
-    maskSensitiveKyc: true
+    defaultCreditLimit: 50000
   });
 
   const [successMsg, setSuccessMsg] = useState('');
@@ -49,7 +45,7 @@ export default function AdminCustomersTab() {
             </h2>
           </div>
           <p className="text-xs text-slate-400 mt-0.5">
-            Configure customer credit limits, reward points accrual ratios, and sensitive identity (PAN/Aadhaar) masking.
+            Configure demo credit limits and reward points. PAN/Aadhaar collection is disabled in the demo.
           </p>
         </div>
 
@@ -117,10 +113,10 @@ export default function AdminCustomersTab() {
         </div>
       </div>
 
-      {/* Credit Limits & Privacy Masking */}
+      {/* Credit Limits and Privacy Status */}
       <div className="bg-slate-900/80 border border-slate-800 rounded-2xl p-5 shadow-xl space-y-4">
         <h3 className="text-xs font-bold uppercase tracking-wider text-amber-400 pb-2 border-b border-slate-800 flex items-center gap-1.5">
-          <Shield className="w-4 h-4" /> 2. Default Credit Limit & KYC Privacy Protection
+          <Shield className="w-4 h-4" /> 2. Default Credit Limit & Privacy Status
         </h3>
 
         <div className="grid grid-cols-1 sm:grid-cols-2 gap-4 text-xs">
@@ -139,20 +135,9 @@ export default function AdminCustomersTab() {
             </span>
           </div>
 
-          <div className="flex flex-col justify-center">
-            <label className="flex items-center space-x-2 text-slate-200 cursor-pointer pt-2">
-              <input
-                type="checkbox"
-                checked={loyaltyRules.maskSensitiveKyc}
-                onChange={(e) => setLoyaltyRules(prev => ({ ...prev, maskSensitiveKyc: e.target.checked }))}
-                className="rounded text-amber-500 focus:ring-0"
-              />
-              <span className="font-semibold text-xs">Mask Sensitive PAN & Aadhaar Numbers in Client Lists</span>
-            </label>
-            <span className="text-[10px] text-slate-400 ml-5 block mt-0.5">
-              Protects sensitive identity documents from shoulder-surfing at public counters
-            </span>
-          </div>
+          <p className="text-xs text-slate-300 self-center">
+            PAN/Aadhaar entry and display are disabled. Existing browser values are retained locally and redacted from snapshot exports.
+          </p>
         </div>
       </div>
     </div>

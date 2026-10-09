@@ -19,7 +19,7 @@ Close every repository-fixable finding in `jewelry-os-audit/REPORT.md`, or expli
 |---|---|---|
 | SEC-001 Authentication and roles | Partial | Better Auth sessions and server membership/role checks protect customer API. Staff, firm, stock, invoice, and other mutations still exist only in the untrusted demo provider; full identity lifecycle and server authorization remain. |
 | SEC-002 Tenant ownership | Partial | Customer API queries are tenant-scoped. Other business entities, references, exports, and firm/branch switching are not migrated or enforced server-side. |
-| SEC-003 KYC and provider secrets | Partial | New credential entry was removed and operational customer responses omit secrets. Local demo snapshot exports/imports redact named KYC, bank, and provider credential fields, but existing browser storage may retain values; retention, deletion, secure migration, and full leakage tests remain unresolved. |
+| SEC-003 KYC and provider secrets | Partial | Demo party seeds and forms no longer collect or show personal PAN/Aadhaar, birth dates, or profile photos; supplier GSTIN has a dedicated field. Mock provider key labels/configuration were removed; connectivity simulations cannot mark services connected. Snapshot import/export still redacts legacy values, while existing browser storage is retained untouched. Approved retention/deletion rules and API/log/bundle leakage review remain. |
 | DB-001 Atomic/concurrent persistence | Partial | Tenant-scoped stock and sale APIs now use PostgreSQL transactions, row locks/conditional updates, idempotency, and an atomic journal. Returns, repayments, purchasing, transfers, and recovery do not have equivalent server transactions. API/database integration tests have not been rerun in this environment. |
 | DB-002 Backup and restore | Partial | Local demo snapshots now use a versioned schema, include omitted histories, redact named sensitive fields, validate IDs/references before any state update, and upgrade the known legacy export shape. Restore/reset downloads a redacted pre-change snapshot; the generic error-boundary data wipe is removed. Operational database backup/restore, durable atomic replacement, migration fixtures, and a recovery drill remain unimplemented. |
 | DB-003 IDs and fiscal numbers | Partial | Operational invoices use database UUIDs and tenant/FY-scoped counters in the sale transaction. Repayment, return, and other numbering remain unimplemented. |
@@ -96,7 +96,7 @@ Close every repository-fixable finding in `jewelry-os-audit/REPORT.md`, or expli
 
 ### Phase 6 — Security, release tests, performance, and production evidence
 
-- [ ] Minimize/redact KYC, remove stale credential surfaces, establish retention/deletion/export rules, and test client/API/log/export/bundle leakage (SEC-003).
+- [ ] Minimize/redact KYC, remove stale credential surfaces, establish retention/deletion/export rules, and test client/API/log/export/bundle leakage (SEC-003). Demo capture/display minimization, seed cleanup, supplier GSTIN correction, mock credential removal, snapshot redaction, and source/seed regression checks are implemented; approved retention/deletion and full leakage review remain.
 - [ ] Re-audit dependency advisories and patch reachable vulnerable build/runtime paths without weakening package verification (SEC-004). Production-only audit reports zero; the current lockfile still reports 7 development findings.
 - [ ] Replace remaining legacy source-presence assertions for critical claims with HTTP/database/browser behavior tests; every failing assertion exits nonzero (OPS-003).
 - [x] Add PR CI with isolated PostgreSQL fresh-install and populated-upgrade databases, full test suites, and demo/operational builds (OPS-003).
@@ -117,6 +117,7 @@ Some work cannot be truthfully completed from code alone: accountant approval of
 - [x] Added a versioned/redacted local demo snapshot schema with known legacy-format upgrade and full preflight tests; removed generic error-boundary localStorage clearing.
 - [x] Audited optional operational workflows; added HTTP-method feature-gate coverage and corrected demo tag preview claims.
 - [x] Added GitHub Actions verification for full tests, disposable PostgreSQL migrations/API tests, and both builds; remote execution remains pending.
+- [x] Disabled demo PAN/Aadhaar entry and display, removed personal identity fields from party seed records, corrected supplier GSTIN storage, removed mock provider credentials/connection claims, and added privacy regression tests; existing browser storage remains untouched.
 - [x] Phase 1 — standalone correctness and demo claims (source/tests/browser checks above).
 - [ ] Phase 2 — transactional inventory/sales boundary (implemented and standalone checks pass; PostgreSQL acceptance suite remains to run).
 - [ ] Phase 3 — pricing/accounting invariants (provisional sale/ledger path implemented; repayments, reports, and accountant review remain).

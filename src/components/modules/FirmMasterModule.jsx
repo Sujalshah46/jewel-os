@@ -37,13 +37,6 @@ export default function FirmMasterModule() {
     setFormData(prev => ({ ...prev, [field]: val }));
   };
 
-  const handleEInvoiceChange = (field, val) => {
-    setFormData(prev => ({
-      ...prev,
-      eInvoiceApi: { ...(prev.eInvoiceApi || {}), [field]: val }
-    }));
-  };
-
   const handleSave = (e) => {
     e.preventDefault();
     setFirms(prev => prev.map(f => f.id === formData.id ? formData : f));

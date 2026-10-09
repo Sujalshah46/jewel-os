@@ -22,7 +22,7 @@ import {
 import { formatCurrency } from '../../utils/numberToWords';
 
 export default function CustomerModule() {
-  const { customers, addCustomer, updateCustomer, udhaarList } = useJewellery();
+  const { customers, addCustomer, udhaarList } = useJewellery();
   const [activePartyTab, setActivePartyTab] = useState('CUSTOMER LIST *');
   const [searchTerm, setSearchTerm] = useState('');
   const [showAddModal, setShowAddModal] = useState(false);
@@ -62,9 +62,7 @@ export default function CustomerModule() {
     city: 'Pune',
     pincode: '411028',
     address: '',
-    dob: '1990-01-01',
-    pan: '',
-    aadhaar: '',
+    gstin: '',
     kit: 'KIT-' + Math.floor(1000 + Math.random() * 9000),
     userType: 'Customer',
     email: '',
@@ -93,9 +91,7 @@ export default function CustomerModule() {
       city: 'Pune',
       pincode: '411028',
       address: '',
-      dob: '1990-01-01',
-      pan: '',
-      aadhaar: '',
+      gstin: '',
       kit: prefix + Math.floor(1000 + Math.random() * 9000),
       userType: targetType,
       email: '',
@@ -140,8 +136,7 @@ export default function CustomerModule() {
       c.companyName?.toLowerCase().includes(term) ||
       c.mobile?.includes(term) ||
       c.city?.toLowerCase().includes(term) ||
-      c.pan?.toLowerCase().includes(term) ||
-      c.aadhaar?.includes(term) ||
+      c.gstin?.toLowerCase().includes(term) ||
       c.designation?.toLowerCase().includes(term) ||
       c.speciality?.toLowerCase().includes(term)
     );
@@ -179,7 +174,7 @@ export default function CustomerModule() {
             </h2>
           </div>
           <p className="text-xs text-amber-400 font-medium mt-0.5">
-            Full KYC, Aadhaar & PAN Registry, Credit Balances & Contacts for Customers, Suppliers, Staff & Lenders
+            Demo contacts and balances. PAN/Aadhaar collection and display are disabled.
           </p>
         </div>
 
@@ -219,7 +214,7 @@ export default function CustomerModule() {
             type="text"
             value={searchTerm}
             onChange={(e) => setSearchTerm(e.target.value)}
-            placeholder={`Search ${activePartyTab.replace(' LIST *', '').replace(' LIST', '')} by Name, Phone, City, GST/PAN...`}
+            placeholder={`Search ${activePartyTab.replace(' LIST *', '').replace(' LIST', '')} by Name, Phone, City, GSTIN...`}
             className="w-full bg-slate-950 border border-slate-700 focus:border-amber-400 rounded-xl pl-9 pr-3 py-1.5 text-xs text-slate-100 placeholder-slate-500 focus:outline-none"
           />
           <Search className="w-4 h-4 text-slate-400 absolute left-3 top-2" />
@@ -303,7 +298,7 @@ export default function CustomerModule() {
                       <strong>Speciality:</strong> {cust.speciality || 'Bullion & Diamond Supplies'}
                     </p>
                     <p className="text-slate-400">
-                      <strong>Tax ID:</strong> <span className="font-mono text-slate-200">{cust.aadhaar || cust.pan || 'GSTIN Pending'}</span>
+                      <strong>GSTIN:</strong> <span className="font-mono text-slate-200">{cust.gstin || 'Not supplied in demo'}</span>
                     </p>
                   </div>
                 )}
@@ -327,17 +322,11 @@ export default function CustomerModule() {
                       <strong>Girvi Interest Rate:</strong> <span className="font-bold text-amber-300">{cust.girviInterestRate || '1.50% / Month'}</span>
                     </p>
                     <p className="text-slate-400">
-                      <strong>License Reg:</strong> <span className="font-mono text-slate-200">{cust.licenseNo || cust.aadhaar || 'MH-PUN-ML-2024'}</span>
+                      <strong>License Reg:</strong> <span className="font-mono text-slate-200">{cust.licenseNo || 'Not supplied in demo'}</span>
                     </p>
                   </div>
                 )}
 
-                {currentTargetType === 'Customer' && (
-                  <div className="grid grid-cols-2 gap-2 text-[11px] pt-1 border-t border-slate-800">
-                    <span className="text-slate-400">PAN: <strong className="font-mono text-slate-200">{cust.pan || 'N/A'}</strong></span>
-                    <span className="text-slate-400">Aadhaar: <strong className="font-mono text-slate-200">{cust.aadhaar || 'N/A'}</strong></span>
-                  </div>
-                )}
               </div>
             </div>
 
@@ -500,8 +489,8 @@ export default function CustomerModule() {
                       <label className="block text-[11px] font-semibold text-slate-300 mb-1">GSTIN NUMBER</label>
                       <input
                         type="text"
-                        value={newCust.aadhaar}
-                        onChange={(e) => setNewCust(prev => ({ ...prev, aadhaar: e.target.value.toUpperCase() }))}
+                        value={newCust.gstin}
+                        onChange={(e) => setNewCust(prev => ({ ...prev, gstin: e.target.value.toUpperCase() }))}
                         placeholder="27AABCR1234K1Z5"
                         className="w-full bg-slate-950 border border-slate-700 rounded-lg px-3 py-1.5 text-slate-100 font-mono"
                       />
@@ -528,16 +517,6 @@ export default function CustomerModule() {
                         value={newCust.monthlySalary}
                         onChange={(e) => setNewCust(prev => ({ ...prev, monthlySalary: Number(e.target.value) }))}
                         placeholder="35000"
-                        className="w-full bg-slate-950 border border-slate-700 rounded-lg px-3 py-1.5 text-slate-100 font-mono"
-                      />
-                    </div>
-                    <div>
-                      <label className="block text-[11px] font-semibold text-slate-300 mb-1">AADHAAR CARD NO</label>
-                      <input
-                        type="text"
-                        value={newCust.aadhaar}
-                        onChange={(e) => setNewCust(prev => ({ ...prev, aadhaar: e.target.value }))}
-                        placeholder="xxxx xxxx xxxx"
                         className="w-full bg-slate-950 border border-slate-700 rounded-lg px-3 py-1.5 text-slate-100 font-mono"
                       />
                     </div>
@@ -581,27 +560,6 @@ export default function CustomerModule() {
 
                 {currentTargetType === 'Customer' && (
                   <>
-                    <div>
-                      <label className="block text-[11px] font-semibold text-slate-300 mb-1">AADHAAR CARD NUMBER</label>
-                      <input
-                        type="text"
-                        value={newCust.aadhaar}
-                        onChange={(e) => setNewCust(prev => ({ ...prev, aadhaar: e.target.value }))}
-                        placeholder="xxxx xxxx xxxx"
-                        className="w-full bg-slate-950 border border-slate-700 rounded-lg px-3 py-1.5 text-slate-100 font-mono"
-                      />
-                    </div>
-
-                    <div>
-                      <label className="block text-[11px] font-semibold text-slate-300 mb-1">PAN NUMBER</label>
-                      <input
-                        type="text"
-                        value={newCust.pan}
-                        onChange={(e) => setNewCust(prev => ({ ...prev, pan: e.target.value.toUpperCase() }))}
-                        className="w-full bg-slate-950 border border-slate-700 rounded-lg px-3 py-1.5 text-slate-100 font-mono"
-                      />
-                    </div>
-
                     <div>
                       <label className="block text-[11px] font-semibold text-slate-300 mb-1">CREDIT LIMIT (₹)</label>
                       <input

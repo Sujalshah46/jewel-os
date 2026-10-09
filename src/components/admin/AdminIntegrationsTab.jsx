@@ -92,13 +92,11 @@ export default function AdminIntegrationsTab() {
                   </div>
                   <span
                     className={`text-[10px] px-2 py-0.5 rounded font-bold uppercase flex items-center gap-1 ${
-                      item.status === 'Connected'
-                        ? 'bg-emerald-500/20 text-emerald-300 border border-emerald-500/30'
-                        : 'bg-amber-500/20 text-amber-300 border border-amber-500/30'
+                      'bg-amber-500/20 text-amber-300 border border-amber-500/30'
                     }`}
                   >
-                    <span className="w-1.5 h-1.5 rounded-full bg-emerald-400"></span>
-                    <span>Demo</span>
+                    <span className="w-1.5 h-1.5 rounded-full bg-amber-400"></span>
+                    <span>Not configured</span>
                   </span>
                 </div>
 
@@ -110,8 +108,8 @@ export default function AdminIntegrationsTab() {
                       <span className="text-amber-300 font-semibold">Not configured</span>
                     </div>
                     <div className="flex items-center justify-between text-[11px]">
-                      <span className="text-slate-400">Last Health Check:</span>
-                      <span className="text-slate-300 font-mono text-[10px]">{item.lastPing}</span>
+                      <span className="text-slate-400">Provider health:</span>
+                      <span className="text-slate-300 font-mono text-[10px]">Not checked</span>
                     </div>
                   </div>
                 </div>

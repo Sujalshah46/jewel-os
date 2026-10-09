@@ -616,26 +616,16 @@ export function JewelleryProvider({ children }) {
     });
   };
 
-  // Integrations Ping & Update
+  // Demo-only integration check: never contact providers or claim connectivity.
   const testIntegrationConnection = (integrationId) => {
     const target = integrations.find(i => i.id === integrationId);
-    setIntegrations(prev => prev.map(i => {
-      if (i.id === integrationId) {
-        return {
-          ...i,
-          status: 'Connected',
-          lastPing: 'Just now (HTTP 200 OK - Latency 24ms)'
-        };
-      }
-      return i;
-    }));
     addAuditLog({
-      action: 'Integration Health Ping',
+      action: 'Demo Integration Check',
       category: 'Integrations',
       target: target?.name || integrationId,
-      details: 'Safe loopback endpoint pinged: Connection verified.'
+      details: 'Demo simulation only; no provider request or connectivity check was performed.'
     });
-    return { success: true, latencyMs: 24, message: 'Ping handshake successful' };
+    return { success: false, simulated: true, message: 'No provider request was sent; connection remains unconfigured.' };
   };
 
   const updateIntegration = (integrationId, updatedFields) => {
