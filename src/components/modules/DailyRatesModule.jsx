@@ -178,7 +178,7 @@ export default function DailyRatesModule() {
               </div>
               <div>
                 <h3 className="font-bold text-sm text-slate-100">24K Gold Base Rate</h3>
-                <p className="text-xs text-slate-400">Changing base rate automatically updates 22K, 20K, 18K, 16K, 14K purities</p>
+                <p className="text-xs text-slate-200">Changing base rate automatically updates 22K, 20K, 18K, 16K, 14K purities</p>
               </div>
             </div>
 
