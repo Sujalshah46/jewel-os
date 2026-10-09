@@ -1,20 +1,45 @@
-// Product photography is served by Unsplash. Replace these demo assets with
-// the shop's own product photography before publishing a real customer catalog.
+// Unsplash product photos (free to use under the Unsplash License) and a CC0
+// Wikimedia emerald photo. These are illustrative catalogue photos, not the
+// exact stock item being sold; merchants should replace them with their own.
+const unsplash = (photoId) => `https://images.unsplash.com/${photoId}?auto=format&fit=crop&w=900&q=85`;
+
 const images = {
-  ring: 'https://images.unsplash.com/photo-1605100804763-247f67b3557e?w=800&auto=format&fit=crop&q=85',
-  diamondRing: 'https://images.unsplash.com/photo-1603561591411-07134e71a2a9?w=800&auto=format&fit=crop&q=85',
-  traditionalRing: 'https://images.unsplash.com/photo-1598560917505-59a3ad559071?w=800&auto=format&fit=crop&q=85',
-  earrings: 'https://images.unsplash.com/photo-1630019852942-f89202989a59?w=800&auto=format&fit=crop&q=85',
-  necklace: 'https://images.unsplash.com/photo-1599643478518-a784e5dc4c8f?w=800&auto=format&fit=crop&q=85',
-  silverJewellery: 'https://images.unsplash.com/photo-1535632066927-ab7c9ab60908?w=800&auto=format&fit=crop&q=85',
-  goldBar: 'https://images.unsplash.com/photo-1610375461246-83df859d849d?w=800&auto=format&fit=crop&q=85',
-  silverBar: 'https://images.unsplash.com/photo-1599643477877-530eb83abc8e?w=800&auto=format&fit=crop&q=85',
-  kada: 'https://images.unsplash.com/photo-1611591475874-884803975d9e?w=800&auto=format&fit=crop&q=85',
-  diamond: 'https://images.unsplash.com/photo-1603561591411-07134e71a2a9?w=800&auto=format&fit=crop&q=85',
-  gemstone: 'https://images.unsplash.com/photo-1598560917505-59a3ad559071?w=800&auto=format&fit=crop&q=85'
+  ring: unsplash('photo-1677466892649-75e21e30dc2c'),
+  diamondRing: unsplash('photo-1788495545073-51161449ca9e'),
+  traditionalRing: unsplash('photo-1689777238091-59591cdf13e7'),
+  mensRing: unsplash('photo-1570932626597-82c2832a1275'),
+  earrings: unsplash('photo-1723361656146-f201d215c49c'),
+  necklace: unsplash('photo-1617171511579-c2711d7a91f6'),
+  fashionNecklace: unsplash('photo-1781901736554-1830ea15021a'),
+  silverJewellery: unsplash('photo-1651395835317-d2868e8ebcac'),
+  goldBar: unsplash('photo-1633484188069-3289e175e52e'),
+  silverBar: unsplash('photo-1693596792761-9b005fb4bfa4'),
+  kada: unsplash('photo-1758995116288-278d7387cbb6'),
+  diamond: unsplash('photo-1631013636761-c533d81e96a4'),
+  gemstone: 'https://upload.wikimedia.org/wikipedia/commons/3/3e/Cut_Emerald.jpg'
 };
 
-export function getProductImage({ category = '', subCategory = '', stockType = '', metalType = '' } = {}) {
+// Give every seeded showroom item its own suitable photograph, even when old
+// localStorage or imported data still contains the previous generic URL.
+const seededItemImages = {
+  LRING33: images.ring,
+  LRING29: images.diamondRing,
+  LRING20: images.traditionalRing,
+  EARRING1: images.earrings,
+  RINGHR3: images.mensRing,
+  'CHOKER-01': images.necklace,
+  'SILVPAYAL-01': images.silverJewellery,
+  'RAWGOLD-100': images.goldBar,
+  'RAWSILV-1KG': images.silverBar,
+  'IM-BRIDAL-01': images.fashionNecklace,
+  'IM-KADA-02': images.kada,
+  'DIA-SOL-01': images.diamond,
+  'GEM-EM-01': images.gemstone
+};
+
+export function getProductImage({ itemCode = '', category = '', subCategory = '', stockType = '', metalType = '' } = {}) {
+  if (seededItemImages[itemCode]) return seededItemImages[itemCode];
+
   const text = `${category} ${subCategory} ${stockType} ${metalType}`.toLowerCase();
   if (text.includes('silver bar') || text.includes('silver ingot') || (text.includes('bullion') && text.includes('silver'))) return images.silverBar;
   if (text.includes('bullion') || text.includes('gold bar')) return images.goldBar;
@@ -24,6 +49,9 @@ export function getProductImage({ category = '', subCategory = '', stockType = '
   if (text.includes('necklace') || text.includes('choker')) return images.necklace;
   if (text.includes('anklet') || text.includes('payal') || text.includes('silver')) return images.silverJewellery;
   if (text.includes('bangle') || text.includes('kada')) return images.kada;
-  if (text.includes('ring')) return text.includes('traditional') || text.includes('floral') ? images.traditionalRing : images.ring;
+  if (text.includes('ring')) {
+    if (text.includes('men') || text.includes('male') || text.includes('gents')) return images.mensRing;
+    return text.includes('traditional') || text.includes('floral') ? images.traditionalRing : images.ring;
+  }
   return images.ring;
 }
