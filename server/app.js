@@ -3,6 +3,7 @@ import { toNodeHandler } from 'better-auth/node';
 import { createHash, createHmac, timingSafeEqual } from 'node:crypto';
 import { z } from 'zod';
 import { calculateCatalogQuote, calculateOldMetalQuote } from './pricing.js';
+import { calculateTrialBalance } from './accounting.js';
 
 const createCustomerSchema = z.object({
   name: z.string().trim().min(1).max(160),
@@ -78,6 +79,14 @@ const invoiceCreateSchema = z.object({
 }).strict().refine(value => new Set(value.items.map(item => item.stockItemId)).size === value.items.length, {
   path: ['items'], message: 'Each stock item may appear only once on an invoice.',
 });
+const invoiceCashSettlementSchema = z.object({ amountPaise: z.number().int().min(1).max(1000000000000) }).strict();
+const idempotencyKeySchema = z.string().min(8).max(128).regex(/^[A-Za-z0-9._:-]+$/);
+const isoDateSchema = z.string().regex(/^\d{4}-\d{2}-\d{2}$/).refine(value => {
+  const parsed = new Date(`${value}T00:00:00.000Z`);
+  return Number.isFinite(parsed.getTime()) && parsed.toISOString().slice(0, 10) === value;
+});
+const trialBalanceRangeSchema = z.object({ from: isoDateSchema.optional(), to: isoDateSchema.optional() }).strict()
+  .refine(({ from, to }) => !from || !to || from <= to, { message: 'The start date must not be after the end date.' });
 
 function sendError(res, status, code, message) {
   return res.status(status).json({ error: { code, message } });
@@ -138,7 +147,7 @@ async function loadInvoiceBundle(db, invoiceId, tenantId) {
        FROM invoice_line WHERE invoice_id = $1::uuid AND tenant_id = $2::uuid ORDER BY id`, [invoiceId, tenantId],
     ),
     db.query(
-      `SELECT method, status, amount_paise AS "amountPaise", reference, created_at AS "createdAt"
+      `SELECT id, method, status, amount_paise AS "amountPaise", reference, receipt_number AS "receiptNumber", created_at AS "createdAt"
        FROM invoice_payment WHERE invoice_id = $1::uuid AND tenant_id = $2::uuid ORDER BY created_at, id`, [invoiceId, tenantId],
     ),
   ]);
@@ -559,6 +568,111 @@ export function createApp({ auth, pool, config }) {
     }
   });
 
+  app.post('/api/invoices/:id/cash-settlements', authenticate, (req, res, next) => {
+    if (!ensureMutationRequest(req, res, config)) return;
+    const key = req.get('idempotency-key');
+    if (!idempotencyKeySchema.safeParse(key).success) {
+      return sendError(res, 400, 'IDEMPOTENCY_KEY_REQUIRED', 'Supply a stable Idempotency-Key for this receipt.');
+    }
+    req.idempotencyKey = key;
+    next();
+  }, async (req, res) => {
+    if (!z.string().uuid().safeParse(req.params.id).success) return sendError(res, 404, 'INVOICE_NOT_FOUND', 'Invoice was not found.');
+    const parsed = invoiceCashSettlementSchema.safeParse(req.body);
+    if (!parsed.success) return sendError(res, 400, 'INVALID_SETTLEMENT', 'A positive integer paise cash amount is required.');
+    const amountPaise = parsed.data.amountPaise;
+    const requestHash = createHash('sha256').update(JSON.stringify({ invoiceId: req.params.id, method: 'CASH', amountPaise })).digest('hex');
+    const client = await pool.connect();
+    try {
+      await client.query('BEGIN');
+      await client.query('SELECT pg_advisory_xact_lock(hashtextextended($1, 0))', [
+        `${req.principal.tenantId}:${req.principal.userId}:cash-settlement:${req.idempotencyKey}`,
+      ]);
+      const replay = await client.query(
+        `SELECT id, invoice_id AS "invoiceId", request_hash AS "requestHash", receipt_number AS "receiptNumber", amount_paise AS "amountPaise", created_at AS "createdAt"
+         FROM invoice_payment WHERE tenant_id = $1::uuid AND actor_user_id = $2 AND idempotency_key = $3`,
+        [req.principal.tenantId, req.principal.userId, req.idempotencyKey],
+      );
+      if (replay.rowCount) {
+        if (replay.rows[0].requestHash !== requestHash || replay.rows[0].invoiceId !== req.params.id) {
+          await client.query('ROLLBACK');
+          return sendError(res, 409, 'IDEMPOTENCY_KEY_REUSED', 'This idempotency key was already used for a different receipt.');
+        }
+        await client.query('COMMIT');
+        const invoice = await loadInvoiceBundle(pool, req.params.id, req.principal.tenantId);
+        return res.status(200).json({ invoice, receipt: replay.rows[0], replayed: true });
+      }
+
+      const invoiceResult = await client.query(
+        `SELECT id, financial_year AS "financialYear", total_paise AS "totalPaise"
+         FROM invoice WHERE id = $1::uuid AND tenant_id = $2::uuid FOR UPDATE`,
+        [req.params.id, req.principal.tenantId],
+      );
+      if (!invoiceResult.rowCount) {
+        await client.query('ROLLBACK');
+        return sendError(res, 404, 'INVOICE_NOT_FOUND', 'Invoice was not found.');
+      }
+      const invoiceRow = invoiceResult.rows[0];
+      const received = await client.query(
+        `SELECT COALESCE(SUM(amount_paise), 0)::bigint AS total
+         FROM invoice_payment WHERE tenant_id = $1::uuid AND invoice_id = $2::uuid
+           AND status = 'RECEIVED' AND method IN ('CASH', 'OLD_METAL')`,
+        [req.principal.tenantId, req.params.id],
+      );
+      const receivedPaise = Number(received.rows[0].total);
+      const invoiceTotalPaise = Number(invoiceRow.totalPaise);
+      if (!Number.isSafeInteger(receivedPaise) || !Number.isSafeInteger(invoiceTotalPaise) || receivedPaise > invoiceTotalPaise) {
+        throw new Error('Stored invoice settlement total is outside the exact-money range.');
+      }
+      const outstandingPaise = invoiceTotalPaise - receivedPaise;
+      if (amountPaise > outstandingPaise) {
+        await client.query('ROLLBACK');
+        return sendError(res, 400, 'SETTLEMENT_EXCEEDS_OUTSTANDING', 'Cash receipt cannot exceed the current invoice balance.');
+      }
+
+      const { financialYear } = businessDateAndFinancialYear();
+      const counter = await client.query(
+        `INSERT INTO payment_counter (tenant_id, financial_year, next_number) VALUES ($1::uuid, $2, 1)
+         ON CONFLICT (tenant_id, financial_year) DO UPDATE SET next_number = payment_counter.next_number + 1
+         RETURNING next_number`,
+        [req.principal.tenantId, financialYear],
+      );
+      const receiptNumber = `RCPT/${financialYear}/${String(counter.rows[0].next_number).padStart(6, '0')}`;
+      const payment = await client.query(
+        `INSERT INTO invoice_payment (tenant_id, invoice_id, method, status, amount_paise, actor_user_id, receipt_number, idempotency_key, request_hash)
+         VALUES ($1::uuid, $2::uuid, 'CASH', 'RECEIVED', $3, $4, $5, $6, $7)
+         RETURNING id, invoice_id AS "invoiceId", receipt_number AS "receiptNumber", amount_paise AS "amountPaise", created_at AS "createdAt"`,
+        [req.principal.tenantId, req.params.id, amountPaise, req.principal.userId, receiptNumber, req.idempotencyKey, requestHash],
+      );
+      const nextOutstandingPaise = outstandingPaise - amountPaise;
+      await client.query(
+        'UPDATE invoice SET outstanding_paise = $3 WHERE id = $1::uuid AND tenant_id = $2::uuid',
+        [req.params.id, req.principal.tenantId, nextOutstandingPaise],
+      );
+      const balancedReceipt = [{ account: 'CASH', debit: amountPaise, credit: 0 }, { account: 'ACCOUNTS_RECEIVABLE', debit: 0, credit: amountPaise }];
+      if (balancedReceipt.reduce((sum, entry) => sum + entry.debit, 0) !== balancedReceipt.reduce((sum, entry) => sum + entry.credit, 0)) {
+        throw new Error('Cash receipt journal invariant failed; receipt transaction rolled back.');
+      }
+      for (const entry of balancedReceipt) {
+        await client.query(
+          `INSERT INTO ledger_entry (tenant_id, invoice_id, account_code, debit_paise, credit_paise, actor_user_id)
+           VALUES ($1::uuid, $2::uuid, $3, $4, $5, $6)`,
+          [req.principal.tenantId, req.params.id, entry.account, entry.debit, entry.credit, req.principal.userId],
+        );
+      }
+      await client.query('COMMIT');
+      const invoice = await loadInvoiceBundle(pool, req.params.id, req.principal.tenantId);
+      return res.status(201).json({ invoice, receipt: payment.rows[0], replayed: false });
+    } catch (error) {
+      try { await client.query('ROLLBACK'); } catch { /* transaction may already be closed */ }
+      if (error?.code === '23503') return sendError(res, 400, 'INVALID_REFERENCE', 'A referenced tenant record is no longer available.');
+      if (error?.code === '23505') return sendError(res, 409, 'SETTLEMENT_CONFLICT', 'The receipt conflicts with a previously recorded request.');
+      throw error;
+    } finally {
+      client.release();
+    }
+  });
+
   app.get('/api/invoices', authenticate, async (req, res) => {
     const { tenantId, ...rawQuery } = req.query;
     if (tenantId !== undefined) return sendError(res, 400, 'TENANT_FILTER_NOT_ALLOWED', 'Tenant scope comes from the authenticated membership.');
@@ -581,6 +695,36 @@ export function createApp({ auth, pool, config }) {
     const invoice = await loadInvoiceBundle(pool, req.params.id, req.principal.tenantId);
     if (!invoice) return sendError(res, 404, 'INVOICE_NOT_FOUND', 'Invoice was not found.');
     res.json({ invoice });
+  });
+
+  app.get('/api/reports/trial-balance', authenticate, async (req, res) => {
+    const parsed = trialBalanceRangeSchema.safeParse(req.query);
+    if (!parsed.success) return sendError(res, 400, 'INVALID_REPORT_RANGE', 'Use valid inclusive YYYY-MM-DD report dates.');
+    const values = [req.principal.tenantId];
+    const filters = ['tenant_id = $1::uuid'];
+    if (parsed.data.from) {
+      values.push(parsed.data.from);
+      filters.push(`(created_at AT TIME ZONE 'Asia/Kolkata')::date >= $${values.length}::date`);
+    }
+    if (parsed.data.to) {
+      values.push(parsed.data.to);
+      filters.push(`(created_at AT TIME ZONE 'Asia/Kolkata')::date <= $${values.length}::date`);
+    }
+    const result = await pool.query(
+      `SELECT account_code AS "accountCode", SUM(debit_paise)::text AS "debitPaise", SUM(credit_paise)::text AS "creditPaise"
+       FROM ledger_entry WHERE ${filters.join(' AND ')} GROUP BY account_code ORDER BY account_code`,
+      values,
+    );
+    let trialBalance;
+    try { trialBalance = calculateTrialBalance(result.rows); }
+    catch { return sendError(res, 409, 'LEDGER_INVALID', 'Posted ledger contains invalid or out-of-range entries.'); }
+    if (!trialBalance.isBalanced) return sendError(res, 409, 'LEDGER_OUT_OF_BALANCE', 'Posted ledger does not balance for the selected period.');
+    res.json({
+      basis: 'posted-ledger-movements',
+      timezone: 'Asia/Kolkata',
+      period: { from: parsed.data.from || null, to: parsed.data.to || null },
+      ...trialBalance,
+    });
   });
 
   app.get('/api/memberships', async (req, res) => {

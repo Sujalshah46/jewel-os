@@ -3,6 +3,7 @@ import assert from 'node:assert/strict';
 import { csvCell, serializeCsv } from '../src/utils/csv.js';
 import { addStockItemToCart, createBillingCartItem, createCatalogueEstimate } from '../src/utils/billingCart.js';
 import { calculateCatalogQuote } from '../server/pricing.js';
+import { calculateTrialBalance } from '../server/accounting.js';
 
 test('CSV text neutralizes spreadsheet formulas while keeping numbers numeric', () => {
   for (const value of ['=1+1', '+SUM(A1:A2)', '-CMD()', '@SUM(1,1)', '\t=1+1', '\r@SUM(1,1)']) {
@@ -69,4 +70,27 @@ test('server quote uses a single calculation rule, zero tax, and an exact GST co
   const zeroTax = calculateCatalogQuote({ ...example, gstRateBps: 0 });
   assert.equal(zeroTax.totalPricePaise, zeroTax.taxableAmountPaise);
   assert.equal(zeroTax.cgstPaise + zeroTax.sgstPaise, 0);
+});
+
+test('trial balance summarizes sale and cash receipt journal entries in exact paise', () => {
+  const trial = calculateTrialBalance([
+    { accountCode: 'ACCOUNTS_RECEIVABLE', debitPaise: '200000', creditPaise: '0' },
+    { accountCode: 'CASH', debitPaise: '50000', creditPaise: '0' },
+    { accountCode: 'SALES_REVENUE', debitPaise: '0', creditPaise: '220000' },
+    { accountCode: 'OUTPUT_CGST', debitPaise: '0', creditPaise: '30000' },
+    { accountCode: 'CASH', debitPaise: '25000', creditPaise: '0' },
+    { accountCode: 'ACCOUNTS_RECEIVABLE', debitPaise: '0', creditPaise: '25000' },
+  ]);
+  assert.equal(trial.isBalanced, true);
+  assert.equal(trial.totalDebitsPaise, 275000);
+  assert.equal(trial.totalCreditsPaise, 275000);
+  const receivable = trial.items.find(item => item.accountCode === 'ACCOUNTS_RECEIVABLE');
+  assert.equal(receivable.debitBalancePaise, 175000);
+  assert.equal(receivable.creditBalancePaise, 0);
+});
+
+test('trial balance flags unequal journals and rejects invalid side or unsafe money values', () => {
+  assert.equal(calculateTrialBalance([{ accountCode: 'CASH', debitPaise: 10, creditPaise: 0 }]).isBalanced, false);
+  assert.throws(() => calculateTrialBalance([{ accountCode: 'CASH', debitPaise: 10, creditPaise: 1 }]), /exact paise/);
+  assert.throws(() => calculateTrialBalance([{ accountCode: 'CASH', debitPaise: Number.MAX_SAFE_INTEGER + 1, creditPaise: 0 }]), /exact paise/);
 });

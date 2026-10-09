@@ -25,8 +25,8 @@ Close every repository-fixable finding in `jewelry-os-audit/REPORT.md`, or expli
 | DB-003 IDs and fiscal numbers | Partial | Operational invoices use database UUIDs and tenant/FY-scoped counters in the sale transaction. Repayment, return, and other numbering remain unimplemented. |
 | FIN-001 Server-derived finalization | Partial | An operational sale endpoint validates tenant references, recalculates amounts from persisted price inputs, and atomically commits sale, stock, invoice, payment, and ledger rows. Database behavior still needs integration verification; other settlement workflows are not implemented. |
 | FIN-002 Balanced journals | Partial | Finalization asserts balanced paise postings for cash, old metal, receivable, revenue, CGST, and SGST. This is a provisional demo-rule mapping; accountant approval and other settlement/account lifecycles remain open. |
-| FIN-003 Repayment settlement truth | Open | Loan/receipt and invoice balances remain legacy demo state. |
-| FIN-004 Ledger-backed reports | Open | Existing reports still use estimates/plugs instead of a verified authoritative ledger. |
+| FIN-003 Repayment settlement truth | Partial | A provisional operational cash receipt endpoint now locks the invoice, calculates balance from received tenders, issues an idempotent tenant/FY receipt number, and posts matching cash/receivable entries. It has not passed PostgreSQL integration tests; loans and non-cash settlement confirmation remain disabled. |
+| FIN-004 Ledger-backed reports | Partial | A tenant-scoped, date-filtered trial-balance API now aggregates posted ledger entries and refuses invalid/out-of-balance periods. The complete statements suite, legacy demo plugs, and PostgreSQL integration verification remain. |
 | FIN-005 Tax precision and zero-rate behavior | Partial | Explicit 0% GST remains zero and CGST/SGST reconcile to rounded GST; server pricing stores paise snapshots. Full worked-example and database tests remain. |
 | FIN-006 Immutable invoice issuer/zero values | Partial | Operational invoices store issuer and priced-line snapshots, including zero tax. Legacy invoice rendering/reprint immutability is not fully corrected. |
 | FIN-007 Pricing-field/product-type wiring | Partial | Operational stock pricing feeds the shared calculation helper; catalogue estimate/billing handoff preserves selected values. Product-specific strategies and UI migration remain. |
@@ -69,8 +69,10 @@ Close every repository-fixable finding in `jewelry-os-audit/REPORT.md`, or expli
 - [x] Create a provisional server-side pricing contract for supported demo jewellery pricing and persist invoice snapshots (FIN-005–007).
 - [x] Recompute and validate totals, discounts, tax, payments, credit, and referenced customers/items at sale finalization (FIN-001).
 - [ ] Obtain accountant review of the provisional cash, bank-pending, debtor, exchange-metal, tax, rounding, refund, and advance posting rules (FIN-002).
-- [ ] Link repayment receipts to invoices and derive outstanding balances from settlement history without changing issued snapshots (FIN-003).
-- [ ] Derive financial reports from the authoritative journal and remove plug/estimate “reconciled” claims (FIN-004).
+- [x] Add a provisional cash receipt lifecycle linked to invoices; derive the current balance from received tender history without changing issued pricing snapshots (FIN-003).
+- [ ] Run PostgreSQL integration cases for partial collection, replay, overpayment, and concurrent receipt attempts; get accountant review before operational use.
+- [x] Add a tenant-scoped trial-balance report from the operational journal with exact-paise reconciliation and date filters (FIN-004).
+- [ ] Add independently reconciled P&L/balance-sheet/stock reports and remove legacy demo plug/estimate “reconciled” claims (FIN-004).
 - **Acceptance:** exact-paise worked examples including explicit zero tax; all valid journals balance; invalid/forged totals and references reject; invoice/customer/report balances reconcile; historical issuer and zero-valued fields remain stable after later firm edits.
 
 ### Phase 4 — Complete recovery, imports, and legacy-data protections

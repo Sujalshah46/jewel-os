@@ -360,6 +360,109 @@ test('old-metal exchange posts a receipt and balanced scrap asset; pending bank 
   assert.equal((await pool.query('SELECT COUNT(*)::int AS total FROM ledger_entry WHERE invoice_id = $1 AND account_code = \'CASH\'', [pendingInvoice.id])).rows[0].total, 0);
 });
 
+test('cash settlements reduce outstanding once, issue a receipt, and post balanced journals', async () => {
+  const stock = await createApiStock('SALE-CASH-SETTLEMENT-1');
+  const customer = await pool.query("INSERT INTO customer (tenant_id, name, mobile) VALUES ($1, 'Synthetic Settlement Customer', '9000000097') RETURNING id", [tenantA]);
+  const created = await request('/api/invoices', {
+    method: 'POST', cookie: ownerCookie, tenantId: tenantA, csrfToken: ownerCsrf,
+    headers: { 'Idempotency-Key': 'sale-settlement-base-01' },
+    body: JSON.stringify({ branchId: branchA, customerId: customer.rows[0].id, items: [{ stockItemId: stock.id, quantity: 1 }] }),
+  });
+  assert.equal(created.status, 201, await created.clone().text());
+  const invoice = (await created.json()).invoice;
+  const amountPaise = 10000;
+  const headers = { 'Idempotency-Key': 'cash-settlement-key-001' };
+  const path = `/api/invoices/${invoice.id}/cash-settlements`;
+
+  const forgedTenant = await request(path, {
+    method: 'POST', cookie: ownerCookie, tenantId: tenantB, csrfToken: ownerCsrf, headers,
+    body: JSON.stringify({ amountPaise }),
+  });
+  assert.equal(forgedTenant.status, 404);
+  const missingCsrf = await request(path, {
+    method: 'POST', cookie: ownerCookie, tenantId: tenantA, headers,
+    body: JSON.stringify({ amountPaise }),
+  });
+  assert.equal(missingCsrf.status, 403);
+
+  const settled = await request(path, {
+    method: 'POST', cookie: ownerCookie, tenantId: tenantA, csrfToken: ownerCsrf, headers,
+    body: JSON.stringify({ amountPaise }),
+  });
+  assert.equal(settled.status, 201, await settled.clone().text());
+  const first = await settled.json();
+  assert.equal(first.replayed, false);
+  assert.match(first.receipt.receiptNumber, /^RCPT\/\d{2}-\d{2}\/\d{6}$/);
+  assert.equal(Number(first.invoice.outstandingPaise), Number(invoice.totalPaise) - amountPaise);
+
+  const replay = await request(path, {
+    method: 'POST', cookie: ownerCookie, tenantId: tenantA, csrfToken: ownerCsrf, headers,
+    body: JSON.stringify({ amountPaise }),
+  });
+  assert.equal(replay.status, 200);
+  const replayed = await replay.json();
+  assert.equal(replayed.replayed, true);
+  assert.equal(replayed.receipt.id, first.receipt.id);
+  const changed = await request(path, {
+    method: 'POST', cookie: ownerCookie, tenantId: tenantA, csrfToken: ownerCsrf, headers,
+    body: JSON.stringify({ amountPaise: amountPaise + 1 }),
+  });
+  assert.equal(changed.status, 409);
+
+  const overpayment = await request(path, {
+    method: 'POST', cookie: ownerCookie, tenantId: tenantA, csrfToken: ownerCsrf,
+    headers: { 'Idempotency-Key': 'cash-settlement-overpay-01' },
+    body: JSON.stringify({ amountPaise: Number(invoice.totalPaise) }),
+  });
+  assert.equal(overpayment.status, 400);
+  const ledger = await pool.query(
+    'SELECT SUM(debit_paise)::bigint AS debits, SUM(credit_paise)::bigint AS credits FROM ledger_entry WHERE invoice_id = $1',
+    [invoice.id],
+  );
+  assert.equal(ledger.rows[0].debits, ledger.rows[0].credits);
+  const receipts = await pool.query("SELECT COUNT(*)::int AS total FROM invoice_payment WHERE invoice_id = $1 AND receipt_number IS NOT NULL", [invoice.id]);
+  assert.equal(receipts.rows[0].total, 1);
+
+  const trialBalance = await request('/api/reports/trial-balance', { cookie: ownerCookie, tenantId: tenantA });
+  assert.equal(trialBalance.status, 200, await trialBalance.clone().text());
+  const report = await trialBalance.json();
+  assert.equal(report.isBalanced, true);
+  assert.equal(report.totalDebitsPaise, report.totalCreditsPaise);
+  const otherTenantReport = await request('/api/reports/trial-balance', { cookie: ownerCookie, tenantId: tenantB });
+  assert.equal(otherTenantReport.status, 200);
+  assert.deepEqual((await otherTenantReport.json()).items, []);
+  assert.equal((await request('/api/reports/trial-balance?from=2026-02-31', { cookie: ownerCookie, tenantId: tenantA })).status, 400);
+});
+
+test('concurrent cash receipts cannot collect the same outstanding balance twice', async () => {
+  const stock = await createApiStock('SALE-CASH-SETTLEMENT-RACE-1');
+  const customer = await pool.query("INSERT INTO customer (tenant_id, name, mobile) VALUES ($1, 'Synthetic Settlement Race', '9000000096') RETURNING id", [tenantA]);
+  const created = await request('/api/invoices', {
+    method: 'POST', cookie: ownerCookie, tenantId: tenantA, csrfToken: ownerCsrf,
+    headers: { 'Idempotency-Key': 'sale-settlement-race-01' },
+    body: JSON.stringify({ branchId: branchA, customerId: customer.rows[0].id, items: [{ stockItemId: stock.id, quantity: 1 }] }),
+  });
+  assert.equal(created.status, 201, await created.clone().text());
+  const invoice = (await created.json()).invoice;
+  const settle = key => request(`/api/invoices/${invoice.id}/cash-settlements`, {
+    method: 'POST', cookie: ownerCookie, tenantId: tenantA, csrfToken: ownerCsrf,
+    headers: { 'Idempotency-Key': key }, body: JSON.stringify({ amountPaise: Number(invoice.totalPaise) }),
+  });
+  const results = await Promise.all([settle('cash-settlement-race-a1'), settle('cash-settlement-race-b1')]);
+  assert.deepEqual(results.map(result => result.status).sort(), [201, 400]);
+  const final = await pool.query(
+    `SELECT i.outstanding_paise,
+            (SELECT COUNT(*)::int FROM invoice_payment WHERE invoice_id = i.id AND receipt_number IS NOT NULL) AS receipt_count,
+            (SELECT SUM(debit_paise)::bigint FROM ledger_entry WHERE invoice_id = i.id) AS debits,
+            (SELECT SUM(credit_paise)::bigint FROM ledger_entry WHERE invoice_id = i.id) AS credits
+     FROM invoice i WHERE i.id = $1`,
+    [invoice.id],
+  );
+  assert.equal(Number(final.rows[0].outstanding_paise), 0);
+  assert.equal(final.rows[0].receipt_count, 1);
+  assert.equal(final.rows[0].debits, final.rows[0].credits);
+});
+
 test('parallel sales of the last unit yield one complete invoice and no partial state', async () => {
   const stock = await createApiStock('SALE-RACE-1');
   const cashPaise = Number(stock.catalogPricePaise);

@@ -176,6 +176,15 @@ export const invoiceCounters = pgTable('invoice_counter', {
   check('invoice_counter_next_number_positive', sql`${table.nextNumber} >= 0`),
 ]);
 
+export const paymentCounters = pgTable('payment_counter', {
+  tenantId: uuid('tenant_id').notNull().references(() => tenants.id, { onDelete: 'restrict' }),
+  financialYear: varchar('financial_year', { length: 5 }).notNull(),
+  nextNumber: integer('next_number').notNull().default(0),
+}, table => [
+  uniqueIndex('payment_counter_tenant_fy_key').on(table.tenantId, table.financialYear),
+  check('payment_counter_next_number_nonnegative', sql`${table.nextNumber} >= 0`),
+]);
+
 export const invoices = pgTable('invoice', {
   id: uuid('id').primaryKey().defaultRandom(),
   tenantId: uuid('tenant_id').notNull().references(() => tenants.id, { onDelete: 'restrict' }),
@@ -246,9 +255,14 @@ export const invoicePayments = pgTable('invoice_payment', {
   amountPaise: bigint('amount_paise', { mode: 'number' }).notNull(),
   reference: varchar('reference', { length: 120 }),
   actorUserId: text('actor_user_id').notNull().references(() => users.id, { onDelete: 'restrict' }),
+  receiptNumber: varchar('receipt_number', { length: 32 }),
+  idempotencyKey: varchar('idempotency_key', { length: 128 }),
+  requestHash: varchar('request_hash', { length: 64 }),
   createdAt: timestamp('created_at', { withTimezone: true }).notNull().defaultNow(),
 }, table => [
   index('invoice_payment_tenant_invoice_idx').on(table.tenantId, table.invoiceId, table.createdAt, table.id),
+  uniqueIndex('invoice_payment_tenant_receipt_number_key').on(table.tenantId, table.receiptNumber).where(sql`${table.receiptNumber} IS NOT NULL`),
+  uniqueIndex('invoice_payment_tenant_actor_idempotency_key').on(table.tenantId, table.actorUserId, table.idempotencyKey).where(sql`${table.idempotencyKey} IS NOT NULL`),
   foreignKey({ columns: [table.tenantId, table.invoiceId], foreignColumns: [invoices.tenantId, invoices.id], name: 'invoice_payment_tenant_invoice_fk' }),
   check('invoice_payment_method_allowed', sql`${table.method} IN ('CASH', 'BANK_PENDING', 'OLD_METAL')`),
   check('invoice_payment_status_allowed', sql`${table.status} IN ('RECEIVED', 'PENDING')`),
