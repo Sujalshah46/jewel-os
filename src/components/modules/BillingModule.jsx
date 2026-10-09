@@ -558,7 +558,7 @@ export default function BillingModule() {
           )}
         </div>
 
-        {/* Barcode / RFID Fast Scanner Input */}
+        {/* Demo inventory item code input */}
         <div className="md:col-span-2">
           <label className="block text-xs font-semibold text-slate-300 mb-1">
             Add Product Barcode / SKU Code (e.g. 1201 / 1150 / LRING33)
@@ -569,7 +569,7 @@ export default function BillingModule() {
                 type="text"
                 value={barcodeInput}
                 onChange={(e) => setBarcodeInput(e.target.value)}
-                placeholder="Scan barcode or type code and press Enter..."
+                placeholder="Type an item code and press Enter..."
                 className="w-full bg-slate-950 border border-slate-700 focus:border-amber-400 rounded-xl pl-9 pr-3 py-2 text-sm text-slate-100 placeholder-slate-500 focus:outline-none font-mono"
               />
               <QrCode className="w-4 h-4 text-amber-400 absolute left-3 top-2.5" />
@@ -645,7 +645,7 @@ export default function BillingModule() {
           <div className="text-center py-10 bg-slate-950/40 rounded-xl border border-dashed border-slate-800">
             <Receipt className="w-10 h-10 text-slate-600 mx-auto mb-2" />
             <p className="text-sm font-semibold text-slate-300">No items in bill yet</p>
-            <p className="text-xs text-slate-500 mt-1">Scan a barcode above or click "Load Audit Sample (IS86)" to begin.</p>
+            <p className="text-xs text-slate-500 mt-1">Type an item code above or click "Load Audit Sample (IS86)" to begin.</p>
           </div>
         ) : (
           <div className="overflow-x-auto rounded-xl border border-slate-800">

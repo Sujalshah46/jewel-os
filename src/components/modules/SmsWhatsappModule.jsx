@@ -63,7 +63,7 @@ export default function SmsWhatsappModule() {
       <rect width="600" height="380" fill="url(#bg)" rx="16"/>
       <rect x="12" y="12" width="576" height="356" fill="none" stroke="url(#gold)" stroke-width="2" rx="12" stroke-opacity="0.6"/>
       <text x="300" y="55" fill="url(#gold)" font-family="serif" font-size="22" font-weight="bold" text-anchor="middle" letter-spacing="3">${activeFirm.name || 'KRISHNA JEWELLERS'}</text>
-      <text x="300" y="78" fill="#94a3b8" font-family="sans-serif" font-size="11" text-anchor="middle" letter-spacing="1">BIS HALLMARK CERTIFIED • OFFICIAL DAILY BULLION RATE BOARD</text>
+      <text x="300" y="78" fill="#94a3b8" font-family="sans-serif" font-size="11" text-anchor="middle" letter-spacing="1">SYNTHETIC DEMO DATA • NOT OFFICIAL OR BIS CERTIFIED</text>
       <line x1="60" y1="95" x2="540" y2="95" stroke="#334155" stroke-width="1"/>
       
       <!-- Gold 22k Box -->
@@ -333,51 +333,13 @@ export default function SmsWhatsappModule() {
   // WhatsApp Cloud API Direct Dispatch
   const handleWhatsAppCloudApi = (e) => {
     e?.preventDefault();
-    let recipientCount = customers.length;
-    if (targetGroup === 'udhaar') {
-      recipientCount = customers.filter(c => c.balanceUdhaar > 0).length || 5;
-    } else if (targetGroup === 'vip') {
-      recipientCount = Math.max(3, Math.floor(customers.length / 3));
-    } else if (targetGroup === 'test') {
-      recipientCount = 1;
-    }
-
-    setSentSuccess({
-      type: 'whatsapp_api',
-      title: 'WhatsApp Cloud API Broadcast Dispatched',
-      recipients: recipientCount,
-      hasImage: !!attachedImage,
-      imageName: attachedImage?.name,
-      mode: attachedImage ? 'Rich Media Template (Image + Caption)' : 'Standard Text Template'
-    });
-    setTimeout(() => setSentSuccess(null), 5000);
+    alert('Demonstration only: no messages were sent and no credits were charged. A server integration is required.');
   };
 
   // SMS Broadcast Dispatch
   const handleSendSms = (e) => {
     e?.preventDefault();
-    let recipientCount = customers.length;
-    if (targetGroup === 'udhaar') {
-      recipientCount = customers.filter(c => c.balanceUdhaar > 0).length || 5;
-    } else if (targetGroup === 'vip') {
-      recipientCount = Math.max(3, Math.floor(customers.length / 3));
-    } else if (targetGroup === 'test') {
-      recipientCount = 1;
-    }
-
-    const creditsPerMsg = smsDeliveryMode === 'mms' ? 1 : smsCreditsNeeded;
-    const totalCreditsUsed = recipientCount * creditsPerMsg;
-
-    setSentSuccess({
-      type: 'sms',
-      title: smsDeliveryMode === 'mms' ? 'Carrier MMS Broadcast Dispatched' : 'SMS Broadcast Dispatched',
-      recipients: recipientCount,
-      creditsUsed: totalCreditsUsed,
-      hasImage: !!attachedImage && includeInSms,
-      shortlink: attachedImage?.shortlink,
-      mode: smsDeliveryMode === 'mms' ? 'Carrier MMS (Direct In-Inbox Multimedia)' : 'DLT SMS with Cloud Media Shortlink'
-    });
-    setTimeout(() => setSentSuccess(null), 5000);
+    alert('Demonstration only: no messages were sent and no credits were charged. A server integration is required.');
   };
 
   return (

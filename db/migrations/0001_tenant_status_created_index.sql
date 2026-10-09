@@ -1,0 +1,1 @@
+CREATE INDEX "tenant_status_created_idx" ON "tenant" USING btree ("status","created_at");

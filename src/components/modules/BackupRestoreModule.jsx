@@ -1,3 +1,4 @@
+import { MAX_BACKUP_BYTES } from '../../utils/backup';
 import React, { useRef } from 'react';
 import { useJewellery } from '../../context/JewelleryContext';
 import {
@@ -18,7 +19,11 @@ export default function BackupRestoreModule() {
   const handleFileUpload = (e) => {
     const file = e.target.files?.[0];
     if (!file) return;
+    e.target.value = '';
+    if (file.size > MAX_BACKUP_BYTES) { alert('Backup exceeds the 10 MB limit.'); return; }
+    if (!window.confirm('Replace the entire synthetic workspace? Export a backup first. Incomplete legacy backups require manual recovery.')) return;
     const reader = new FileReader();
+    reader.onerror = () => alert('Backup could not be read. No records were changed.');
     reader.onload = (event) => {
       try {
         const json = JSON.parse(event.target?.result);
@@ -56,7 +61,7 @@ export default function BackupRestoreModule() {
             </div>
             <h3 className="font-bold text-base text-slate-100">Export Complete Database</h3>
             <p className="text-xs text-slate-400 mt-1">
-              Download your entire Jewellery OS database (firms, rates, stock, customers, bills, udhaar, daybook) as a secure standalone JSON file.
+              Download your entire Jewellery OS database (firms, rates, stock, customers, bills, udhaar, daybook) as an unencrypted JSON file for synthetic records.
             </p>
           </div>
 
@@ -77,7 +82,7 @@ export default function BackupRestoreModule() {
             </div>
             <h3 className="font-bold text-base text-slate-100">Restore From Backup</h3>
             <p className="text-xs text-slate-400 mt-1">
-              Upload a previously exported Jewellery OS JSON backup file to instantly restore all business records.
+              Upload a previously exported Jewellery OS JSON backup file to restore a complete version 2 synthetic snapshot. Incomplete legacy backups require manual recovery.
             </p>
           </div>
 

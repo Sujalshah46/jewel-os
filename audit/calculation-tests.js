@@ -123,3 +123,4 @@ const failCount = results.filter(r => !r.passed).length;
 console.log(`\n========================================`);
 console.log(`TOTAL TESTS: ${results.length} | PASSED: ${passCount} | FAILED: ${failCount}`);
 console.log(`========================================`);
+if (failCount > 0) process.exitCode = 1;

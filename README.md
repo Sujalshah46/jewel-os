@@ -1,3 +1,20 @@
+> **Release status: operational foundation verified locally, full ERP launch still gated.** The operational customer UI and tenant-scoped stock, invoice, cash-settlement and trial-balance APIs now use Better Auth and PostgreSQL. Demonstration workflows remain separate and must contain synthetic data only. Production deployment, off-host backup schedules/retention, accountant approval and the remaining business lifecycles still need release evidence.
+
+## Run modes and checks
+
+- `npm ci` installs locked dependencies (Node >=20.11; locally verified on Node 24).
+- `npm run dev` / `npm run build:demo` explicitly select the synthetic demo.
+- `npm run build` fails closed at startup because no operational/demo mode was selected; it is not a deployment command.
+- `npm run dev:operational` / `npm run build:operational` select the separate authenticated customer UI.
+- Follow [Operational development](docs/operational-development.md) to create a private `.env.operational`, migrate PostgreSQL, provision an owner and run the backend. No public sign-up or demo fallback is available.
+- `npm test` covers local regressions; `npm run test:all` additionally requires disposable PostgreSQL test, upgrade and restore databases and exercises real HTTP/SQL concurrency and an encrypted restore drill.
+- [Recovery runbook](docs/recovery-runbook.md) documents encrypted snapshots, independent keys, empty-target restores, row-digest reconciliation, session invalidation and deployment/monitoring gates. Systemd templates are provided under `ops/`; they are not deployed automatically.
+
+The synthetic demo writes one version 2 snapshot to `JEWELLERY_OS_DEMO_V2`. Old `JEWELLERY_OS_STATE_V1_*` records remain untouched; incomplete legacy backups require manual recovery. Browser storage is not a multi-user database. Operational endpoints never import those records automatically. The feature catalogue below describes legacy demonstrations; it is not an inventory of verified operational capabilities.
+
+
+---
+
 # 💎 JEWELLERY OS — Next-Generation Jewellery ERP & POS System
 
 **Jewellery OS** is a complete, custom-built ERP and Point of Sale (POS) application engineered for modern jewellery retailers, multi-branch stores, and SaaS enterprises.

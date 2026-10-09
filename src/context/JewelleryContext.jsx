@@ -22,6 +22,9 @@ import {
   INITIAL_INTEGRATIONS,
   INITIAL_AUDIT_LOGS
 } from '../data/initialAdminData';
+import { createBackup, loadDemoBackup, restoreDemoBackup, downloadJson, DEMO_STORAGE_KEY } from '../utils/backup';
+import { snapshotIssuer, invoiceJournal } from '../utils/invoices';
+import { DEMO_MODE } from '../utils/appMode';
 import { calculateJewelleryItem, calculateOldMetalExchange } from '../utils/calculations';
 
 // Business Date & Financial Year Helpers
@@ -46,31 +49,26 @@ export function getFinancialYearString(dateStr = getTodayBusinessDate()) {
   }
 }
 
-// Safe storage recovery helper to prevent blank startup crashes on malformed data
-function safeLoadStorage(key, defaultValue) {
-  try {
-    const saved = localStorage.getItem(key);
-    if (!saved) return defaultValue;
-    const parsed = JSON.parse(saved);
-    return parsed !== null && parsed !== undefined ? parsed : defaultValue;
-  } catch (err) {
-    console.warn(`[Jewellery OS] Corrupt local storage data at ${key}, falling back to default:`, err);
-    return defaultValue;
-  }
-}
-
 const JewelleryContext = createContext();
 
 const STORAGE_KEY = 'JEWELLERY_OS_STATE_V1';
 
 export function JewelleryProvider({ children }) {
-  // Load state from localStorage or initialize with seed data
+  if (!DEMO_MODE) throw new Error('Operational mode requires a verified backend.');
+  const [savedDemo] = useState(() => loadDemoBackup(localStorage));
+  const [storageError, setStorageError] = useState('');
+  const storageFields = { FIRMS: 'firms', RATES: 'dailyRates', STOCK: 'stock', CUSTOMERS: 'customers',
+    KARIGARS: 'karigars', INVOICES: 'invoices', UDHAAR: 'udhaarList', UDHAAR_REPAYMENTS: 'udhaarRepayments',
+    STOCK_MOVEMENTS: 'stockMovements', GENERAL_LEDGER: 'generalLedger', SCHEMES: 'schemes',
+    EXPENSES: 'expenses', DIARY: 'dailyDiary' };
+  const safeLoadStorage = (key, fallback) => savedDemo?.[storageFields[key.replace(STORAGE_KEY + '_', '')]] ?? fallback;
+  // Only the new synthetic namespace is loaded. Legacy records remain untouched.
   const [firms, setFirms] = useState(() => {
     return safeLoadStorage(STORAGE_KEY + '_FIRMS', INITIAL_FIRMS);
   });
 
   const [activeFirmId, setActiveFirmId] = useState(() => {
-    const saved = localStorage.getItem(STORAGE_KEY + '_ACTIVE_FIRM_ID');
+    const saved = savedDemo?.activeFirmId;
     return saved || firms[0]?.id || 'FIRM-001';
   });
 
@@ -89,21 +87,7 @@ export function JewelleryProvider({ children }) {
     }));
   });
 
-  const [customers, setCustomers] = useState(() => {
-    const saved = localStorage.getItem(STORAGE_KEY + '_CUSTOMERS');
-    if (!saved) return INITIAL_CUSTOMERS;
-    try {
-      const parsed = JSON.parse(saved);
-      const hasOtherTypes = parsed.some(c => c.userType === 'Supplier' || c.userType === 'Staff' || c.userType === 'Money Lender');
-      if (!hasOtherTypes) {
-        const nonCustomers = INITIAL_CUSTOMERS.filter(c => c.userType && c.userType !== 'Customer');
-        return [...parsed, ...nonCustomers];
-      }
-      return parsed;
-    } catch (e) {
-      return INITIAL_CUSTOMERS;
-    }
-  });
+  const [customers, setCustomers] = useState(() => savedDemo?.customers ?? INITIAL_CUSTOMERS);
 
   const [karigars, setKarigars] = useState(() => {
     return safeLoadStorage(STORAGE_KEY + '_KARIGARS', INITIAL_KARIGARS);
@@ -189,8 +173,8 @@ export function JewelleryProvider({ children }) {
   });
 
   const [karigarVouchers, setKarigarVouchers] = useState(() => {
-    const saved = localStorage.getItem(STORAGE_KEY + '_KARIGAR_VOUCHERS');
-    return saved ? JSON.parse(saved) : [
+    const saved = savedDemo?.karigarVouchers;
+    return saved ?? [
       {
         id: 'KV-101',
         karigarId: 'KAR-001',
@@ -205,8 +189,8 @@ export function JewelleryProvider({ children }) {
   });
 
   const [schemeEnrollments, setSchemeEnrollments] = useState(() => {
-    const saved = localStorage.getItem(STORAGE_KEY + '_SCHEME_ENROLLMENTS');
-    return saved ? JSON.parse(saved) : [
+    const saved = savedDemo?.schemeEnrollments;
+    return saved ?? [
       {
         id: 'ENR-101',
         schemeId: 'SCH-001',
@@ -226,41 +210,41 @@ export function JewelleryProvider({ children }) {
 
   // Admin & Multi-Tenant Platform State
   const [clients, setClients] = useState(() => {
-    const saved = localStorage.getItem(STORAGE_KEY + '_CLIENTS');
-    return saved ? JSON.parse(saved) : INITIAL_CLIENTS;
+    const saved = savedDemo?.clients;
+    return saved ?? INITIAL_CLIENTS;
   });
 
   const [activeClientId, setActiveClientId] = useState(() => {
-    return clients[0]?.id || 'CLIENT-001';
+    return savedDemo?.activeClientId ?? clients[0]?.id ?? '';
   });
 
   const [branches, setBranches] = useState(() => {
-    const saved = localStorage.getItem(STORAGE_KEY + '_BRANCHES');
-    return saved ? JSON.parse(saved) : INITIAL_BRANCHES;
+    const saved = savedDemo?.branches;
+    return saved ?? INITIAL_BRANCHES;
   });
 
   const [activeBranchId, setActiveBranchId] = useState(() => {
-    return branches[0]?.id || 'BR-001';
+    return savedDemo?.activeBranchId ?? branches[0]?.id ?? '';
   });
 
   const [staffUsers, setStaffUsers] = useState(() => {
-    const saved = localStorage.getItem(STORAGE_KEY + '_STAFF');
-    return saved ? JSON.parse(saved) : INITIAL_STAFF;
+    const saved = savedDemo?.staffUsers;
+    return saved ?? INITIAL_STAFF;
   });
 
   const [catalogueSettings, setCatalogueSettings] = useState(() => {
-    const saved = localStorage.getItem(STORAGE_KEY + '_CATALOGUE');
-    return saved ? JSON.parse(saved) : INITIAL_CATALOGUE_SETTINGS;
+    const saved = savedDemo?.catalogueSettings;
+    return saved ?? INITIAL_CATALOGUE_SETTINGS;
   });
 
   const [integrations, setIntegrations] = useState(() => {
-    const saved = localStorage.getItem(STORAGE_KEY + '_INTEGRATIONS');
-    return saved ? JSON.parse(saved) : INITIAL_INTEGRATIONS;
+    const saved = savedDemo?.integrations;
+    return saved ?? INITIAL_INTEGRATIONS;
   });
 
   const [auditLogs, setAuditLogs] = useState(() => {
-    const saved = localStorage.getItem(STORAGE_KEY + '_AUDIT_LOGS');
-    return saved ? JSON.parse(saved) : INITIAL_AUDIT_LOGS;
+    const saved = savedDemo?.auditLogs;
+    return saved ?? INITIAL_AUDIT_LOGS;
   });
 
   const [currentRole, setCurrentRole] = useState('Platform Super Admin');
@@ -312,86 +296,17 @@ export function JewelleryProvider({ children }) {
     ? (branches.find(b => b.id === activeBranchId) || branches[0])
     : INITIAL_BRANCHES[0];
 
-  // Save to localStorage when critical state changes
+  const demoState = { firms, activeFirmId, dailyRates, stock, customers, karigars, invoices, udhaarList, udhaarRepayments, stockMovements, generalLedger, schemes, expenses, dailyDiary, karigarVouchers, schemeEnrollments, clients, activeClientId, branches, activeBranchId, staffUsers, catalogueSettings, integrations, auditLogs };
+  // One atomic browser snapshot avoids partial writes across collection keys.
+  // This is still demonstration storage, without multi-user transaction guarantees.
   useEffect(() => {
-    localStorage.setItem(STORAGE_KEY + '_FIRMS', JSON.stringify(firms));
-  }, [firms]);
-
-  useEffect(() => {
-    localStorage.setItem(STORAGE_KEY + '_CLIENTS', JSON.stringify(clients));
-  }, [clients]);
-
-  useEffect(() => {
-    localStorage.setItem(STORAGE_KEY + '_BRANCHES', JSON.stringify(branches));
-  }, [branches]);
-
-  useEffect(() => {
-    localStorage.setItem(STORAGE_KEY + '_STAFF', JSON.stringify(staffUsers));
-  }, [staffUsers]);
-
-  useEffect(() => {
-    localStorage.setItem(STORAGE_KEY + '_CATALOGUE', JSON.stringify(catalogueSettings));
-  }, [catalogueSettings]);
-
-  useEffect(() => {
-    localStorage.setItem(STORAGE_KEY + '_INTEGRATIONS', JSON.stringify(integrations));
-  }, [integrations]);
-
-  useEffect(() => {
-    localStorage.setItem(STORAGE_KEY + '_AUDIT_LOGS', JSON.stringify(auditLogs));
-  }, [auditLogs]);
-
-  useEffect(() => {
-    localStorage.setItem(STORAGE_KEY + '_RATES', JSON.stringify(dailyRates));
-  }, [dailyRates]);
-
-  useEffect(() => {
-    localStorage.setItem(STORAGE_KEY + '_STOCK', JSON.stringify(stock));
-  }, [stock]);
-
-  useEffect(() => {
-    localStorage.setItem(STORAGE_KEY + '_CUSTOMERS', JSON.stringify(customers));
-  }, [customers]);
-
-  useEffect(() => {
-    localStorage.setItem(STORAGE_KEY + '_INVOICES', JSON.stringify(invoices));
-  }, [invoices]);
-
-  useEffect(() => {
-    localStorage.setItem(STORAGE_KEY + '_UDHAAR', JSON.stringify(udhaarList));
-  }, [udhaarList]);
-
-  useEffect(() => {
-    localStorage.setItem(STORAGE_KEY + '_KARIGARS', JSON.stringify(karigars));
-  }, [karigars]);
-
-  useEffect(() => {
-    localStorage.setItem(STORAGE_KEY + '_KARIGAR_VOUCHERS', JSON.stringify(karigarVouchers));
-  }, [karigarVouchers]);
-
-  useEffect(() => {
-    localStorage.setItem(STORAGE_KEY + '_SCHEMES', JSON.stringify(schemes));
-  }, [schemes]);
-
-  useEffect(() => {
-    localStorage.setItem(STORAGE_KEY + '_SCHEME_ENROLLMENTS', JSON.stringify(schemeEnrollments));
-  }, [schemeEnrollments]);
-
-  useEffect(() => {
-    localStorage.setItem(STORAGE_KEY + '_ACTIVE_FIRM_ID', activeFirmId);
-  }, [activeFirmId]);
-
-  useEffect(() => {
-    localStorage.setItem(STORAGE_KEY + '_UDHAAR_REPAYMENTS', JSON.stringify(udhaarRepayments));
-  }, [udhaarRepayments]);
-
-  useEffect(() => {
-    localStorage.setItem(STORAGE_KEY + '_STOCK_MOVEMENTS', JSON.stringify(stockMovements));
-  }, [stockMovements]);
-
-  useEffect(() => {
-    localStorage.setItem(STORAGE_KEY + '_GENERAL_LEDGER', JSON.stringify(generalLedger));
-  }, [generalLedger]);
+    try {
+      restoreDemoBackup(localStorage, createBackup(demoState));
+      setStorageError('');
+    } catch (error) {
+      setStorageError('Changes could not be saved. Export recovery data before reloading. ' + error.message);
+    }
+  }, [firms, activeFirmId, dailyRates, stock, customers, karigars, invoices, udhaarList, udhaarRepayments, stockMovements, generalLedger, schemes, expenses, dailyDiary, karigarVouchers, schemeEnrollments, clients, activeClientId, branches, activeBranchId, staffUsers, catalogueSettings, integrations, auditLogs]);
 
   // Live MCX ticker update simulation
   useEffect(() => {
@@ -429,11 +344,11 @@ export function JewelleryProvider({ children }) {
 
   // SaaS Client / Tenant Administration
   const addClient = (newClientData) => {
-    const clientId = 'CLIENT-' + Date.now().toString().slice(-4);
+    const clientId = 'CLIENT-' + crypto.randomUUID();
     const client = {
       id: clientId,
       name: newClientData.name,
-      code: newClientData.code || ('CL-' + Date.now().toString().slice(-4)),
+      code: newClientData.code || ('CL-' + crypto.randomUUID()),
       subdomain: newClientData.subdomain || newClientData.name.toLowerCase().replace(/[^a-z0-9]/g, ''),
       plan: newClientData.plan || 'Professional',
       status: newClientData.status || 'Active',
@@ -523,7 +438,7 @@ export function JewelleryProvider({ children }) {
   const addBranch = (newBranchData) => {
     const branch = {
       ...newBranchData,
-      id: 'BR-' + Date.now().toString().slice(-4),
+      id: 'BR-' + crypto.randomUUID(),
       firmId: newBranchData.firmId || activeFirm.id,
       status: newBranchData.status || 'Active',
       linkedStockCount: 0
@@ -551,9 +466,10 @@ export function JewelleryProvider({ children }) {
   const deleteBranch = (branchId) => {
     const targetBranch = branches.find(b => b.id === branchId);
     const hasLinkedStock = stock.some(s => s.branchId === branchId);
-    if (hasLinkedStock) {
-      throw new Error(`Cannot delete branch "${targetBranch?.name}". Branch contains active inventory items. Please transfer stock first.`);
+    if (hasLinkedStock || staffUsers.some(user => user.branchId === branchId)) {
+      throw new Error(`Cannot delete branch "${targetBranch?.name}". Branch is referenced by inventory or staff. Reassign those records first.`);
     }
+    if (activeBranchId === branchId) setActiveBranchId(branches.find(branch => branch.id !== branchId)?.id ?? '');
     setBranches(prev => prev.filter(b => b.id !== branchId));
     addAuditLog({
       action: 'Branch Deleted',
@@ -567,7 +483,7 @@ export function JewelleryProvider({ children }) {
   const addStaffUser = (newStaffData) => {
     const staff = {
       ...newStaffData,
-      id: 'STAFF-' + Date.now().toString().slice(-4),
+      id: 'STAFF-' + crypto.randomUUID(),
       branchId: newStaffData.branchId || branches[0]?.id || 'BR-001',
       status: newStaffData.status || 'Active',
       lastActive: 'Never'
@@ -616,24 +532,7 @@ export function JewelleryProvider({ children }) {
 
   // Integrations Ping & Update
   const testIntegrationConnection = (integrationId) => {
-    const target = integrations.find(i => i.id === integrationId);
-    setIntegrations(prev => prev.map(i => {
-      if (i.id === integrationId) {
-        return {
-          ...i,
-          status: 'Connected',
-          lastPing: 'Just now (HTTP 200 OK - Latency 24ms)'
-        };
-      }
-      return i;
-    }));
-    addAuditLog({
-      action: 'Integration Health Ping',
-      category: 'Integrations',
-      target: target?.name || integrationId,
-      details: 'Safe loopback endpoint pinged: Connection verified.'
-    });
-    return { success: true, latencyMs: 24, message: 'Ping handshake successful' };
+    return { success: false, message: 'Unavailable in synthetic demonstration mode. No network request was sent.' };
   };
 
   const updateIntegration = (integrationId, updatedFields) => {
@@ -707,7 +606,7 @@ export function JewelleryProvider({ children }) {
 
     // Record opening / purchase movement in stock ledger
     const movement = {
-      id: 'SM-' + Date.now().toString(36) + '-' + Math.random().toString(36).slice(2, 6),
+      id: 'SM-' + crypto.randomUUID(),
       movementNo: `MOV-${String(stockMovements.length + 1).padStart(4, '0')}`,
       firmId: activeFirm.id,
       firmCode: activeFirm.code,
@@ -733,6 +632,9 @@ export function JewelleryProvider({ children }) {
   };
 
   const deleteStockItem = (id) => {
+    if (invoices.some(invoice => invoice.items?.some(item => item.itemId === id))) {
+      throw new Error('Cannot delete stock referenced by an invoice. Preserve transaction history.');
+    }
     setStock(prev => prev.filter(item => item.id !== id));
   };
 
@@ -740,7 +642,7 @@ export function JewelleryProvider({ children }) {
   const addCustomer = (newCust) => {
     const cust = {
       ...newCust,
-      id: 'CUST-' + Date.now().toString().slice(-4),
+      id: 'CUST-' + crypto.randomUUID(),
       currentUdhaarBalance: 0,
       loyaltyPoints: 50
     };
@@ -781,6 +683,16 @@ export function JewelleryProvider({ children }) {
 
   // Invoicing & Sales actions
   const createInvoice = (invoiceData) => {
+    const posting = invoiceJournal(invoiceData, activeFirm.bankName);
+    if (!Array.isArray(invoiceData.items) || invoiceData.items.length === 0) throw new Error('Invoice requires items.');
+    const stockIds = invoiceData.items.map(item => item.itemId).filter(Boolean);
+    if (new Set(stockIds).size !== stockIds.length) throw new Error('Duplicate stock item in invoice.');
+    for (const id of stockIds) {
+      const item = stock.find(row => row.id === id);
+      if (!item || item.firmId !== activeFirm.id || item.firmCode !== activeFirm.code) {
+        throw new Error('Stock item is missing or belongs to another firm.');
+      }
+    }
     // 1. Prevent double selling of serialized items (INV-01)
     if (invoiceData.items && invoiceData.items.length > 0) {
       const billedItemIds = invoiceData.items.map(i => i.itemId).filter(Boolean);
@@ -809,7 +721,7 @@ export function JewelleryProvider({ children }) {
       throw new Error('Payment amounts cannot be negative.');
     }
 
-    // 4. Collision-safe sequential invoice numbering scoped by firm and FY
+    // Demonstration numbering only; concurrent allocation needs a database constraint.
     const fy = getFinancialYearString();
     const firmInvoices = invoices.filter(inv => (!inv.firmId || inv.firmId === activeFirm.id));
     const maxSeq = firmInvoices.reduce((max, inv) => {
@@ -818,13 +730,14 @@ export function JewelleryProvider({ children }) {
       return num > max ? num : max;
     }, firmInvoices.length + 86);
     const nextSeq = maxSeq + 1;
-    const invoiceId = 'INV-IS' + nextSeq;
-    const invoiceNo = `IS/${nextSeq}/24-25`;
+    const invoiceId = 'INV-' + crypto.randomUUID();
+    const invoiceNo = `IS/${nextSeq}/${fy}`;
 
     const invoiceDate = invoiceData.date || getTodayBusinessDate();
 
     const newInvoice = {
-      ...invoiceData,
+      ...structuredClone(invoiceData),
+      firmSnapshot: snapshotIssuer(activeFirm),
       id: invoiceId,
       invoiceNo,
       date: invoiceDate,
@@ -839,9 +752,10 @@ export function JewelleryProvider({ children }) {
     // If there is an unpaid balance, book to Udhaar
     if (balanceDue > 0 && invoiceData.customerId) {
       const newUdhaar = {
-        id: 'UDH-' + Date.now().toString(36) + '-' + Math.random().toString(36).slice(2, 6),
+        id: 'UDH-' + crypto.randomUUID(),
         invoiceNo: 'KUM' + (udhaarList.length + 83),
         mainInvoiceNo: invoiceNo,
+        invoiceId,
         date: newInvoice.date,
         firmId: activeFirm.id,
         firmCode: activeFirm.code,
@@ -879,7 +793,7 @@ export function JewelleryProvider({ children }) {
       setStock(prev => prev.map(item => soldItemIds.includes(item.id) ? { ...item, status: 'Sold Out' } : item));
 
       const newMovements = invoiceData.items.map((it, idx) => ({
-        id: 'SM-' + Date.now().toString(36) + '-' + idx,
+        id: 'SM-' + crypto.randomUUID(),
         movementNo: `MOV-${String(stockMovements.length + idx + 1).padStart(4, '0')}`,
         firmId: activeFirm.id,
         firmCode: activeFirm.code,
@@ -899,27 +813,16 @@ export function JewelleryProvider({ children }) {
     }
 
     // Post Balanced Double-Entry Journal Entry
-    const bankTotal = cheque + card + online;
-    const glDebits = [];
-    if (cash > 0) glDebits.push({ account: 'Cash in Hand (Counter)', amount: cash });
-    if (bankTotal > 0) glDebits.push({ account: `${activeFirm.bankName} (Current A/c)`, amount: bankTotal });
-    if (balanceDue > 0) glDebits.push({ account: `Customer Udhaar Debtors (${invoiceData.customerName})`, amount: balanceDue });
-
-    const glCredits = [
-      { account: 'Gold & Silver Sales Revenue', amount: Number(invoiceData.taxableAmount || (invoiceData.totalInvoiceAmount * 0.97)) },
-      { account: 'GST Output Tax (CGST + SGST)', amount: Number(invoiceData.totalTax || (invoiceData.totalInvoiceAmount * 0.03)) }
-    ];
-
     const glJournal = {
-      id: 'GL-' + Date.now().toString(36),
+      id: 'GL-' + crypto.randomUUID(),
       entryNo: `JE-${generalLedger.length + 1}`,
       firmId: activeFirm.id,
       date: invoiceDate,
       type: 'INVOICE',
       referenceId: invoiceNo,
       description: `Sales Invoice ${invoiceNo} generated for ${invoiceData.customerName}`,
-      debits: glDebits,
-      credits: glCredits
+      debits: posting.debits,
+      credits: posting.credits
     };
     setGeneralLedger(prev => [glJournal, ...prev]);
 
@@ -956,7 +859,7 @@ export function JewelleryProvider({ children }) {
   // Udhaar Deposit & Immutable Repayment Transaction Recording (Audit P1 Fix)
   const recordUdhaarDeposit = (udhaarId, amount, paymentMode = 'Cash', reference = '', notes = '') => {
     const depositAmt = Number(amount);
-    if (!depositAmt || depositAmt <= 0) {
+    if (!Number.isFinite(depositAmt) || depositAmt <= 0 || Math.abs(depositAmt * 100 - Math.round(depositAmt * 100)) > 0.00001) {
       throw new Error('Repayment deposit amount must be greater than zero.');
     }
     const targetLoan = udhaarList.find(u => u.id === udhaarId);
@@ -967,16 +870,24 @@ export function JewelleryProvider({ children }) {
       throw new Error(`Repayment amount (₹${depositAmt.toLocaleString('en-IN')}) cannot exceed remaining balance (₹${(targetLoan.leftBalance || 0).toLocaleString('en-IN')}).`);
     }
 
-    const receiptNo = `REC/${(udhaarRepayments.length + 101)}/24-25`;
+    if (targetLoan.firmId !== activeFirm.id) throw new Error('Loan belongs to another firm.');
+    const linkedInvoices = invoices.filter(invoice => invoice.firmId === targetLoan.firmId &&
+      (targetLoan.invoiceId ? invoice.id === targetLoan.invoiceId : invoice.invoiceNo === targetLoan.mainInvoiceNo));
+    if ((targetLoan.invoiceId || targetLoan.mainInvoiceNo) && linkedInvoices.length !== 1) {
+      throw new Error('Cannot uniquely identify the original invoice. Reconcile this loan before repayment.');
+    }
+
+    const receiptNo = `REC/${(udhaarRepayments.length + 101)}/${getFinancialYearString()}`;
     const businessDate = getTodayBusinessDate();
 
     const repaymentRecord = {
-      id: 'REP-' + Date.now().toString(36) + '-' + Math.random().toString(36).slice(2, 6),
+      id: 'REP-' + crypto.randomUUID(),
       receiptNo,
       firmId: targetLoan.firmId || activeFirm.id,
       firmCode: targetLoan.firmCode || activeFirm.code,
       loanId: udhaarId,
-      invoiceNo: targetLoan.invoiceNo || targetLoan.mainInvoiceNo,
+      invoiceId: linkedInvoices[0]?.id ?? null,
+      invoiceNo: linkedInvoices[0]?.invoiceNo ?? targetLoan.invoiceNo,
       customerId: targetLoan.customerId,
       customerName: targetLoan.customerName,
       date: businessDate,
@@ -1029,7 +940,7 @@ export function JewelleryProvider({ children }) {
 
     // 5. Post to General Ledger
     const glEntry = {
-      id: 'GL-' + Date.now().toString(36),
+      id: 'GL-' + crypto.randomUUID(),
       entryNo: `JE-${generalLedger.length + 1}`,
       firmId: targetLoan.firmId || activeFirm.id,
       date: businessDate,
@@ -1061,7 +972,7 @@ export function JewelleryProvider({ children }) {
     const nextGirviSeq = maxGirviSeq + 1;
 
     const newLoan = {
-      id: 'UDH-' + Date.now().toString(36) + '-' + Math.random().toString(36).slice(2, 6),
+      id: 'UDH-' + crypto.randomUUID(),
       invoiceNo: `GIRVI-${nextGirviSeq}`,
       mainInvoiceNo: 'GIRVI-VOUCHER',
       date: loanData.date || getTodayBusinessDate(),
@@ -1212,145 +1123,27 @@ export function JewelleryProvider({ children }) {
     }));
   };
 
-  // Reset entire database to audit seed data
+  // Reset only explicitly synthetic data; legacy and unrelated origin keys survive.
   const resetToAuditData = () => {
-    localStorage.clear();
-    setFirms(INITIAL_FIRMS);
-    setActiveFirmId(INITIAL_FIRMS[0].id);
-    setDailyRates(INITIAL_DAILY_RATES);
-    setStock(INITIAL_STOCK);
-    setCustomers(INITIAL_CUSTOMERS);
-    setKarigars(INITIAL_KARIGARS);
-    setInvoices(INITIAL_INVOICES);
-    setUdhaarList(INITIAL_UDHAAR);
-    setSchemes(INITIAL_SCHEMES);
-    setExpenses(INITIAL_EXPENSES);
-    setDailyDiary(INITIAL_DAILY_DIARY);
-    setClients(INITIAL_CLIENTS);
-    setActiveClientId(INITIAL_CLIENTS[0].id);
-    setBranches(INITIAL_BRANCHES);
-    setActiveBranchId(INITIAL_BRANCHES[0].id);
-    setStaffUsers(INITIAL_STAFF);
-    setCatalogueSettings(INITIAL_CATALOGUE_SETTINGS);
-    setIntegrations(INITIAL_INTEGRATIONS);
-    setAuditLogs(INITIAL_AUDIT_LOGS);
-    setCurrentRole('Platform Super Admin');
+    localStorage.removeItem(DEMO_STORAGE_KEY);
+    window.location.reload();
   };
 
-  // Export full JSON database
   const exportDatabaseJson = () => {
-    const fullDb = {
-      appName: 'Jewellery OS',
-      version: '2.7.364 Pro',
-      exportDate: new Date().toISOString(),
-      firms,
-      dailyRates,
-      stock,
-      customers,
-      karigars,
-      invoices,
-      udhaarList,
-      udhaarRepayments,
-      stockMovements,
-      generalLedger,
-      schemes,
-      expenses,
-      dailyDiary,
-      clients,
-      branches,
-      staffUsers,
-      catalogueSettings,
-      integrations,
-      auditLogs
-    };
-    const dataStr = "data:text/json;charset=utf-8," + encodeURIComponent(JSON.stringify(fullDb, null, 2));
-    const downloadAnchor = document.createElement('a');
-    downloadAnchor.setAttribute("href", dataStr);
-    downloadAnchor.setAttribute("download", `Jewellery_OS_Backup_${new Date().toISOString().split('T')[0]}.json`);
-    document.body.appendChild(downloadAnchor);
-    downloadAnchor.click();
-    downloadAnchor.remove();
+    try {
+      const backup = createBackup(demoState);
+      downloadJson(backup, 'Jewellery_OS_Demo_Backup.json');
+      return backup;
+    } catch (error) {
+      alert(error.message);
+      throw error;
+    }
   };
 
-  // Import JSON database with schema validation (SEC-06)
   const importDatabaseJson = (jsonObj) => {
-    if (!jsonObj || typeof jsonObj !== 'object' || Array.isArray(jsonObj)) {
-      throw new Error('Invalid backup file: Root structure must be a JSON object.');
-    }
-
-    const validCollections = ['firms', 'dailyRates', 'stock', 'customers', 'karigars', 'invoices', 'udhaarList', 'schemes', 'expenses', 'dailyDiary', 'clients', 'branches'];
-    const hasAtLeastOne = validCollections.some(key => Array.isArray(jsonObj[key]));
-    if (!hasAtLeastOne) {
-      throw new Error('Invalid backup schema: No valid Jewellery OS collections found in backup.');
-    }
-
-    if (jsonObj.firms) {
-      if (!Array.isArray(jsonObj.firms)) throw new Error('Schema error: "firms" must be an array.');
-      setFirms(jsonObj.firms);
-    }
-    if (jsonObj.dailyRates) {
-      if (!Array.isArray(jsonObj.dailyRates)) throw new Error('Schema error: "dailyRates" must be an array.');
-      setDailyRates(jsonObj.dailyRates);
-    }
-    if (jsonObj.stock) {
-      if (!Array.isArray(jsonObj.stock)) throw new Error('Schema error: "stock" must be an array.');
-      setStock(jsonObj.stock);
-    }
-    if (jsonObj.customers) {
-      if (!Array.isArray(jsonObj.customers)) throw new Error('Schema error: "customers" must be an array.');
-      setCustomers(jsonObj.customers);
-    }
-    if (jsonObj.karigars) {
-      if (!Array.isArray(jsonObj.karigars)) throw new Error('Schema error: "karigars" must be an array.');
-      setKarigars(jsonObj.karigars);
-    }
-    if (jsonObj.invoices) {
-      if (!Array.isArray(jsonObj.invoices)) throw new Error('Schema error: "invoices" must be an array.');
-      setInvoices(jsonObj.invoices);
-    }
-    if (jsonObj.udhaarList) {
-      if (!Array.isArray(jsonObj.udhaarList)) throw new Error('Schema error: "udhaarList" must be an array.');
-      setUdhaarList(jsonObj.udhaarList);
-    }
-    if (jsonObj.udhaarRepayments && Array.isArray(jsonObj.udhaarRepayments)) {
-      setUdhaarRepayments(jsonObj.udhaarRepayments);
-    }
-    if (jsonObj.stockMovements && Array.isArray(jsonObj.stockMovements)) {
-      setStockMovements(jsonObj.stockMovements);
-    }
-    if (jsonObj.generalLedger && Array.isArray(jsonObj.generalLedger)) {
-      setGeneralLedger(jsonObj.generalLedger);
-    }
-    if (jsonObj.schemes) {
-      if (!Array.isArray(jsonObj.schemes)) throw new Error('Schema error: "schemes" must be an array.');
-      setSchemes(jsonObj.schemes);
-    }
-    if (jsonObj.expenses) {
-      if (!Array.isArray(jsonObj.expenses)) throw new Error('Schema error: "expenses" must be an array.');
-      setExpenses(jsonObj.expenses);
-    }
-    if (jsonObj.dailyDiary) {
-      if (!Array.isArray(jsonObj.dailyDiary)) throw new Error('Schema error: "dailyDiary" must be an array.');
-      setDailyDiary(jsonObj.dailyDiary);
-    }
-    if (jsonObj.clients && Array.isArray(jsonObj.clients)) {
-      setClients(jsonObj.clients);
-    }
-    if (jsonObj.branches && Array.isArray(jsonObj.branches)) {
-      setBranches(jsonObj.branches);
-    }
-    if (jsonObj.staffUsers && Array.isArray(jsonObj.staffUsers)) {
-      setStaffUsers(jsonObj.staffUsers);
-    }
-    if (jsonObj.catalogueSettings && typeof jsonObj.catalogueSettings === 'object') {
-      setCatalogueSettings(jsonObj.catalogueSettings);
-    }
-    if (jsonObj.integrations && Array.isArray(jsonObj.integrations)) {
-      setIntegrations(jsonObj.integrations);
-    }
-    if (jsonObj.auditLogs && Array.isArray(jsonObj.auditLogs)) {
-      setAuditLogs(jsonObj.auditLogs);
-    }
+    restoreDemoBackup(localStorage, jsonObj);
+    // Hydrate only after the entire validated snapshot has been committed.
+    window.location.reload();
   };
 
   // Aggregate Dashboard Analytics scoped by Active Firm (P0 Fix)
@@ -1490,7 +1283,11 @@ export function JewelleryProvider({ children }) {
         totalStockCount: firmStock.filter(s => s.status === 'In Stock').length
       }
     }}>
-      {children}
+      {storageError ? <div role="alert" className="fixed inset-0 z-[100] bg-slate-950 text-white p-8">
+        <h1 className="text-xl">Demonstration storage error</h1><p>{storageError}</p>
+        <button onClick={() => downloadJson(demoState, 'Jewellery_OS_UNVALIDATED_Recovery.json')}>Download unsaved recovery data</button>
+        <button className="ml-6" onClick={() => window.location.reload()}>Reload last saved state</button>
+      </div> : children}
     </JewelleryContext.Provider>
   );
 }

@@ -1,0 +1,48 @@
+{
+  "version": "7",
+  "dialect": "postgresql",
+  "entries": [
+    {
+      "idx": 0,
+      "version": "7",
+      "when": 1791522633518,
+      "tag": "0000_operational_foundation",
+      "breakpoints": true
+    },
+    {
+      "idx": 1,
+      "version": "7",
+      "when": 1791522653858,
+      "tag": "0001_tenant_status_created_index",
+      "breakpoints": true
+    },
+    {
+      "idx": 2,
+      "version": "7",
+      "when": 1791522750108,
+      "tag": "0002_invoice_business_date_and_price_constraints",
+      "breakpoints": true
+    },
+    {
+      "idx": 3,
+      "version": "7",
+      "when": 1791523644094,
+      "tag": "0003_cash_settlement_receipts",
+      "breakpoints": true
+    },
+    {
+      "idx": 4,
+      "version": "7",
+      "when": 1791526929904,
+      "tag": "0004_auth_rate_limit",
+      "breakpoints": true
+    },
+    {
+      "idx": 5,
+      "version": "7",
+      "when": 1791527134733,
+      "tag": "0005_disabled_users",
+      "breakpoints": true
+    }
+  ]
+}

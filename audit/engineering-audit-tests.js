@@ -42,20 +42,9 @@ assert(
   'AccountsReportsModule has zero arbitrary literal numbers (1850000, 750000, 12500) hardcoded in reports'
 );
 
-assert(
-  accountsContent.includes('bisHallmarkingFees') &&
-  accountsContent.includes('proprietorCapital') &&
-  accountsContent.includes('totalDebits') &&
-  accountsContent.includes('isReconciled'),
-  'ENG-REP-02',
-  'AccountsReportsModule derives fees, capital, and debits/credits balance dynamically'
-);
+// Replaced with executable backup/render regressions in audit/regression.
 
-assert(
-  accountsContent.includes('Generated from') && accountsContent.includes('sales invoices'),
-  'ENG-REP-03',
-  'AccountsReportsModule renders data provenance banner showing underlying record counts'
-);
+// Replaced with executable backup/render regressions in audit/regression.
 
 // -----------------------------------------------------------------------------
 // 3. P0 Finding 2: Multi-Firm Data Scoping
@@ -70,23 +59,12 @@ assert(
   'JewelleryContext isolates analytics (stock, invoices, udhaar) strictly to active firm'
 );
 
-assert(
-  accountsContent.includes('firmInvoices') &&
-  accountsContent.includes('firmStock') &&
-  accountsContent.includes('firmUdhaar'),
-  'ENG-FIRM-02',
-  'AccountsReportsModule filters records strictly by active firm ID/code'
-);
+// Replaced with executable backup/render regressions in audit/regression.
 
 // -----------------------------------------------------------------------------
 // 4. P0 Finding 3: Safe Storage Parsing and Schema Resilience
 // -----------------------------------------------------------------------------
-assert(
-  contextContent.includes('safeLoadStorage') &&
-  contextContent.includes('Corrupt local storage data at'),
-  'ENG-STORE-01',
-  'JewelleryContext includes safeLoadStorage parser protecting app against corrupt local storage JSON crashes'
-);
+// Replaced with executable backup/render regressions in audit/regression.
 
 assert(
   contextContent.includes('getTodayBusinessDate()') &&
@@ -103,7 +81,7 @@ const billingContent = fs.readFileSync('src/components/modules/BillingModule.jsx
 assert(
   billingContent.includes('isSubmitting') && billingContent.includes('setIsSubmitting(true)'),
   'ENG-BILL-01',
-  'BillingModule implements idempotency guard preventing double submission on rapid clicking'
+  'BillingModule contains a UI submission guard on rapid clicking'
 );
 
 assert(
@@ -116,7 +94,7 @@ assert(
   contextContent.includes('already sold out and cannot be billed again') &&
   contextContent.includes("status: 'Sold Out'"),
   'ENG-BILL-03',
-  'JewelleryContext atomically sets stock status to Sold Out and blocks double selling'
+  'JewelleryContext contains a setter for stock status to Sold Out and blocks double selling'
 );
 
 assert(
@@ -167,7 +145,7 @@ assert(
   contextContent.includes('IS/') &&
   contextContent.includes('REC/'),
   'ENG-NUM-01',
-  'JewelleryContext generates sequential collision-safe firm/FY-scoped numbers for invoices and receipts'
+  'JewelleryContext generates invoice and receipt formatting helpers for invoices and receipts'
 );
 
 console.log('\n----------------------------------------------------------------------');
@@ -177,5 +155,5 @@ console.log('-------------------------------------------------------------------
 if (failedCount > 0) {
   process.exit(1);
 } else {
-  console.log('🎉 ALL ENGINEERING AUDIT REQUIREMENTS FULLY SATISFIED!\n');
+  console.log('🎉 Legacy source checks completed; these do not establish production readiness.\n');
 }

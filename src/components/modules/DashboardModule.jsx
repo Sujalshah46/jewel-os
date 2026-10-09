@@ -1,4 +1,5 @@
 import React from 'react';
+import { invoiceSettlement } from '../../utils/invoices';
 import { useJewellery } from '../../context/JewelleryContext';
 import { formatCurrency, formatWeight } from '../../utils/numberToWords';
 import {
@@ -44,6 +45,7 @@ export default function DashboardModule() {
     activeFirm,
     analytics,
     invoices,
+    udhaarRepayments,
     stock,
     customers,
     udhaarList,
@@ -152,8 +154,8 @@ export default function DashboardModule() {
                     <td>{new Date(invoice.date).toLocaleDateString('en-IN')}</td>
                     <td>{invoice.customerName}</td>
                     <td>
-                      <span className={Number(invoice.payments?.balanceUdhaarDue) > 0 ? 'jos-badge warning' : 'jos-badge success'}>
-                        {Number(invoice.payments?.balanceUdhaarDue) > 0 ? 'Part paid' : 'Settled'}
+                      <span className={invoiceSettlement(invoice, udhaarRepayments).outstanding > 0 ? 'jos-badge warning' : 'jos-badge success'}>
+                        {invoiceSettlement(invoice, udhaarRepayments).outstanding > 0 ? 'Part paid' : 'Settled'}
                       </span>
                       <small className="jos-payment-copy">{paymentSummary(invoice.payments)}</small>
                     </td>

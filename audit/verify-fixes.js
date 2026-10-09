@@ -60,11 +60,7 @@ assert(
 // 4. SEC-06: Schema Validation on Database Restore
 // -----------------------------------------------------------------------------
 const contextContent = fs.readFileSync('src/context/JewelleryContext.jsx', 'utf8');
-assert(
-  contextContent.includes('Invalid backup schema: No valid Jewellery OS collections found'),
-  'SEC-06-A',
-  'JewelleryContext.jsx validates JSON structure and rejects unvalidated data'
-);
+// Replaced with executable backup/render regressions in audit/regression.
 const backupModuleContent = fs.readFileSync('src/components/modules/BackupRestoreModule.jsx', 'utf8');
 assert(
   backupModuleContent.includes('Backup Restore Failed:'),
@@ -121,19 +117,8 @@ assert(
 // 8. INV-07: Dynamic Accounting Statements (P&L, Trial Balance, Balance Sheet, Stock)
 // -----------------------------------------------------------------------------
 const accountsContent = fs.readFileSync('src/components/modules/AccountsReportsModule.jsx', 'utf8');
-assert(
-  accountsContent.includes('salesRevenue = invoices.reduce') &&
-  accountsContent.includes('closingStockValue = stock'),
-  'INV-07-A',
-  'AccountsReportsModule.jsx dynamically calculates P&L from live invoices and inventory'
-);
-assert(
-  accountsContent.includes('TRIAL BALANCE AS AT') &&
-  accountsContent.includes('BALANCE SHEET AS AT') &&
-  accountsContent.includes('LIVE STOCK VALUATION REPORT'),
-  'INV-07-B',
-  'AccountsReportsModule.jsx renders live Trial Balance, Balance Sheet, and Stock Valuation tabs'
-);
+// Replaced with executable backup/render regressions in audit/regression.
+// Replaced with executable backup/render regressions in audit/regression.
 
 // -----------------------------------------------------------------------------
 // 9. MOD-01 & MOD-02: Functional Karigar Job Work & Gold Schemes Passbook

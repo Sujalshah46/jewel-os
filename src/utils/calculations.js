@@ -50,12 +50,19 @@ export function calculateJewelleryItem({
 
   // Taxable Amount (Before GST)
   const baseAmount = metalValue + totalMakingCharges + Number(otherCharges) + Number(hallmarkCharge) + totalStoneValue;
-  const taxableAmount = Math.max(0, baseAmount - (Number(itemDiscount) || 0));
+  const taxableAmount = Number(Math.max(0, baseAmount - (Number(itemDiscount) || 0)).toFixed(2));
 
   // GST Calculation (3% total: 1.5% CGST + 1.5% SGST)
-  const gstAmount = Number(((taxableAmount * (Number(gstRatePercent) || 3)) / 100).toFixed(2));
-  const cgst = Number((gstAmount / 2).toFixed(2));
-  const sgst = Number((gstAmount / 2).toFixed(2));
+  const taxRate = Number(gstRatePercent ?? 3);
+  if (!Number.isFinite(taxRate) || taxRate < 0 || taxRate > 100) {
+    throw new Error('GST rate must be between 0 and 100.');
+  }
+  const gstPaise = Math.round(Number(((taxableAmount * taxRate) / 100).toFixed(2)) * 100);
+  // Round CGST half-up to a paisa, then allocate the residual to SGST.
+  const cgstPaise = Math.round(gstPaise / 2);
+  const gstAmount = gstPaise / 100;
+  const cgst = cgstPaise / 100;
+  const sgst = (gstPaise - cgstPaise) / 100;
 
   // Final Value
   const finalValue = Number((taxableAmount + gstAmount).toFixed(2));

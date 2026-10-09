@@ -21,6 +21,7 @@ import InvoiceViewModal from './components/modules/InvoiceViewModal';
 import EstimateModal from './components/modules/EstimateModal';
 import AdminPanel from './components/admin/AdminPanel';
 import ErrorBoundary from './components/common/ErrorBoundary';
+import { DEMO_MODE } from './utils/appMode';
 import { Lock, ShieldAlert } from 'lucide-react';
 
 function MainApp() {
@@ -257,9 +258,17 @@ function MainApp() {
 }
 
 export default function App() {
+  if (!DEMO_MODE) return (
+    <main className="min-h-screen p-10 bg-slate-950 text-slate-100">
+      <h1 className="text-2xl font-bold">Operational mode unavailable</h1>
+      <p>This version has no verified authenticated backend. Business workflows are disabled.</p>
+      <p>For synthetic demonstrations, use the explicit demo build. Do not enter real customer data.</p>
+    </main>
+  );
   return (
     <ErrorBoundary>
       <JewelleryProvider>
+        <div role="status" className="bg-amber-200 text-slate-950 text-center p-2 font-bold">Synthetic Demonstration Mode — no real customer data, stock or payments</div>
         <MainApp />
       </JewelleryProvider>
     </ErrorBoundary>

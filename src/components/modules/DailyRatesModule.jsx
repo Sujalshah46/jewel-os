@@ -17,6 +17,7 @@ import {
   X
 } from 'lucide-react';
 import { formatCurrency } from '../../utils/numberToWords';
+import { serializeCsv } from '../../utils/csv';
 
 export default function DailyRatesModule() {
   const {
@@ -92,6 +93,26 @@ export default function DailyRatesModule() {
     }, 800);
   };
 
+  const downloadRatesCsv = (formatLabel) => {
+    const headers = ['Metal', 'Purity', 'Karat', 'Rate/Gram', 'Rate/10g', 'Tax 3%', 'Rate Inc. Tax'];
+    const rows = dailyRates.map(rate => [
+      rate.metalType,
+      `${rate.purityPercent}%`,
+      rate.karat || '',
+      rate.ratePerGram,
+      rate.ratePer10Gm,
+      rate.taxAmount ?? 0,
+      rate.rateWithTax ?? rate.ratePerGram
+    ]);
+    const csvContent = `data:text/csv;charset=utf-8,${encodeURIComponent(serializeCsv([headers, ...rows]))}`;
+    const link = document.createElement('a');
+    link.href = csvContent;
+    link.download = `Daily_Rates_${new Date().toISOString().split('T')[0]}_${formatLabel}.csv`;
+    document.body.appendChild(link);
+    link.click();
+    link.remove();
+  };
+
   const handleAddRate = (e) => {
     e.preventDefault();
     const rateNum = Number(newRate.ratePerGram);
@@ -144,7 +165,7 @@ export default function DailyRatesModule() {
             className="flex items-center space-x-1.5 bg-slate-800 hover:bg-slate-700 text-amber-300 border border-amber-500/40 px-3 py-1.5 rounded-lg text-xs font-bold transition-colors cursor-pointer"
           >
             <RefreshCw className={`w-3.5 h-3.5 ${mcxSyncing ? 'animate-spin' : ''}`} />
-            <span>{mcxSyncing ? 'SYNCING MCX...' : 'UPDATE MCX DAILY RATES'}</span>
+            <span>{mcxSyncing ? 'SIMULATING RATE UPDATE...' : 'SIMULATE MCX RATE UPDATE'}</span>
           </button>
         </div>
       </div>
@@ -211,7 +232,7 @@ export default function DailyRatesModule() {
                 <h3 className="font-bold text-sm text-slate-100 uppercase tracking-wider">
                   TODAY'S RATES MASTER TABLE
                 </h3>
-                <p className="text-xs text-slate-400">Locally active metal price list used for POS billing &amp; valuations</p>
+                <p className="text-xs text-amber-300">Demo-only synthetic rates. MCX update is simulated; these are not live market prices.</p>
               </div>
 
               {/* Action Toolbar: Copy, Csv, Excel, Pdf, Print, Delete All */}
@@ -230,53 +251,17 @@ export default function DailyRatesModule() {
                   </button>
                   <button
                     type="button"
-                    onClick={() => {
-                      const headers = ['Metal', 'Purity', 'Karat', 'Rate/Gram', 'Rate/10g', 'Tax 3%', 'Rate Inc. Tax'];
-                      const rows = dailyRates.map(r => [
-                        `"${r.metalType}"`,
-                        `"${r.purityPercent}%"`,
-                        `"${r.karat || ''}"`,
-                        r.ratePerGram,
-                        r.ratePer10Gm,
-                        r.taxAmount || 0,
-                        r.rateWithTax || r.ratePerGram
-                      ].join(','));
-                      const csvContent = "data:text/csv;charset=utf-8," + [headers.join(','), ...rows].join("\n");
-                      const link = document.createElement("a");
-                      link.setAttribute("href", encodeURI(csvContent));
-                      link.setAttribute("download", `Daily_Rates_${new Date().toISOString().split('T')[0]}.csv`);
-                      document.body.appendChild(link);
-                      link.click();
-                      link.remove();
-                    }}
+                    onClick={() => downloadRatesCsv('CSV')}
                     className="px-2 py-0.5 hover:bg-slate-800 rounded transition-colors"
                   >
                     CSV
                   </button>
                   <button
                     type="button"
-                    onClick={() => {
-                      const headers = ['Metal', 'Purity', 'Karat', 'Rate/Gram', 'Rate/10g', 'Tax 3%', 'Rate Inc. Tax'];
-                      const rows = dailyRates.map(r => [
-                        `"${r.metalType}"`,
-                        `"${r.purityPercent}%"`,
-                        `"${r.karat || ''}"`,
-                        r.ratePerGram,
-                        r.ratePer10Gm,
-                        r.taxAmount || 0,
-                        r.rateWithTax || r.ratePerGram
-                      ].join(','));
-                      const csvContent = "data:text/csv;charset=utf-8," + [headers.join(','), ...rows].join("\n");
-                      const link = document.createElement("a");
-                      link.setAttribute("href", encodeURI(csvContent));
-                      link.setAttribute("download", `Daily_Rates_${new Date().toISOString().split('T')[0]}.xls`);
-                      document.body.appendChild(link);
-                      link.click();
-                      link.remove();
-                    }}
+                    onClick={() => downloadRatesCsv('Excel-compatible')}
                     className="px-2 py-0.5 hover:bg-slate-800 rounded transition-colors"
                   >
-                    Excel
+                    Excel-compatible CSV
                   </button>
                   <button
                     type="button"
@@ -400,7 +385,7 @@ export default function DailyRatesModule() {
                 <h1 className="text-3xl font-serif font-bold text-amber-300 uppercase tracking-widest">
                   KRISHNA JEWELLERS — DIGITAL RATE BOARD
                 </h1>
-                <p className="text-sm text-slate-400">TODAY'S OFFICIAL GOVERNMENT BIS CERTIFIED RATES (आज का भाव)</p>
+                <p className="text-sm text-slate-400">DEMO RATE DISPLAY — sample data, not official or provider-verified (आज का भाव)</p>
               </div>
             </div>
 

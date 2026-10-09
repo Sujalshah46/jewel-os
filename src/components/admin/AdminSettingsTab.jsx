@@ -1,3 +1,4 @@
+import { MAX_BACKUP_BYTES } from '../../utils/backup';
 import React, { useState } from 'react';
 import { useJewellery } from '../../context/JewelleryContext';
 import {
@@ -28,7 +29,11 @@ export default function AdminSettingsTab() {
   const handleFileUpload = (e) => {
     const file = e.target.files[0];
     if (!file) return;
+    e.target.value = '';
+    if (file.size > MAX_BACKUP_BYTES) { alert('Backup exceeds the 10 MB limit.'); return; }
+    if (!window.confirm('Replace the entire synthetic workspace? Export a backup first. Incomplete legacy backups require manual recovery.')) return;
     const reader = new FileReader();
+    reader.onerror = () => alert('Backup could not be read. No records were changed.');
     reader.onload = (event) => {
       try {
         const parsed = JSON.parse(event.target.result);

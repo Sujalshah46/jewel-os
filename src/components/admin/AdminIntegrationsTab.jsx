@@ -27,26 +27,19 @@ export default function AdminIntegrationsTab() {
   const [successMsg, setSuccessMsg] = useState('');
 
   const handleTestPing = (id, name) => {
-    setTestingId(id);
-    setTimeout(() => {
-      const res = testIntegrationConnection(id);
-      setTestingId(null);
-      setSuccessMsg(`Ping successful for "${name}": Latency ${res.latencyMs}ms (HTTP 200 OK).`);
-      setTimeout(() => setSuccessMsg(''), 4000);
-    }, 600);
+    setSuccessMsg(testIntegrationConnection(id).message);
   };
 
   const handleSaveEdit = (e) => {
     e.preventDefault();
     if (!editingIntegration) return;
     updateIntegration(editingIntegration.id, {
-      status: editingIntegration.status,
-      apiKeyMasked: editingIntegration.apiKeyMasked,
+      status: 'Not configured',
       endpoint: editingIntegration.endpoint,
       description: editingIntegration.description
     });
     setEditingIntegration(null);
-    setSuccessMsg('Integration settings updated successfully.');
+    setSuccessMsg('Demonstration settings saved. No service was connected.');
     setTimeout(() => setSuccessMsg(''), 4000);
   };
 
@@ -183,12 +176,10 @@ export default function AdminIntegrationsTab() {
 
               <div>
                 <label className="block text-[11px] font-semibold text-slate-300 mb-1">
-                  API KEY (STORED SAFELY WITH SECRETS MASKING)
+                  API KEYS REQUIRE A SERVER — UNAVAILABLE IN DEMO
                 </label>
                 <input
-                  type="text"
-                  value={editingIntegration.apiKeyMasked || ''}
-                  onChange={(e) => setEditingIntegration(prev => ({ ...prev, apiKeyMasked: e.target.value }))}
+                  type="password" disabled value="" placeholder="Do not enter real credentials"
                   className="w-full bg-slate-950 border border-slate-700 rounded-lg px-3 py-1.5 text-slate-100 font-mono"
                 />
               </div>

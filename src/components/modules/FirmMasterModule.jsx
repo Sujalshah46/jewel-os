@@ -1,6 +1,7 @@
 import React, { useState } from 'react';
 import { useJewellery } from '../../context/JewelleryContext';
 import {
+  AlertTriangle,
   Building2,
   Save,
   CheckCircle,
@@ -304,14 +305,21 @@ export default function FirmMasterModule() {
 
             <div>
               <label className="block text-[11px] font-semibold text-slate-300 mb-1">
-                BANK A/C NO & IFSC
+                BANK ACCOUNT NUMBER
               </label>
               <input
                 type="text"
-                value={`${formData.accountNumber || ''} (${formData.ifscCode || ''})`}
+                value={formData.accountNumber ?? ''}
                 onChange={(e) => handleInputChange('accountNumber', e.target.value)}
                 className="w-full bg-slate-950 border border-slate-700 rounded-lg px-3 py-1.5 text-xs text-slate-100 font-mono"
               />
+            </div>
+
+            <div>
+              <label className="block text-[11px] font-semibold text-slate-300 mb-1" htmlFor="firm-ifsc">IFSC CODE</label>
+              <input id="firm-ifsc" value={formData.ifscCode ?? ''}
+                onChange={e => handleInputChange('ifscCode', e.target.value)}
+                className="w-full bg-slate-950 border border-slate-700 rounded-lg px-3 py-1.5 text-xs text-slate-100" />
             </div>
 
             <div className="md:col-span-2">
@@ -365,8 +373,7 @@ export default function FirmMasterModule() {
               </label>
               <input
                 type="text"
-                value={formData.eInvoiceApi?.appId || ''}
-                onChange={(e) => handleEInvoiceChange('appId', e.target.value)}
+                value="" disabled placeholder="Unavailable in demonstration mode"
                 className="w-full bg-slate-950 border border-slate-700 rounded-lg px-3 py-1.5 text-xs text-slate-100 font-mono"
               />
             </div>
@@ -377,8 +384,7 @@ export default function FirmMasterModule() {
               </label>
               <input
                 type="password"
-                value={formData.eInvoiceApi?.apiKey || ''}
-                onChange={(e) => handleEInvoiceChange('apiKey', e.target.value)}
+                value="" disabled placeholder="Unavailable in demonstration mode"
                 className="w-full bg-slate-950 border border-slate-700 rounded-lg px-3 py-1.5 text-xs text-slate-100 font-mono"
               />
             </div>
@@ -389,8 +395,7 @@ export default function FirmMasterModule() {
               </label>
               <input
                 type="text"
-                value={formData.eInvoiceApi?.username || ''}
-                onChange={(e) => handleEInvoiceChange('username', e.target.value)}
+                value="" disabled placeholder="Unavailable in demonstration mode"
                 className="w-full bg-slate-950 border border-slate-700 rounded-lg px-3 py-1.5 text-xs text-slate-100"
               />
             </div>
@@ -399,9 +404,9 @@ export default function FirmMasterModule() {
               <label className="block text-[11px] font-semibold text-slate-300 mb-1">
                 E-INVOICE STATUS
               </label>
-              <div className="bg-emerald-950/60 border border-emerald-500/40 px-3 py-1.5 rounded-lg text-emerald-300 text-xs font-bold flex items-center gap-1.5">
-                <CheckCircle className="w-3.5 h-3.5" />
-                <span>Demo credentials stored locally</span>
+              <div className="bg-amber-950/60 border border-amber-500/40 px-3 py-1.5 rounded-lg text-amber-300 text-xs font-bold flex items-center gap-1.5">
+                <AlertTriangle className="w-3.5 h-3.5" />
+                <span>Server integration unavailable</span>
               </div>
             </div>
           </div>
@@ -481,7 +486,7 @@ export default function FirmMasterModule() {
               <p>• <strong>GSTIN & HSN:</strong> Required for generating statutory B2B & B2C tax invoices under Indian jewellery taxation (HSN 7113, GST 3%).</p>
               <p>• <strong>Hallmark ID:</strong> Enter your BIS certified registration code to automatically stamp Hallmark charges on receipts.</p>
               <p>• <strong>Multi-Firm Policy:</strong> You can configure up to 2 active firms. Toggle between them anytime using the "Make Active" button.</p>
-              <p>• <strong>E-Invoicing API:</strong> Credentials entered here are securely validated for B2B e-invoice generation with the NIC IRP portal.</p>
+              <p>• <strong>E-Invoicing API:</strong> No provider is connected in this demonstration. Configure credentials only in a future trusted backend.</p>
             </div>
             <div className="pt-2 text-right">
               <button

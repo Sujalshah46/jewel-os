@@ -22,7 +22,11 @@ export default function DailyDiaryModule() {
   
   // Dynamic business date selector (defaults to current date, supports historical archive)
   const [selectedDate, setSelectedDate] = useState(() => getTodayBusinessDate());
-  const isHistoricalArchive = selectedDate === '2024-08-12';
+  const isHistoricalArchive = dailyDiary.date === selectedDate && dailyDiary.firmCode === activeFirm.code;
+  const handleDateChange = (event) => {
+    if (event.currentTarget.value) setSelectedDate(event.currentTarget.value);
+    else event.currentTarget.value = selectedDate;
+  };
 
   // Invoices for selected business date & active firm
   const dateInvoices = (invoices || []).filter(inv =>
@@ -71,10 +75,11 @@ export default function DailyDiaryModule() {
     (!e.firmId || e.firmId === activeFirm.id || !e.firmCode || e.firmCode === activeFirm.code)
   );
   const totalCashExpenses = dateExpenses.reduce((acc, e) => acc + (Number(e.amount) || 0), 0) +
-    (isHistoricalArchive ? (Number(dailyDiary.expensesTotal) || 13300) : 0);
+    (isHistoricalArchive ? (Number(dailyDiary.expensesTotal) || 0) : 0);
 
   // Authoritative physical cash formula: Opening + Physical Inward - Cash Outward = Closing Drawer Cash
-  const openingBalance = Number(dailyDiary.openingBalance) || 10000;
+  const hasOpeningBalance = isHistoricalArchive && dailyDiary.openingBalance != null;
+  const openingBalance = hasOpeningBalance ? Number(dailyDiary.openingBalance) : 0;
   const closingDrawerCash = openingBalance + totalPhysicalCashInward - totalCashExpenses;
   const todaySellTotal = sellList.reduce((acc, r) => acc + (Number(r.total) || 0), 0);
 
@@ -101,10 +106,8 @@ export default function DailyDiaryModule() {
             <input
               type="date"
               value={selectedDate}
-              onChange={(e) => {
-                setSelectedDate(e.target.value);
-                setIsHistoricalArchive(e.target.value === '2024-08-12');
-              }}
+              onInput={handleDateChange}
+              onChange={handleDateChange}
               className="bg-transparent text-amber-200 font-bold font-mono focus:outline-none"
             />
             {isHistoricalArchive && (
@@ -131,7 +134,7 @@ export default function DailyDiaryModule() {
         <div className="bg-slate-900 border border-slate-800 rounded-2xl p-4 md:p-5 shadow-lg">
           <p className="text-xs font-semibold text-slate-400 uppercase tracking-wider">1. Opening Cash in Drawer</p>
           <p className="text-2xl font-extrabold text-slate-100 mt-1 font-mono">
-            {formatCurrency(openingBalance)}
+            {hasOpeningBalance ? formatCurrency(openingBalance) : 'Not recorded'}
           </p>
           <p className="text-[11px] text-slate-400 mt-1">Cash brought forward at day start</p>
         </div>
@@ -169,7 +172,7 @@ export default function DailyDiaryModule() {
             <span className="text-[10px] bg-amber-500/20 text-amber-300 px-1.5 py-0.5 rounded border border-amber-500/40 font-bold">PHYSICAL</span>
           </div>
           <p className="text-2xl font-black text-amber-200 mt-1 font-mono">
-            {formatCurrency(closingDrawerCash)}
+            {hasOpeningBalance ? formatCurrency(closingDrawerCash) : 'Opening balance required'}
           </p>
           <p className="text-[11px] text-amber-400/80 mt-1 flex items-center gap-1">
             <CheckCircle className="w-3.5 h-3.5 text-emerald-400 flex-shrink-0" />
