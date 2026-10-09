@@ -1,4 +1,4 @@
-import React, { useState, useEffect } from 'react';
+import React, { useState, useEffect, useCallback } from 'react';
 import { JewelleryProvider, useJewellery } from './context/JewelleryContext';
 import AppShell, { DesktopSidebar } from './components/layout/AppShell';
 import CalculatorModal from './components/common/CalculatorModal';
@@ -68,7 +68,7 @@ function MainApp() {
     return () => window.removeEventListener('hashchange', handleHashChange);
   }, []);
 
-  const switchPortal = (portal) => {
+  const switchPortal = useCallback((portal) => {
     setCurrentPortal(portal);
     if (portal === 'admin') {
       window.location.hash = '#admin';
@@ -78,7 +78,7 @@ function MainApp() {
         setActiveModule('dashboard');
       }
     }
-  };
+  }, [activeModule, setActiveModule]);
 
   // Keyboard Shortcuts (F2 -> POS Billing, Esc -> Close modals)
   useEffect(() => {
@@ -99,7 +99,7 @@ function MainApp() {
     };
     window.addEventListener('keydown', handleKeyDown);
     return () => window.removeEventListener('keydown', handleKeyDown);
-  }, [previewInvoice, previewEstimate, calculatorOpen, mobileMenuOpen, currentPortal, setActiveModule, setPreviewInvoice, setPreviewEstimate]);
+  }, [previewInvoice, previewEstimate, calculatorOpen, mobileMenuOpen, currentPortal, switchPortal, setActiveModule, setPreviewInvoice, setPreviewEstimate]);
 
   // Phase 3: in API mode, require a server session before showing the app.
   // Placed after every hook call (Rules of Hooks): early returns above the
@@ -264,12 +264,12 @@ function MainApp() {
           <span>•</span>
           <span>Jewellery Store POS &amp; Showroom Portal</span>
           <span>•</span>
-          <span>Local demonstration workspace</span>
+          <span>{apiMode ? 'Cloud workspace' : 'Local demonstration workspace'}</span>
         </div>
         <div className="flex items-center space-x-3 text-xs">
           <span className="flex items-center gap-1.5">
             <span className="jos-status-dot warning"></span>
-            <span>No live payments, messaging or cloud sync</span>
+            <span>{apiMode ? 'Connected · data syncs to your workspace' : 'No live payments, messaging or cloud sync'}</span>
           </span>
           <span>•</span>
           <span>Shortcut: <kbd>F2</kbd> New Bill</span>

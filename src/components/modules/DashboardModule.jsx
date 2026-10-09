@@ -49,7 +49,8 @@ export default function DashboardModule() {
     udhaarList,
     dailyRates,
     setActiveModule,
-    setPreviewInvoice
+    setPreviewInvoice,
+    apiMode
   } = useJewellery();
 
   const firmInvoices = invoices.filter(invoice =>
@@ -89,7 +90,7 @@ export default function DashboardModule() {
         <div>
           <span>Overview · Financial year 2024–25</span>
           <h1>{activeFirm.name}</h1>
-          <p>Store operations snapshot from locally stored demonstration records.</p>
+          <p>{apiMode ? 'Store operations snapshot from your workspace.' : 'Store operations snapshot from locally stored demonstration records.'}</p>
         </div>
         <button type="button" className="jos-primary-button" onClick={() => setActiveModule('billing')}>
           <Receipt size={18} /> New Bill <kbd>F2</kbd>
@@ -101,7 +102,7 @@ export default function DashboardModule() {
           icon={TrendingUp}
           label="Sales in selected dataset"
           value={formatCurrency(periodSales)}
-          note={`${firmInvoices.length} invoices · historical demo data`}
+          note={`${firmInvoices.length} invoices · ${apiMode ? 'historical records' : 'historical demo data'}`}
         />
         <MetricCard
           icon={Banknote}

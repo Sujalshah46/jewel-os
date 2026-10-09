@@ -269,9 +269,64 @@ export function useRatesApi({ api, enabled }) {
     setDailyRates(INITIAL_DAILY_RATES);
   }, []);
 
+  /**
+   * 24K base-rate cascade: recalculate every gold karat proportionally from
+   * the 24K per-gram base and persist each one. Mirrors the local
+   * handleBaseRateChange math in DailyRatesModule (rate = base * fineness/1000).
+   * Optimistic for all entries, then one POST per gold purity; on failure the
+   * affected entries roll back and ratesError is set.
+   */
+  const updateBaseRate = useCallback((base24kPerGram) => {
+    const base = Number(base24kPerGram);
+    if (!base || base <= 0) return;
+
+    const defsById = new Map(RATE_DEFS.map((d) => [d.id, d]));
+    const derived = new Map(); // id -> ratePerGram
+    for (const r of ratesRef.current) {
+      const def = defsById.get(r.id);
+      if (!def || def.metalCode !== 'gold') continue;
+      const ratePerGram = Number((base * (Number(def.fineness) / 1000)).toFixed(2));
+      derived.set(r.id, ratePerGram);
+    }
+    if (derived.size === 0) return;
+
+    const previous = new Map();
+    for (const [id] of derived) {
+      const found = ratesRef.current.find((r) => r.id === id);
+      if (found) previous.set(id, found);
+    }
+    setDailyRates((prev) =>
+      prev.map((r) => (derived.has(r.id) ? applyRateMath(r, derived.get(r.id)) : r))
+    );
+
+    const { api: a, enabled: e } = liveRef.current;
+    if (!e || !a) return; // local-only until bootstrap
+    (async () => {
+      try {
+        for (const [id, ratePerGram] of derived) {
+          const mapping = purityByIdRef.current[id];
+          if (!mapping) continue;
+          await a.post('/v1/rates', {
+            metal_code: mapping.metalCode,
+            purity_id: mapping.purityId,
+            rate_per_gram: String(ratePerGram),
+            source: 'daily-rates-ui-base-cascade',
+            effective_at: new Date().toISOString(),
+          });
+        }
+      } catch (err) {
+        setDailyRates((prev) =>
+          prev.map((r) => (previous.has(r.id) ? previous.get(r.id) : r))
+        );
+        setRatesError(friendlyRatesError(err, 'save'));
+      }
+    })();
+  }, []);
+
   return {
     dailyRates,
     updateDailyRate,
+    updateBaseRate,
     deleteAllRates,
     resetDefaultRates,
     ratesLoading,

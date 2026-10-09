@@ -89,7 +89,8 @@ export default function AppShell({
     activeModule,
     setActiveModule,
     globalSearch,
-    setGlobalSearch
+    setGlobalSearch,
+    apiMode
   } = useJewellery();
   const [firmDropdownOpen, setFirmDropdownOpen] = useState(false);
   const [ratesExpanded, setRatesExpanded] = useState(false);
@@ -210,13 +211,13 @@ export default function AppShell({
         <div className="jos-rate-strip">
           <button type="button" onClick={() => setRatesExpanded(!ratesExpanded)} aria-expanded={ratesExpanded}>
             <span className="jos-status-dot warning" />
-            Demo rate master
+            {apiMode ? 'Rate master' : 'Demo rate master'}
             <ChevronDown size={14} className={ratesExpanded ? 'rotate-180' : ''} />
           </button>
           <span><strong>24K</strong> ₹{gold24k.toLocaleString('en-IN')}/g</span>
           <span><strong>22K</strong> ₹{gold22k.toLocaleString('en-IN')}/g</span>
           <span><strong>Silver 999</strong> ₹{silver999.toLocaleString('en-IN')}/g</span>
-          <span className="hidden lg:inline">Stored locally · MCX simulation updated {mcxData.updatedAt || 'on load'}</span>
+          <span className="hidden lg:inline">{apiMode ? `Synced rates · updated ${mcxData.updatedAt || 'on load'}` : `Stored locally · MCX simulation updated ${mcxData.updatedAt || 'on load'}`}</span>
         </div>
         {ratesExpanded && (
           <div className="jos-rate-drawer">

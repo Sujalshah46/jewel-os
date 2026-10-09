@@ -32,11 +32,11 @@ export default function SchemeModule() {
   const [selectedCustomerId, setSelectedCustomerId] = useState(customers[0]?.id || '');
   const [monthlyAmount, setMonthlyAmount] = useState(selectedScheme?.monthlyInstallment || 5000);
 
-  const handleEnrollSubmit = (e) => {
+  const handleEnrollSubmit = async (e) => {
     e.preventDefault();
     if (!selectedScheme || !selectedCustomerId) return;
     try {
-      const enrollment = enrollCustomerInScheme({
+      const enrollment = await enrollCustomerInScheme({
         schemeId: selectedScheme.id,
         customerId: selectedCustomerId,
         monthlyInstallment: monthlyAmount
@@ -49,9 +49,9 @@ export default function SchemeModule() {
     }
   };
 
-  const handlePayInstallment = (enr) => {
+  const handlePayInstallment = async (enr) => {
     try {
-      recordSchemeInstallment(enr.id, enr.monthlyInstallment);
+      await recordSchemeInstallment(enr.id, enr.monthlyInstallment);
       alert(`Installment payment of ${formatCurrency(enr.monthlyInstallment)} recorded for ${enr.customerName}.`);
     } catch (err) {
       alert('Payment Error: ' + err.message);

@@ -45,11 +45,11 @@ export default function KarigarModule() {
     labourAmount: ''
   });
 
-  const handleIssueSubmit = (e) => {
+  const handleIssueSubmit = async (e) => {
     e.preventDefault();
     if (!selectedKarigar) return;
     try {
-      const voucher = issueMetalToKarigar(selectedKarigar.id, {
+      const voucher = await issueMetalToKarigar(selectedKarigar.id, {
         metalType: issueMetal,
         grams: issueGrams,
         notes: issueNotes
@@ -63,11 +63,11 @@ export default function KarigarModule() {
     }
   };
 
-  const handleReceiveSubmit = (e) => {
+  const handleReceiveSubmit = async (e) => {
     e.preventDefault();
     if (!selectedKarigar) return;
     try {
-      const voucher = receiveOrnamentFromKarigar(selectedKarigar.id, {
+      const voucher = await receiveOrnamentFromKarigar(selectedKarigar.id, {
         itemDescription: receiveForm.ornamentName,
         metalType: receiveForm.metalType,
         grossWeight: receiveForm.grossWeight,

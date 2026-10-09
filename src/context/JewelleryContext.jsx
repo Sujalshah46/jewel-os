@@ -31,6 +31,11 @@ import { useRatesApi } from '../lib/adapters/ratesAdapter.js';
 import { useCustomersApi } from '../lib/adapters/customersAdapter.js';
 import { useStockApi } from '../lib/adapters/stockAdapter.js';
 import { useInvoicesApi } from '../lib/adapters/invoicesAdapter.js';
+import { useUdhaarApi } from '../lib/adapters/udhaarAdapter.js';
+import { useExpensesApi } from '../lib/adapters/expensesAdapter.js';
+import { useKarigarApi } from '../lib/adapters/karigarAdapter.js';
+import { useSchemesApi } from '../lib/adapters/schemesAdapter.js';
+import { useDiaryApi } from '../lib/adapters/diaryAdapter.js';
 
 // Business Date & Financial Year Helpers
 export function getTodayBusinessDate() {
@@ -191,6 +196,23 @@ export function JewelleryProvider({ children }) {
   const [expenses, setExpenses] = useState(() => {
     return safeLoadStorage(STORAGE_KEY + '_EXPENSES', INITIAL_EXPENSES);
   });
+
+  // Local-mode expense actions (API mode uses expensesApi).
+  const addExpense = (entry) => {
+    const record = {
+      id: 'EXP-' + Date.now().toString(36),
+      date: entry.date || new Date().toISOString().split('T')[0],
+      createdAt: new Date().toISOString(),
+      ...entry,
+    };
+    setExpenses((prev) => [record, ...prev]);
+    return record;
+  };
+  const voidExpense = (id, reason) => {
+    setExpenses((prev) =>
+      prev.map((e) => (e.id === id ? { ...e, voidedAt: new Date().toISOString(), voidReason: reason || '' } : e))
+    );
+  };
 
   const [dailyDiary, setDailyDiary] = useState(() => {
     return safeLoadStorage(STORAGE_KEY + '_DIARY', INITIAL_DAILY_DIARY);
@@ -785,6 +807,29 @@ export function JewelleryProvider({ children }) {
 
   const resetDefaultRates = () => {
     setDailyRates(INITIAL_DAILY_RATES);
+  };
+
+  // Local-mode 24K base-rate cascade (mirrors DailyRatesModule.handleBaseRateChange).
+  const updateBaseRate = (base24kPerGram) => {
+    const base = Number(base24kPerGram);
+    if (!base || base <= 0) return;
+    setDailyRates((prev) =>
+      prev.map((r) => {
+        if (r.metalType === 'Gold' && r.purityPercent) {
+          const ratePerGram = Number((base * (r.purityPercent / 100)).toFixed(2));
+          const ratePer10Gm = Number((ratePerGram * 10).toFixed(2));
+          const taxAmount = Number(((ratePerGram * 3) / 100).toFixed(2));
+          return {
+            ...r,
+            ratePerGram,
+            ratePer10Gm,
+            taxAmount,
+            rateWithTax: Number((ratePerGram + taxAmount).toFixed(2)),
+          };
+        }
+        return r;
+      })
+    );
   };
 
   // Invoicing & Sales actions
@@ -1427,10 +1472,10 @@ export function JewelleryProvider({ children }) {
     }
   }, [apiClient]);
 
-  const doSignup = useCallback(async (email, password, name, tenantName) => {
+  const doSignup = useCallback(async (email, password, tenantName) => {
     setSessionError(null);
     try {
-      const res = await apiSignup(apiClient, { email, password, name, tenantName });
+      const res = await apiSignup(apiClient, { email, password, tenantName });
       const me = await fetchMe(apiClient).catch(() => null);
       setSession((me && (me.user || me)) || { email });
       return res;
@@ -1455,6 +1500,75 @@ export function JewelleryProvider({ children }) {
     branchId: apiMode ? undefined : activeBranchId,
     stock: apiMode ? stockApi.stock : stock,
   });
+  // Phase 3b: remaining domain adapters — all hooks unconditional (Rules of Hooks).
+  // branchId resolves via stockApi.resolvedBranchId once the tenant branch loads.
+  const apiCustomers = apiMode ? customersApi.customers : customers;
+  const udhaarApi = useUdhaarApi({
+    api: apiClient,
+    enabled: apiReady,
+    branchId: stockApi.resolvedBranchId,
+    customers: apiCustomers,
+  });
+  const expensesApi = useExpensesApi({
+    api: apiClient,
+    enabled: apiReady,
+    branchId: stockApi.resolvedBranchId,
+  });
+  const karigarApi = useKarigarApi({
+    api: apiClient,
+    enabled: apiReady,
+    branchId: stockApi.resolvedBranchId,
+  });
+  const schemesApi = useSchemesApi({ api: apiClient, enabled: apiReady });
+  const diaryApi = useDiaryApi({
+    api: apiClient,
+    enabled: apiReady,
+    branchId: stockApi.resolvedBranchId,
+  });
+
+  // Phase 3b: API-aware wrappers translating local call signatures to the
+  // adapter inputs. All async (server round-trip); callers must await.
+  const issueMetalToKarigarApi = useCallback(
+    (karigarId, { metalType, grams, notes }) =>
+      karigarApi.addKarigarVoucher({ kind: 'ISSUE', karigarId, metalType, grams, notes }),
+    [karigarApi]
+  );
+  const receiveOrnamentFromKarigarApi = useCallback(
+    (karigarId, { itemDescription, metalType, grossWeight, fineWeight, labourAmount, ghatLossGm }) =>
+      karigarApi.addKarigarVoucher({
+        kind: 'RECEIVE', karigarId, itemDescription, metalType,
+        grossWeight, fineWeight, labourAmount, ghatLossGm,
+      }),
+    [karigarApi]
+  );
+  // Udhaar wrappers — same signatures as the local actions, async via adapter.
+  const recordUdhaarDepositApi = useCallback(
+    (udhaarId, amount, paymentMode, reference, notes) =>
+      udhaarApi.recordUdhaarRepayment(udhaarId, amount, paymentMode, reference, notes),
+    [udhaarApi]
+  );
+  const createGirviLoanApi = useCallback(
+    (loanData) => udhaarApi.addUdhaarLoan({ ...loanData, transType: loanData.transType || 'GIRVI' }),
+    [udhaarApi]
+  );
+  // Scheme wrappers — resolve customer display fields from the roster.
+  const enrollCustomerInSchemeApi = useCallback(
+    ({ schemeId, customerId, monthlyInstallment }) => {
+      const cust = apiCustomers.find((c) => c.id === customerId);
+      return schemesApi.enrollCustomer({
+        schemeId,
+        customerId,
+        customerName: cust?.fullName || cust?.name || '',
+        mobile: cust?.mobile || '',
+        firstInstallment: true,
+      });
+    },
+    [schemesApi, apiCustomers]
+  );
+  const recordSchemeInstallmentApi = useCallback(
+    (enrollmentId, amount) => schemesApi.recordInstallment(enrollmentId, amount),
+    [schemesApi]
+  );
 
   return (
     <JewelleryContext.Provider value={{
@@ -1521,6 +1635,7 @@ export function JewelleryProvider({ children }) {
       dailyRates: apiMode ? ratesApi.dailyRates : dailyRates,
       setDailyRates,
       updateDailyRate: apiMode ? ratesApi.updateDailyRate : updateDailyRate,
+      updateBaseRate: apiMode ? ratesApi.updateBaseRate : updateBaseRate,
       deleteAllRates: apiMode ? ratesApi.deleteAllRates : deleteAllRates,
       resetDefaultRates: apiMode ? ratesApi.resetDefaultRates : resetDefaultRates,
       ratesLoading: apiMode ? ratesApi.ratesLoading : false,
@@ -1539,25 +1654,39 @@ export function JewelleryProvider({ children }) {
       updateCustomer: apiMode ? customersApi.updateCustomer : updateCustomer,
       customersLoading: apiMode ? customersApi.customersLoading : false,
       customersError: apiMode ? customersApi.customersError : null,
-      karigars,
-      karigarVouchers,
-      issueMetalToKarigar,
-      receiveOrnamentFromKarigar,
+      karigars: apiMode ? karigarApi.karigars : karigars,
+      karigarVouchers: apiMode ? karigarApi.karigarVouchers : karigarVouchers,
+      issueMetalToKarigar: apiMode ? issueMetalToKarigarApi : issueMetalToKarigar,
+      receiveOrnamentFromKarigar: apiMode ? receiveOrnamentFromKarigarApi : receiveOrnamentFromKarigar,
+      karigarLoading: apiMode ? karigarApi.karigarLoading : false,
+      karigarError: apiMode ? karigarApi.karigarError : null,
       invoices: apiMode ? invoicesApi.invoices : invoices,
       createInvoice: apiMode ? invoicesApi.createInvoice : createInvoice,
       invoicesLoading: apiMode ? invoicesApi.invoicesLoading : false,
       invoicesError: apiMode ? invoicesApi.invoicesError : null,
-      udhaarList,
-      udhaarRepayments,
-      recordUdhaarDeposit,
-      createGirviLoan,
+      udhaarList: apiMode ? udhaarApi.udhaarList : udhaarList,
+      udhaarRepayments: apiMode ? udhaarApi.udhaarRepayments : udhaarRepayments,
+      recordUdhaarDeposit: apiMode ? recordUdhaarDepositApi : recordUdhaarDeposit,
+      createGirviLoan: apiMode ? createGirviLoanApi : createGirviLoan,
+      udhaarLoading: apiMode ? udhaarApi.udhaarLoading : false,
+      udhaarError: apiMode ? udhaarApi.udhaarError : null,
       generalLedger,
-      schemes,
-      schemeEnrollments,
-      enrollCustomerInScheme,
-      recordSchemeInstallment,
-      expenses,
-      dailyDiary,
+      schemes: apiMode ? schemesApi.schemes : schemes,
+      schemeEnrollments: apiMode ? schemesApi.enrollments : schemeEnrollments,
+      enrollCustomerInScheme: apiMode ? enrollCustomerInSchemeApi : enrollCustomerInScheme,
+      recordSchemeInstallment: apiMode ? recordSchemeInstallmentApi : recordSchemeInstallment,
+      schemesLoading: apiMode ? schemesApi.schemesLoading : false,
+      schemesError: apiMode ? schemesApi.schemesError : null,
+      expenses: apiMode ? expensesApi.expenses : expenses,
+      addExpense: apiMode ? expensesApi.addExpense : addExpense,
+      voidExpense: apiMode ? expensesApi.voidExpense : voidExpense,
+      expensesLoading: apiMode ? expensesApi.expensesLoading : false,
+      expensesError: apiMode ? expensesApi.expensesError : null,
+      dailyDiary: apiMode ? diaryApi.diaryDay : dailyDiary,
+      loadDiaryDay: apiMode ? diaryApi.loadDiaryDay : null,
+      saveDiaryDay: apiMode ? diaryApi.saveDiaryDay : null,
+      diaryLoading: apiMode ? diaryApi.diaryLoading : false,
+      diaryError: apiMode ? diaryApi.diaryError : null,
       activeModule,
       setActiveModule,
       globalSearch,

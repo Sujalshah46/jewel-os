@@ -10,7 +10,6 @@ export default function LoginScreen() {
   const [mode, setMode] = useState('login'); // 'login' | 'signup'
   const [email, setEmail] = useState('');
   const [password, setPassword] = useState('');
-  const [name, setName] = useState('');
   const [tenantName, setTenantName] = useState('');
   const [error, setError] = useState('');
   const [busy, setBusy] = useState(false);
@@ -23,10 +22,10 @@ export default function LoginScreen() {
       if (mode === 'login') {
         await login(email.trim(), password);
       } else {
-        if (!name.trim() || !tenantName.trim()) {
-          throw new Error('Name and business name are required to create an account.');
+        if (!tenantName.trim()) {
+          throw new Error('Business name is required to create an account.');
         }
-        await signup(email.trim(), password, name.trim(), tenantName.trim());
+        await signup(email.trim(), password, tenantName.trim());
       }
     } catch (err) {
       setError(err.message || 'Sign in failed. Please try again.');
@@ -46,22 +45,13 @@ export default function LoginScreen() {
         </div>
         <form onSubmit={submit} className="space-y-4">
           {mode === 'signup' && (
-            <>
-              <input
-                className="w-full border rounded-lg px-3 py-2"
-                placeholder="Your name"
-                value={name}
-                onChange={(e) => setName(e.target.value)}
-                autoComplete="name"
-              />
-              <input
-                className="w-full border rounded-lg px-3 py-2"
-                placeholder="Business / firm name"
-                value={tenantName}
-                onChange={(e) => setTenantName(e.target.value)}
-                autoComplete="organization"
-              />
-            </>
+            <input
+              className="w-full border rounded-lg px-3 py-2"
+              placeholder="Business / firm name"
+              value={tenantName}
+              onChange={(e) => setTenantName(e.target.value)}
+              autoComplete="organization"
+            />
           )}
           <input
             className="w-full border rounded-lg px-3 py-2"

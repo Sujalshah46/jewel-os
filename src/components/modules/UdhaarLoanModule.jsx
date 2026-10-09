@@ -98,11 +98,11 @@ export default function UdhaarLoanModule() {
   const totalDeposited = filteredList.reduce((acc, curr) => acc + (Number(curr.depositedAmount) || 0), 0);
   const totalLeftBalance = filteredList.reduce((acc, curr) => acc + (Number(curr.leftBalance) || 0), 0);
 
-  const handleDepositSubmit = (e) => {
+  const handleDepositSubmit = async (e) => {
     e.preventDefault();
     if (!selectedUdhaarForDeposit || !depositAmount) return;
     try {
-      recordUdhaarDeposit(
+      await recordUdhaarDeposit(
         selectedUdhaarForDeposit.id,
         Number(depositAmount),
         depositMode,
@@ -116,18 +116,22 @@ export default function UdhaarLoanModule() {
     }
   };
 
-  const handleGirviSubmit = (e) => {
+  const handleGirviSubmit = async (e) => {
     e.preventDefault();
     const cust = customers.find(c => c.id === girviForm.customerId) || customers[0];
-    createGirviLoan({
-      ...girviForm,
-      customerName: cust.fullName,
-      mobile: cust.mobile,
-      leftBalance: Number(girviForm.principalAmount),
-      amountWithInterest: Number(girviForm.principalAmount),
-      depositedAmount: 0
-    });
-    setShowGirviModal(false);
+    try {
+      await createGirviLoan({
+        ...girviForm,
+        customerName: cust.fullName,
+        mobile: cust.mobile,
+        leftBalance: Number(girviForm.principalAmount),
+        amountWithInterest: Number(girviForm.principalAmount),
+        depositedAmount: 0
+      });
+      setShowGirviModal(false);
+    } catch (err) {
+      alert('Girvi Error: ' + err.message);
+    }
   };
 
   return (

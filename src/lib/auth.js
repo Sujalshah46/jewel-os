@@ -34,8 +34,11 @@ export async function login(api, { email, password }) {
   return res;
 }
 
-export async function signup(api, { email, password, name, tenantName }) {
-  const res = await api.post('/v1/auth/signup', { email, password, name, tenantName });
+export async function signup(api, { email, password, tenantName }) {
+  // Backend contract: { email, password, tenantName, businessName }.
+  // For self-serve signup the workspace name and the legal-entity business
+  // name are the same value collected from the "Business / firm name" field.
+  const res = await api.post('/v1/auth/signup', { email, password, tenantName, businessName: tenantName });
   if (res && res.token) setToken(res.token);
   return res;
 }

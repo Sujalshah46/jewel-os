@@ -23,6 +23,7 @@ export default function DailyRatesModule() {
     dailyRates,
     setDailyRates,
     updateDailyRate,
+    updateBaseRate,
     deleteAllRates,
     resetDefaultRates,
     mcxData
@@ -61,6 +62,13 @@ export default function DailyRatesModule() {
   ];
 
   const handleBaseRateChange = (rate24kPerGram) => {
+    // API-aware cascade: in apiMode this derives every gold karat from the
+    // 24K base and persists each rate to the backend; in local mode it
+    // updates local state with the same math.
+    if (typeof updateBaseRate === 'function') {
+      updateBaseRate(rate24kPerGram);
+      return;
+    }
     const base = Number(rate24kPerGram);
     if (!base || base <= 0) return;
 

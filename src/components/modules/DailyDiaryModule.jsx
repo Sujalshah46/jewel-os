@@ -1,4 +1,4 @@
-import React, { useState } from 'react';
+import React, { useState, useEffect } from 'react';
 import { useJewellery, getTodayBusinessDate } from '../../context/JewelleryContext';
 import {
   BookOpen,
@@ -18,11 +18,18 @@ import {
 import { formatCurrency } from '../../utils/numberToWords';
 
 export default function DailyDiaryModule() {
-  const { dailyDiary, activeFirm, invoices, expenses, udhaarRepayments } = useJewellery();
+  const { dailyDiary, activeFirm, invoices, expenses, udhaarRepayments, loadDiaryDay, apiMode } = useJewellery();
   
   // Dynamic business date selector (defaults to current date, supports historical archive)
   const [selectedDate, setSelectedDate] = useState(() => getTodayBusinessDate());
   const isHistoricalArchive = selectedDate === '2024-08-12';
+
+  // In API mode, fetch the diary day (opening balance, notes) for the selected date.
+  useEffect(() => {
+    if (apiMode && typeof loadDiaryDay === 'function' && selectedDate) {
+      loadDiaryDay(selectedDate);
+    }
+  }, [apiMode, loadDiaryDay, selectedDate]);
 
   // Invoices for selected business date & active firm
   const dateInvoices = (invoices || []).filter(inv =>
