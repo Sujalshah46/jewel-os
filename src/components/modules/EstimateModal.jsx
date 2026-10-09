@@ -56,10 +56,10 @@ export default function EstimateModal() {
               {(previewEstimate.items || []).map((i, idx) => (
                 <tr key={idx}>
                   <td className="py-1.5 px-2 font-bold">{i.itemCode || 'LRING29'}</td>
-                  <td className="py-1.5 px-2">{formatWeight(i.grossWeight || 2.0)}</td>
+                  <td className="py-1.5 px-2">{formatWeight(i.grossWeight ?? 0)}</td>
                   <td className="py-1.5 px-2">{i.purityKarat || '22K (91.6)'}</td>
                   <td className="py-1.5 px-2 text-right font-bold">
-                    ₹{(i.finalValue || 17200).toLocaleString('en-IN', { minimumFractionDigits: 2 })}
+                    ₹{Number(i.finalValue ?? i.totalPrice ?? 0).toLocaleString('en-IN', { minimumFractionDigits: 2 })}
                   </td>
                 </tr>
               ))}
@@ -68,7 +68,7 @@ export default function EstimateModal() {
 
           <div className="flex justify-between font-bold text-sm text-slate-900 pt-1">
             <span>TOTAL ESTIMATE VALUE:</span>
-            <span>{formatCurrency(previewEstimate.total || 17200)}</span>
+            <span>{formatCurrency(previewEstimate.total ?? (previewEstimate.items || []).reduce((sum, item) => sum + Number(item.finalValue ?? item.totalPrice ?? 0), 0))}</span>
           </div>
 
           <p className="text-[10px] text-slate-500 italic pt-2 border-t border-slate-200 font-sans">

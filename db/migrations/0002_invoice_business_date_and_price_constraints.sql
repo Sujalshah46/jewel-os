@@ -1,0 +1,2 @@
+ALTER TABLE "invoice" ALTER COLUMN "business_date" SET DATA TYPE date USING "business_date"::date;--> statement-breakpoint
+ALTER TABLE "stock_item" ADD CONSTRAINT "stock_item_making_percentage_range" CHECK ("stock_item"."making_charge_type" <> 'percentage' OR "stock_item"."making_charge_value" <= 10000);

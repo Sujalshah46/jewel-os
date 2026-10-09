@@ -61,15 +61,16 @@ assert(
 // -----------------------------------------------------------------------------
 const contextContent = fs.readFileSync('src/context/JewelleryContext.jsx', 'utf8');
 assert(
-  contextContent.includes('Invalid backup schema: No valid Jewellery OS collections found'),
+  contextContent.includes('prepareBackupRestore(jsonObj)') &&
+  contextContent.indexOf('prepareBackupRestore(jsonObj)') < contextContent.indexOf('setFirms(data.firms)'),
   'SEC-06-A',
-  'JewelleryContext.jsx validates JSON structure and rejects unvalidated data'
+  'JewelleryContext.jsx validates the entire snapshot before scheduling any restore state changes'
 );
 const backupModuleContent = fs.readFileSync('src/components/modules/BackupRestoreModule.jsx', 'utf8');
 assert(
-  backupModuleContent.includes('Backup Restore Failed:'),
+  backupModuleContent.includes('Restore failed:') && backupModuleContent.includes('A redacted snapshot of the current state will download first'),
   'SEC-06-B',
-  'BackupRestoreModule.jsx reports explicit schema validation errors to the user'
+  'BackupRestoreModule.jsx reports validation errors and requires a preserved pre-restore snapshot'
 );
 
 // -----------------------------------------------------------------------------

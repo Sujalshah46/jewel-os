@@ -23,6 +23,7 @@ import {
   INITIAL_AUDIT_LOGS
 } from '../data/initialAdminData';
 import { calculateJewelleryItem, calculateOldMetalExchange } from '../utils/calculations';
+import { createBackupDocument, downloadBackupDocument, prepareBackupRestore } from '../utils/backup';
 
 // Business Date & Financial Year Helpers
 export function getTodayBusinessDate() {
@@ -298,6 +299,7 @@ export function JewelleryProvider({ children }) {
   const [globalSearch, setGlobalSearch] = useState('');
   const [previewInvoice, setPreviewInvoice] = useState(null);
   const [previewEstimate, setPreviewEstimate] = useState(null);
+  const [pendingBillingItem, setPendingBillingItem] = useState(null);
 
   // Active Context Objects with robust null-safety fallbacks
   const activeFirm = (Array.isArray(firms) && firms.length > 0)
@@ -614,26 +616,16 @@ export function JewelleryProvider({ children }) {
     });
   };
 
-  // Integrations Ping & Update
+  // Demo-only integration check: never contact providers or claim connectivity.
   const testIntegrationConnection = (integrationId) => {
     const target = integrations.find(i => i.id === integrationId);
-    setIntegrations(prev => prev.map(i => {
-      if (i.id === integrationId) {
-        return {
-          ...i,
-          status: 'Connected',
-          lastPing: 'Just now (HTTP 200 OK - Latency 24ms)'
-        };
-      }
-      return i;
-    }));
     addAuditLog({
-      action: 'Integration Health Ping',
+      action: 'Demo Integration Check',
       category: 'Integrations',
       target: target?.name || integrationId,
-      details: 'Safe loopback endpoint pinged: Connection verified.'
+      details: 'Demo simulation only; no provider request or connectivity check was performed.'
     });
-    return { success: true, latencyMs: 24, message: 'Ping handshake successful' };
+    return { success: false, simulated: true, message: 'No provider request was sent; connection remains unconfigured.' };
   };
 
   const updateIntegration = (integrationId, updatedFields) => {
@@ -1214,7 +1206,12 @@ export function JewelleryProvider({ children }) {
 
   // Reset entire database to audit seed data
   const resetToAuditData = () => {
-    localStorage.clear();
+    const ownedKeys = [];
+    for (let index = 0; index < localStorage.length; index += 1) {
+      const key = localStorage.key(index);
+      if (key?.startsWith(STORAGE_KEY)) ownedKeys.push(key);
+    }
+    ownedKeys.forEach(key => localStorage.removeItem(key));
     setFirms(INITIAL_FIRMS);
     setActiveFirmId(INITIAL_FIRMS[0].id);
     setDailyRates(INITIAL_DAILY_RATES);
@@ -1223,7 +1220,33 @@ export function JewelleryProvider({ children }) {
     setKarigars(INITIAL_KARIGARS);
     setInvoices(INITIAL_INVOICES);
     setUdhaarList(INITIAL_UDHAAR);
+    setUdhaarRepayments([
+      {
+        id: 'REP-101', receiptNo: 'REC/101/24-25', firmId: 'FIRM-001', firmCode: 'KJJ', loanId: 'UDH-002',
+        invoiceNo: 'KUM82', customerId: 'CUST-002', customerName: 'Sunita Patil', date: '2024-08-10',
+        timestamp: '2024-08-10 11:30:00', amount: 25000, paymentMode: 'Cash', reference: 'RCP-DRAWER-82',
+        operator: 'Rajesh Soni', notes: 'Partial settlement against gold chain loan',
+      },
+    ]);
+    setStockMovements(INITIAL_STOCK.map((item, idx) => ({
+      id: `SM-${idx + 1}`, movementNo: `MOV-${String(idx + 1).padStart(4, '0')}`,
+      firmId: item.firmId || 'FIRM-001', firmCode: item.firmCode || 'KJJ', stockId: item.id,
+      itemCode: item.itemCode, barcode: item.barcode, type: 'OPENING', date: '2024-04-01',
+      timestamp: '2024-04-01 09:00:00', grossWeight: item.grossWeight, netWeight: item.netWeight,
+      metalType: item.metalType, referenceId: 'OPENING_STOCK', notes: 'Initial inventory balance import',
+    })));
+    setGeneralLedger([]);
     setSchemes(INITIAL_SCHEMES);
+    setKarigarVouchers([{
+      id: 'KV-101', karigarId: 'KAR-001', karigarName: 'Gopal Soni (Master Ring Craftsman)',
+      type: 'ISSUE', metalType: 'Gold', weightGm: 20, date: '2024-10-01',
+      notes: 'Issued 24K pure gold for ladies casting rings',
+    }]);
+    setSchemeEnrollments([{
+      id: 'ENR-101', schemeId: 'SCH-001', schemeName: 'Swarna Nidhi 11+1 Bonus Plan', customerId: 'CUST-001',
+      customerName: 'Priya Sharma', mobile: '+91 9822019283', monthlyInstallment: 5000, durationMonths: 11,
+      paidInstallmentsCount: 5, totalPaidAmount: 25000, startDate: '2024-05-10', status: 'Active',
+    }]);
     setExpenses(INITIAL_EXPENSES);
     setDailyDiary(INITIAL_DAILY_DIARY);
     setClients(INITIAL_CLIENTS);
@@ -1237,120 +1260,53 @@ export function JewelleryProvider({ children }) {
     setCurrentRole('Platform Super Admin');
   };
 
-  // Export full JSON database
+  const getCurrentBackupState = () => ({
+    firms, dailyRates, stock, customers, karigars, invoices, udhaarList, udhaarRepayments,
+    stockMovements, generalLedger, schemes, karigarVouchers, schemeEnrollments, expenses, dailyDiary,
+    clients, branches, staffUsers, catalogueSettings, integrations, auditLogs,
+    activeFirmId, activeClientId, activeBranchId,
+  });
+
+  // Export a validated, redacted local demo snapshot. This is not a database backup.
   const exportDatabaseJson = () => {
-    const fullDb = {
-      appName: 'Jewellery OS',
-      version: '2.7.364 Pro',
-      exportDate: new Date().toISOString(),
-      firms,
-      dailyRates,
-      stock,
-      customers,
-      karigars,
-      invoices,
-      udhaarList,
-      udhaarRepayments,
-      stockMovements,
-      generalLedger,
-      schemes,
-      expenses,
-      dailyDiary,
-      clients,
-      branches,
-      staffUsers,
-      catalogueSettings,
-      integrations,
-      auditLogs
-    };
-    const dataStr = "data:text/json;charset=utf-8," + encodeURIComponent(JSON.stringify(fullDb, null, 2));
-    const downloadAnchor = document.createElement('a');
-    downloadAnchor.setAttribute("href", dataStr);
-    downloadAnchor.setAttribute("download", `Jewellery_OS_Backup_${new Date().toISOString().split('T')[0]}.json`);
-    document.body.appendChild(downloadAnchor);
-    downloadAnchor.click();
-    downloadAnchor.remove();
+    const snapshot = createBackupDocument(getCurrentBackupState());
+    downloadBackupDocument(snapshot, `Jewellery_OS_Demo_Snapshot_${new Date().toISOString().slice(0, 10)}.json`);
+    return snapshot;
   };
 
-  // Import JSON database with schema validation (SEC-06)
-  const importDatabaseJson = (jsonObj) => {
-    if (!jsonObj || typeof jsonObj !== 'object' || Array.isArray(jsonObj)) {
-      throw new Error('Invalid backup file: Root structure must be a JSON object.');
+  // Validate the full snapshot, preserve the current state, then apply the prepared state.
+  const importDatabaseJson = (jsonObj, preserveCurrentSnapshot) => {
+    const { data } = prepareBackupRestore(jsonObj);
+    if (typeof preserveCurrentSnapshot !== 'function') {
+      throw new Error('Restore requires a pre-restore snapshot handler.');
     }
+    preserveCurrentSnapshot(createBackupDocument(getCurrentBackupState()));
 
-    const validCollections = ['firms', 'dailyRates', 'stock', 'customers', 'karigars', 'invoices', 'udhaarList', 'schemes', 'expenses', 'dailyDiary', 'clients', 'branches'];
-    const hasAtLeastOne = validCollections.some(key => Array.isArray(jsonObj[key]));
-    if (!hasAtLeastOne) {
-      throw new Error('Invalid backup schema: No valid Jewellery OS collections found in backup.');
-    }
-
-    if (jsonObj.firms) {
-      if (!Array.isArray(jsonObj.firms)) throw new Error('Schema error: "firms" must be an array.');
-      setFirms(jsonObj.firms);
-    }
-    if (jsonObj.dailyRates) {
-      if (!Array.isArray(jsonObj.dailyRates)) throw new Error('Schema error: "dailyRates" must be an array.');
-      setDailyRates(jsonObj.dailyRates);
-    }
-    if (jsonObj.stock) {
-      if (!Array.isArray(jsonObj.stock)) throw new Error('Schema error: "stock" must be an array.');
-      setStock(jsonObj.stock);
-    }
-    if (jsonObj.customers) {
-      if (!Array.isArray(jsonObj.customers)) throw new Error('Schema error: "customers" must be an array.');
-      setCustomers(jsonObj.customers);
-    }
-    if (jsonObj.karigars) {
-      if (!Array.isArray(jsonObj.karigars)) throw new Error('Schema error: "karigars" must be an array.');
-      setKarigars(jsonObj.karigars);
-    }
-    if (jsonObj.invoices) {
-      if (!Array.isArray(jsonObj.invoices)) throw new Error('Schema error: "invoices" must be an array.');
-      setInvoices(jsonObj.invoices);
-    }
-    if (jsonObj.udhaarList) {
-      if (!Array.isArray(jsonObj.udhaarList)) throw new Error('Schema error: "udhaarList" must be an array.');
-      setUdhaarList(jsonObj.udhaarList);
-    }
-    if (jsonObj.udhaarRepayments && Array.isArray(jsonObj.udhaarRepayments)) {
-      setUdhaarRepayments(jsonObj.udhaarRepayments);
-    }
-    if (jsonObj.stockMovements && Array.isArray(jsonObj.stockMovements)) {
-      setStockMovements(jsonObj.stockMovements);
-    }
-    if (jsonObj.generalLedger && Array.isArray(jsonObj.generalLedger)) {
-      setGeneralLedger(jsonObj.generalLedger);
-    }
-    if (jsonObj.schemes) {
-      if (!Array.isArray(jsonObj.schemes)) throw new Error('Schema error: "schemes" must be an array.');
-      setSchemes(jsonObj.schemes);
-    }
-    if (jsonObj.expenses) {
-      if (!Array.isArray(jsonObj.expenses)) throw new Error('Schema error: "expenses" must be an array.');
-      setExpenses(jsonObj.expenses);
-    }
-    if (jsonObj.dailyDiary) {
-      if (!Array.isArray(jsonObj.dailyDiary)) throw new Error('Schema error: "dailyDiary" must be an array.');
-      setDailyDiary(jsonObj.dailyDiary);
-    }
-    if (jsonObj.clients && Array.isArray(jsonObj.clients)) {
-      setClients(jsonObj.clients);
-    }
-    if (jsonObj.branches && Array.isArray(jsonObj.branches)) {
-      setBranches(jsonObj.branches);
-    }
-    if (jsonObj.staffUsers && Array.isArray(jsonObj.staffUsers)) {
-      setStaffUsers(jsonObj.staffUsers);
-    }
-    if (jsonObj.catalogueSettings && typeof jsonObj.catalogueSettings === 'object') {
-      setCatalogueSettings(jsonObj.catalogueSettings);
-    }
-    if (jsonObj.integrations && Array.isArray(jsonObj.integrations)) {
-      setIntegrations(jsonObj.integrations);
-    }
-    if (jsonObj.auditLogs && Array.isArray(jsonObj.auditLogs)) {
-      setAuditLogs(jsonObj.auditLogs);
-    }
+    setFirms(data.firms);
+    setActiveFirmId(data.activeFirmId);
+    setDailyRates(data.dailyRates);
+    setStock(data.stock);
+    setCustomers(data.customers);
+    setKarigars(data.karigars);
+    setInvoices(data.invoices);
+    setUdhaarList(data.udhaarList);
+    setUdhaarRepayments(data.udhaarRepayments);
+    setStockMovements(data.stockMovements);
+    setGeneralLedger(data.generalLedger);
+    setSchemes(data.schemes);
+    setKarigarVouchers(data.karigarVouchers);
+    setSchemeEnrollments(data.schemeEnrollments);
+    setExpenses(data.expenses);
+    setDailyDiary(data.dailyDiary);
+    setClients(data.clients);
+    setActiveClientId(data.activeClientId);
+    setBranches(data.branches);
+    setActiveBranchId(data.activeBranchId);
+    setStaffUsers(data.staffUsers);
+    setCatalogueSettings(data.catalogueSettings);
+    setIntegrations(data.integrations);
+    setAuditLogs(data.auditLogs);
+    return { migratedFromVersion: jsonObj.version || null };
   };
 
   // Aggregate Dashboard Analytics scoped by Active Firm (P0 Fix)
@@ -1475,6 +1431,8 @@ export function JewelleryProvider({ children }) {
       setPreviewInvoice,
       previewEstimate,
       setPreviewEstimate,
+      pendingBillingItem,
+      setPendingBillingItem,
       resetToAuditData,
       exportDatabaseJson,
       importDatabaseJson,

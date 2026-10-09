@@ -28,7 +28,7 @@ export default function AdminSalesPosTab() {
 
   const handleSave = (e) => {
     e.preventDefault();
-    setSuccessMsg('Sales, POS & statutory compliance policies updated.');
+    setSuccessMsg('Demo only: these policies are not saved or enforced by transaction handlers.');
     setTimeout(() => setSuccessMsg(''), 4000);
   };
 

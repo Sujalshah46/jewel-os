@@ -1,5 +1,6 @@
 import React, { useState } from 'react';
 import { useJewellery } from '../../context/JewelleryContext';
+import { downloadBackupDocument } from '../../utils/backup';
 import {
   Settings,
   Globe,
@@ -26,27 +27,47 @@ export default function AdminSettingsTab() {
   const [errorMsg, setErrorMsg] = useState('');
 
   const handleFileUpload = (e) => {
-    const file = e.target.files[0];
+    const file = e.target.files?.[0];
     if (!file) return;
+    e.target.value = '';
+    if (file.size > 25 * 1024 * 1024) {
+      setErrorMsg('Restore failed: snapshot files must be 25 MB or smaller.');
+      return;
+    }
     const reader = new FileReader();
     reader.onload = (event) => {
       try {
-        const parsed = JSON.parse(event.target.result);
-        importDatabaseJson(parsed);
-        setSuccessMsg('Database restored successfully from JSON backup!');
+        const parsed = JSON.parse(event.target?.result);
+        if (!window.confirm('Restore replaces the current local demo state. A redacted snapshot of the current state will download first. Continue?')) return;
+        const result = importDatabaseJson(parsed, snapshot => {
+          downloadBackupDocument(snapshot, `Jewellery_OS_Pre_Restore_${new Date().toISOString().slice(0, 10)}.json`);
+        });
+        setSuccessMsg(result.migratedFromVersion
+          ? `Demo snapshot restored after upgrading the older ${result.migratedFromVersion} format.`
+          : 'Local demo snapshot restored.');
         setTimeout(() => setSuccessMsg(''), 4000);
       } catch (err) {
         setErrorMsg(err.message || 'Failed to restore database');
         setTimeout(() => setErrorMsg(''), 4000);
       }
     };
+    reader.onerror = () => {
+      setErrorMsg('Restore failed: the selected file could not be read.');
+      setTimeout(() => setErrorMsg(''), 4000);
+    };
     reader.readAsText(file);
   };
 
   const handleReset = () => {
-    if (window.confirm('WARNING: Reset all tables to audit seed data? This will reset all local changes.')) {
+    if (window.confirm('Reset local demo data to the audit seed? A redacted snapshot will download first. Continue?')) {
+      try {
+        exportDatabaseJson();
+      } catch (err) {
+        setErrorMsg(`Could not create the pre-reset snapshot: ${err.message || 'unknown error'}. Reset cancelled.`);
+        return;
+      }
       resetToAuditData();
-      setSuccessMsg('System reset to default seed data.');
+      setSuccessMsg('Local demo reset. The redacted pre-reset snapshot was downloaded.');
       setTimeout(() => setSuccessMsg(''), 4000);
     }
   };
@@ -76,7 +97,7 @@ export default function AdminSettingsTab() {
             </h2>
           </div>
           <p className="text-xs text-slate-400 mt-0.5">
-            Configure system localization, timezone, currency format, and trigger full offline database backup exports or recovery imports.
+            Configure demo display options and manage redacted local synthetic demo snapshots. Operational data is stored separately.
           </p>
         </div>
       </div>
@@ -133,7 +154,7 @@ export default function AdminSettingsTab() {
       {/* Database Backup & Recovery */}
       <div className="bg-slate-900/80 border border-slate-800 rounded-2xl p-5 shadow-xl space-y-4">
         <h3 className="text-xs font-bold uppercase tracking-wider text-amber-400 pb-2 border-b border-slate-800 flex items-center gap-1.5">
-          <Database className="w-4 h-4" /> 2. Complete Database Backup & Local Recovery
+          <Database className="w-4 h-4" /> 2. Local Demo Snapshot & Recovery
         </h3>
 
         <div className="grid grid-cols-1 md:grid-cols-3 gap-4 text-xs">
@@ -142,10 +163,10 @@ export default function AdminSettingsTab() {
             <div>
               <h4 className="font-bold text-slate-100 flex items-center gap-1.5">
                 <Download className="w-4 h-4 text-emerald-400" />
-                <span>Export JSON Database</span>
+                <span>Export Local Demo Snapshot</span>
               </h4>
               <p className="text-[11px] text-slate-400 mt-1">
-                Generates a snapshot containing all firms, clients, branches, staff, rates, inventory, and invoices.
+                Exports versioned demo records and histories. Customer KYC, bank details, and provider credentials are redacted. This is not an operational backup.
               </p>
             </div>
             <button
@@ -161,10 +182,10 @@ export default function AdminSettingsTab() {
             <div>
               <h4 className="font-bold text-slate-100 flex items-center gap-1.5">
                 <Upload className="w-4 h-4 text-blue-400" />
-                <span>Restore From JSON</span>
+                <span>Restore Demo Snapshot</span>
               </h4>
               <p className="text-[11px] text-slate-400 mt-1">
-                Restores state with strict schema validation against corruption.
+                Validates the entire snapshot before applying it and downloads a redacted pre-restore snapshot first.
               </p>
             </div>
             <label className="mt-4 w-full py-2 bg-blue-600 hover:bg-blue-500 text-white font-bold rounded-xl transition-colors text-center cursor-pointer block">

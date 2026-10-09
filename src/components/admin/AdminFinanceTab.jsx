@@ -1,12 +1,10 @@
-import React, { useState } from 'react';
+import React from 'react';
 import { useJewellery } from '../../context/JewelleryContext';
 import {
   DollarSign,
   Building2,
   Calendar,
   Lock,
-  Unlock,
-  CheckCircle,
   FileSpreadsheet,
   Wallet,
   ArrowUpRight
@@ -16,8 +14,7 @@ import { formatCurrency } from '../../utils/numberToWords';
 export default function AdminFinanceTab() {
   const { firms, activeFirm, setActiveModule, invoices, expenses } = useJewellery();
 
-  const [periodStatus, setPeriodStatus] = useState('Open');
-  const [successMsg, setSuccessMsg] = useState('');
+  const periodStatus = 'Not enforced in demo';
 
   const chartOfAccounts = [
     { code: '1000', name: 'Cash in Hand (Showroom Drawer)', type: 'Current Asset', balance: activeFirm.cashBalance },
@@ -33,13 +30,6 @@ export default function AdminFinanceTab() {
 
   return (
     <div className="space-y-6">
-      {successMsg && (
-        <div className="p-3 bg-emerald-950/90 border border-emerald-500 rounded-xl text-emerald-300 text-xs flex items-center space-x-2">
-          <CheckCircle className="w-4 h-4 text-emerald-400 flex-shrink-0" />
-          <span>{successMsg}</span>
-        </div>
-      )}
-
       {/* Header */}
       <div className="flex flex-col sm:flex-row sm:items-center justify-between gap-4 pb-4 border-b border-slate-800">
         <div>
@@ -88,18 +78,16 @@ export default function AdminFinanceTab() {
             <div>
               <p className="text-[11px] text-slate-400">Fiscal Period Status</p>
               <p className="text-base font-bold text-amber-300 mt-0.5">{periodStatus}</p>
+              <p className="mt-1 text-[10px] text-slate-400">Period closing is not implemented and does not restrict postings.</p>
             </div>
             <button
-              onClick={() => {
-                const next = periodStatus === 'Open' ? 'Closed / Audited' : 'Open';
-                setPeriodStatus(next);
-                setSuccessMsg(`Fiscal Period status switched to "${next}".`);
-                setTimeout(() => setSuccessMsg(''), 3000);
-              }}
-              className="mt-2 py-1 px-3 bg-slate-900 hover:bg-slate-800 text-slate-200 border border-slate-700 rounded-lg text-xs font-bold transition-colors flex items-center justify-center gap-1"
+              type="button"
+              disabled
+              title="Period controls are unavailable in the demo."
+              className="mt-2 py-1 px-3 bg-slate-900 text-slate-500 border border-slate-700 rounded-lg text-xs font-bold flex items-center justify-center gap-1 cursor-not-allowed"
             >
-              {periodStatus === 'Open' ? <Lock className="w-3 h-3 text-amber-400" /> : <Unlock className="w-3 h-3 text-emerald-400" />}
-              <span>{periodStatus === 'Open' ? 'Close Financial Period' : 'Reopen Period'}</span>
+              <Lock className="w-3 h-3" />
+              <span>Unavailable in demo</span>
             </button>
           </div>
         </div>

@@ -185,14 +185,14 @@ console.log('\n--- 5. Testing Integrations Hub ---');
 assert(
   Array.isArray(INITIAL_INTEGRATIONS) && INITIAL_INTEGRATIONS.length >= 6,
   'ADM-15',
-  `Integrations Hub pre-configured with Payment, SMS, WhatsApp, E-Invoice and Hardware (Found: ${INITIAL_INTEGRATIONS.length})`
+  `Demo provider examples are present but not configured (Found: ${INITIAL_INTEGRATIONS.length})`
 );
 
-const maskedKeysSafe = INITIAL_INTEGRATIONS.every(i => !i.apiKeyMasked.includes('live_sec_') || i.apiKeyMasked.includes('••••'));
+const maskedKeysSafe = INITIAL_INTEGRATIONS.every(i => !('apiKeyMasked' in i) && i.status === 'Not configured');
 assert(
   maskedKeysSafe,
   'ADM-16',
-  'All integration secrets are masked without raw secret leakage'
+  'Provider examples expose no mock credentials and make no connection claim'
 );
 
 // -----------------------------------------------------------------------------

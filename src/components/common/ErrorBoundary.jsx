@@ -16,15 +16,6 @@ export class ErrorBoundary extends React.Component {
     this.setState({ errorInfo });
   }
 
-  handleReset = () => {
-    try {
-      localStorage.clear();
-      window.location.reload();
-    } catch (e) {
-      window.location.reload();
-    }
-  };
-
   render() {
     if (this.state.hasError) {
       return (
@@ -38,7 +29,7 @@ export class ErrorBoundary extends React.Component {
                 Application Recoverable Error
               </h2>
               <p className="text-xs text-slate-400 mt-2">
-                A component encountered an issue while loading. Click below to refresh or restore clean system baseline data.
+                A component encountered an issue while loading. Reloading preserves browser data. No application data has been cleared.
               </p>
               {this.state.error && (
                 <div className="mt-3 p-3 bg-slate-950 border border-slate-800 rounded-xl text-left font-mono text-[11px] text-rose-300 overflow-x-auto max-h-36">
@@ -53,12 +44,6 @@ export class ErrorBoundary extends React.Component {
               >
                 <RefreshCw className="w-4 h-4" />
                 <span>Reload Page</span>
-              </button>
-              <button
-                onClick={this.handleReset}
-                className="px-4 py-2.5 bg-rose-600/20 hover:bg-rose-600 text-rose-300 hover:text-white border border-rose-500/30 rounded-xl text-xs font-bold transition-all cursor-pointer"
-              >
-                Reset System Cache
               </button>
             </div>
           </div>

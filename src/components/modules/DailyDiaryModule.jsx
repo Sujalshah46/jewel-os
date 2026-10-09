@@ -101,10 +101,7 @@ export default function DailyDiaryModule() {
             <input
               type="date"
               value={selectedDate}
-              onChange={(e) => {
-                setSelectedDate(e.target.value);
-                setIsHistoricalArchive(e.target.value === '2024-08-12');
-              }}
+              onChange={(e) => setSelectedDate(e.target.value)}
               className="bg-transparent text-amber-200 font-bold font-mono focus:outline-none"
             />
             {isHistoricalArchive && (

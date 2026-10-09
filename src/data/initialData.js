@@ -27,12 +27,7 @@ export const INITIAL_FIRMS = [
     upiId: '8956693545@hdfcbank',
     headerInfo: '|| SHUBH LABH || — KRISHNA JEWELLERS — TRUST OF PURITY SINCE 1998',
     footerInfo: 'Subject to Pune Jurisdiction. Interest @ 1.5% per month will be charged after 12 months. Pure Hallmark jewellery exchange guaranteed as per government norms.',
-    diwaliBannerText: 'HAPPY DIWALI & DHANTERAS SPECIAL OFFER — 5% OFF ON GOLD JEWELLERY MAKING | 15% OFF ON DIAMOND JEWELLERY | WWW.KRISHNAJEWELLERS.COM',
-    eInvoiceApi: {
-      appId: 'KJJ_EINV_9921',
-      apiKey: '',
-      username: 'krishna_einv_admin'
-    }
+    diwaliBannerText: 'HAPPY DIWALI & DHANTERAS SPECIAL OFFER — 5% OFF ON GOLD JEWELLERY MAKING | 15% OFF ON DIAMOND JEWELLERY | WWW.KRISHNAJEWELLERS.COM'
   },
   {
     id: 'FIRM-002',
@@ -60,12 +55,7 @@ export const INITIAL_FIRMS = [
     upiId: 'shubhlaxmi@icici',
     headerInfo: 'SHUBH LAXMI ORNAMENTS — LUXURY CRAFTSMANSHIP',
     footerInfo: 'No cash refund on purchased items. Exchange within 7 days against invoice.',
-    diwaliBannerText: 'FESTIVE WEDDING SEASON BONANZA — FLAT 20% DISCOUNT ON ALL BRIDAL MAKING CHARGES',
-    eInvoiceApi: {
-      appId: 'SLJ_EINV_4011',
-      apiKey: '',
-      username: 'shubh_laxmi_admin'
-    }
+    diwaliBannerText: 'FESTIVE WEDDING SEASON BONANZA — FLAT 20% DISCOUNT ON ALL BRIDAL MAKING CHARGES'
   }
 ];
 
@@ -224,16 +214,12 @@ export const INITIAL_CUSTOMERS = [
     city: 'Pune',
     pincode: '411028',
     address: 'Plot 42, Vasant Vihar, Hadapsar, Pune',
-    dob: '1985-06-15',
-    pan: 'ABCDE1234F',
-    aadhaar: '4589 1234 9876',
     kit: 'KIT-9812',
     userType: 'Customer',
     email: 'avinash.kale@example.com',
     creditLimit: 100000,
     currentUdhaarBalance: 4000.00,
-    loyaltyPoints: 340,
-    photo: 'https://images.unsplash.com/photo-1507003211169-0a1dd7228f2d?w=150&auto=format&fit=crop&q=80'
+    loyaltyPoints: 340
   },
   {
     id: 'CUST-002',
@@ -250,16 +236,12 @@ export const INITIAL_CUSTOMERS = [
     city: 'Pune',
     pincode: '411030',
     address: '108 Laxmi Road, Pune',
-    dob: '1990-11-20',
-    pan: 'BCDEF2345G',
-    aadhaar: '6712 3456 1289',
     kit: 'KIT-4401',
     userType: 'Customer',
     email: 'deva.jadhav@example.com',
     creditLimit: 75000,
     currentUdhaarBalance: 0.00,
-    loyaltyPoints: 120,
-    photo: 'https://images.unsplash.com/photo-1500648767791-00dcc994a43e?w=150&auto=format&fit=crop&q=80'
+    loyaltyPoints: 120
   },
   {
     id: 'CUST-003',
@@ -276,16 +258,12 @@ export const INITIAL_CUSTOMERS = [
     city: 'Pune',
     pincode: '411038',
     address: 'B-12, Kothrud Gardens, Pune',
-    dob: '1978-03-12',
-    pan: 'CDEFG3456H',
-    aadhaar: '8901 2345 6789',
     kit: 'KIT-1102',
     userType: 'Customer',
     email: 'lata.shinde@example.com',
     creditLimit: 150000,
     currentUdhaarBalance: 0.00,
-    loyaltyPoints: 580,
-    photo: 'https://images.unsplash.com/photo-1544005313-94ddf0286df2?w=150&auto=format&fit=crop&q=80'
+    loyaltyPoints: 580
   },
   {
     id: 'CUST-004',
@@ -302,16 +280,12 @@ export const INITIAL_CUSTOMERS = [
     city: 'Pune',
     pincode: '411014',
     address: '45, Nagar Road, Chandan Nagar, Pune',
-    dob: '1992-09-08',
-    pan: 'DEFGH4567J',
-    aadhaar: '3456 7890 1234',
     kit: 'KIT-6612',
     userType: 'Customer',
     email: 'omkar.patil@example.com',
     creditLimit: 50000,
     currentUdhaarBalance: 0.00,
-    loyaltyPoints: 85,
-    photo: 'https://images.unsplash.com/photo-1522075469751-3a6694fb2f61?w=150&auto=format&fit=crop&q=80'
+    loyaltyPoints: 85
   },
   {
     id: 'CUST-005',
@@ -328,16 +302,12 @@ export const INITIAL_CUSTOMERS = [
     city: 'Pune',
     pincode: '411041',
     address: 'Sinhagad Road, Pune',
-    dob: '1995-12-01',
-    pan: 'EFGHI5678K',
-    aadhaar: '2345 6789 0123',
     kit: 'KIT-2900',
     userType: 'Customer',
     email: 'rushikesh.more@example.com',
     creditLimit: 80000,
     currentUdhaarBalance: 0.00,
-    loyaltyPoints: 210,
-    photo: 'https://images.unsplash.com/photo-1492562080023-ab3db95bfbce?w=150&auto=format&fit=crop&q=80'
+    loyaltyPoints: 210
   },
   {
     id: 'CUST-006',
@@ -354,16 +324,12 @@ export const INITIAL_CUSTOMERS = [
     city: 'Pune',
     pincode: '411004',
     address: 'Deccan Gymkhana, Pune',
-    dob: '1988-04-25',
-    pan: 'FGHIJ6789L',
-    aadhaar: '1234 5678 9012',
     kit: 'KIT-8821',
     userType: 'Customer',
     email: 'gayatri.k@example.com',
     creditLimit: 120000,
     currentUdhaarBalance: 0.00,
-    loyaltyPoints: 450,
-    photo: 'https://images.unsplash.com/photo-1534528741775-53994a69daeb?w=150&auto=format&fit=crop&q=80'
+    loyaltyPoints: 450
   },
 
   // --- SUPPLIERS ---
@@ -383,17 +349,14 @@ export const INITIAL_CUSTOMERS = [
     city: 'Pune',
     pincode: '411002',
     address: '240 Raviwar Peth, Sarafa Bazaar, Pune',
-    dob: '1995-01-01',
-    pan: 'AABCR1234K',
-    aadhaar: 'GSTIN: 27AABCR1234K1Z5',
+    gstin: '27AABCR1234K1Z5',
     kit: 'SUP-9901',
     userType: 'Supplier',
     email: 'contact@rsbullion.com',
     creditLimit: 5000000,
     currentUdhaarBalance: 125000.00,
     loyaltyPoints: 0,
-    speciality: '24K 999 Fine Gold & 999 Silver Bars',
-    photo: 'https://images.unsplash.com/photo-1579783902614-a3fb3927b675?w=150&auto=format&fit=crop&q=80'
+    speciality: '24K 999 Fine Gold & 999 Silver Bars'
   },
   {
     id: 'SUP-002',
@@ -411,17 +374,14 @@ export const INITIAL_CUSTOMERS = [
     city: 'Surat',
     pincode: '395003',
     address: 'Tower B, Surat Diamond Bourse, Khajod, Surat',
-    dob: '1998-05-12',
-    pan: 'BBDSD5678L',
-    aadhaar: 'GSTIN: 24BBDSD5678L1Z8',
+    gstin: '24BBDSD5678L1Z8',
     kit: 'SUP-4412',
     userType: 'Supplier',
     email: 'sales@suratdiamonds.com',
     creditLimit: 3000000,
     currentUdhaarBalance: 84000.00,
     loyaltyPoints: 0,
-    speciality: 'Certified VVS-VS Loose Diamonds & Solitaires',
-    photo: 'https://images.unsplash.com/photo-1605100804763-247f67b3557e?w=150&auto=format&fit=crop&q=80'
+    speciality: 'Certified VVS-VS Loose Diamonds & Solitaires'
   },
   {
     id: 'SUP-003',
@@ -439,17 +399,14 @@ export const INITIAL_CUSTOMERS = [
     city: 'Pune',
     pincode: '411002',
     address: 'Shop 18, Sonya Maruti Chowk, Pune',
-    dob: '2002-08-15',
-    pan: 'CCDST9012M',
-    aadhaar: 'GSTIN: 27CCDST9012M1Z2',
+    gstin: '27CCDST9012M1Z2',
     kit: 'SUP-1109',
     userType: 'Supplier',
     email: 'silvertouch@example.com',
     creditLimit: 1000000,
     currentUdhaarBalance: 0.00,
     loyaltyPoints: 0,
-    speciality: 'Pure 92.5 Sterling Silver Utensils & Payal',
-    photo: 'https://images.unsplash.com/photo-1535632066927-ab7c9ab60908?w=150&auto=format&fit=crop&q=80'
+    speciality: 'Pure 92.5 Sterling Silver Utensils & Payal'
   },
 
   // --- STAFF ---
@@ -468,9 +425,6 @@ export const INITIAL_CUSTOMERS = [
     city: 'Pune',
     pincode: '411028',
     address: 'B-4, Mayur Park, Hadapsar, Pune',
-    dob: '1987-03-21',
-    pan: 'DDERS3456N',
-    aadhaar: '8912 3456 7890',
     kit: 'STF-001',
     userType: 'Staff',
     email: 'rajesh.sharma@krishnajewellers.com',
@@ -478,8 +432,7 @@ export const INITIAL_CUSTOMERS = [
     currentUdhaarBalance: 0.00,
     loyaltyPoints: 0,
     designation: 'Showroom General Manager',
-    monthlySalary: 45000,
-    photo: 'https://images.unsplash.com/photo-1500648767791-00dcc994a43e?w=150&auto=format&fit=crop&q=80'
+    monthlySalary: 45000
   },
   {
     id: 'STF-002',
@@ -496,9 +449,6 @@ export const INITIAL_CUSTOMERS = [
     city: 'Pune',
     pincode: '411030',
     address: 'Flat 12, Sahakar Nagar, Pune',
-    dob: '1994-09-10',
-    pan: 'EEFSP7890P',
-    aadhaar: '4512 6789 2345',
     kit: 'STF-002',
     userType: 'Staff',
     email: 'snehal.patil@krishnajewellers.com',
@@ -506,8 +456,7 @@ export const INITIAL_CUSTOMERS = [
     currentUdhaarBalance: 0.00,
     loyaltyPoints: 0,
     designation: 'Head Cashier & Billing Operator',
-    monthlySalary: 32000,
-    photo: 'https://images.unsplash.com/photo-1494790108377-be9c29b29330?w=150&auto=format&fit=crop&q=80'
+    monthlySalary: 32000
   },
   {
     id: 'STF-003',
@@ -524,9 +473,6 @@ export const INITIAL_CUSTOMERS = [
     city: 'Pune',
     pincode: '411014',
     address: 'Viman Nagar, Pune',
-    dob: '1992-12-05',
-    pan: 'FFGAV1234Q',
-    aadhaar: '6789 1234 5678',
     kit: 'STF-003',
     userType: 'Staff',
     email: 'amit.verma@krishnajewellers.com',
@@ -534,8 +480,7 @@ export const INITIAL_CUSTOMERS = [
     currentUdhaarBalance: 0.00,
     loyaltyPoints: 0,
     designation: 'Gold Valuation & Counter Sales Specialist',
-    monthlySalary: 28000,
-    photo: 'https://images.unsplash.com/photo-1519085360753-af0119f7cbe7?w=150&auto=format&fit=crop&q=80'
+    monthlySalary: 28000
   },
 
   // --- MONEY LENDERS ---
@@ -555,9 +500,6 @@ export const INITIAL_CUSTOMERS = [
     city: 'Pune',
     pincode: '411002',
     address: 'Sarafa Line, Sonya Maruti Chowk, Pune',
-    dob: '1989-10-10',
-    pan: 'GGMSL5678R',
-    aadhaar: 'Lic: MH-PUN-ML-2019/882',
     kit: 'ML-001',
     userType: 'Money Lender',
     email: 'shubhlabhfinance@example.com',
@@ -565,8 +507,7 @@ export const INITIAL_CUSTOMERS = [
     currentUdhaarBalance: 450000.00,
     loyaltyPoints: 0,
     girviInterestRate: '1.50% / Month',
-    licenseNo: 'MH-PUN-ML-2019/882',
-    photo: 'https://images.unsplash.com/photo-1554224155-6726b3ff858f?w=150&auto=format&fit=crop&q=80'
+    licenseNo: 'MH-PUN-ML-2019/882'
   },
   {
     id: 'ML-002',
@@ -584,9 +525,6 @@ export const INITIAL_CUSTOMERS = [
     city: 'Pune',
     pincode: '411011',
     address: 'Kasba Peth, Pune',
-    dob: '1980-04-14',
-    pan: 'HHMMB9012S',
-    aadhaar: 'Lic: MH-PUN-ML-2021/419',
     kit: 'ML-002',
     userType: 'Money Lender',
     email: 'mahavirfinance@example.com',
@@ -594,8 +532,7 @@ export const INITIAL_CUSTOMERS = [
     currentUdhaarBalance: 210000.00,
     loyaltyPoints: 0,
     girviInterestRate: '1.25% / Month',
-    licenseNo: 'MH-PUN-ML-2021/419',
-    photo: 'https://images.unsplash.com/photo-1563986768609-322da13575f3?w=150&auto=format&fit=crop&q=80'
+    licenseNo: 'MH-PUN-ML-2021/419'
   }
 ];
 
