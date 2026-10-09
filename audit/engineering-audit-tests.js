@@ -99,6 +99,7 @@ assert(
 // 5. P1 Finding 4: Invoice Settlement Integrity & Double Selling Prevention
 // -----------------------------------------------------------------------------
 const billingContent = fs.readFileSync('src/components/modules/BillingModule.jsx', 'utf8');
+const billingCartContent = fs.readFileSync('src/utils/billingCart.js', 'utf8');
 
 assert(
   billingContent.includes('isSubmitting') && billingContent.includes('setIsSubmitting(true)'),
@@ -107,7 +108,9 @@ assert(
 );
 
 assert(
-  billingContent.includes('calculateJewelleryItem({') && billingContent.includes('grossWeight: found.grossWeight'),
+  billingContent.includes('createBillingCartItem(found') &&
+  billingCartContent.includes('calculateJewelleryItem({') &&
+  billingCartContent.includes('grossWeight: stockItem.grossWeight'),
   'ENG-BILL-02',
   'BillingModule unifies barcode scanned item pricing with standard calculateJewelleryItem engine'
 );

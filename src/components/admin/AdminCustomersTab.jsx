@@ -26,7 +26,7 @@ export default function AdminCustomersTab() {
 
   const handleSave = (e) => {
     e.preventDefault();
-    setSuccessMsg('Customer loyalty & privacy policies updated.');
+    setSuccessMsg('Demo only: these customer and privacy policies are not saved or enforced.');
     setTimeout(() => setSuccessMsg(''), 4000);
   };
 

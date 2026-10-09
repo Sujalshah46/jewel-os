@@ -358,50 +358,13 @@ export default function FirmMasterModule() {
             <Globe className="w-4 h-4" /> 3. Government E-Invoice & E-Way Bill Integration API
           </h3>
 
-          <div className="grid grid-cols-1 md:grid-cols-4 gap-4">
+          <div className="grid grid-cols-1 gap-4">
             <div>
               <label className="block text-[11px] font-semibold text-slate-300 mb-1">
-                E-INVOICE APP ID
+                E-INVOICE CREDENTIALS
               </label>
-              <input
-                type="text"
-                value={formData.eInvoiceApi?.appId || ''}
-                onChange={(e) => handleEInvoiceChange('appId', e.target.value)}
-                className="w-full bg-slate-950 border border-slate-700 rounded-lg px-3 py-1.5 text-xs text-slate-100 font-mono"
-              />
-            </div>
-
-            <div>
-              <label className="block text-[11px] font-semibold text-slate-300 mb-1">
-                E-INVOICE API KEY
-              </label>
-              <input
-                type="password"
-                value={formData.eInvoiceApi?.apiKey || ''}
-                onChange={(e) => handleEInvoiceChange('apiKey', e.target.value)}
-                className="w-full bg-slate-950 border border-slate-700 rounded-lg px-3 py-1.5 text-xs text-slate-100 font-mono"
-              />
-            </div>
-
-            <div>
-              <label className="block text-[11px] font-semibold text-slate-300 mb-1">
-                E-INVOICE USERNAME
-              </label>
-              <input
-                type="text"
-                value={formData.eInvoiceApi?.username || ''}
-                onChange={(e) => handleEInvoiceChange('username', e.target.value)}
-                className="w-full bg-slate-950 border border-slate-700 rounded-lg px-3 py-1.5 text-xs text-slate-100"
-              />
-            </div>
-
-            <div>
-              <label className="block text-[11px] font-semibold text-slate-300 mb-1">
-                E-INVOICE STATUS
-              </label>
-              <div className="bg-emerald-950/60 border border-emerald-500/40 px-3 py-1.5 rounded-lg text-emerald-300 text-xs font-bold flex items-center gap-1.5">
-                <CheckCircle className="w-3.5 h-3.5" />
-                <span>Demo credentials stored locally</span>
+              <div className="bg-amber-950/60 border border-amber-500/40 px-3 py-3 rounded-lg text-amber-100 text-xs">
+                Credentials cannot be entered in this browser-only demonstration. Never store provider secrets in local browser data.
               </div>
             </div>
           </div>

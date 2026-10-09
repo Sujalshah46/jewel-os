@@ -298,6 +298,7 @@ export function JewelleryProvider({ children }) {
   const [globalSearch, setGlobalSearch] = useState('');
   const [previewInvoice, setPreviewInvoice] = useState(null);
   const [previewEstimate, setPreviewEstimate] = useState(null);
+  const [pendingBillingItem, setPendingBillingItem] = useState(null);
 
   // Active Context Objects with robust null-safety fallbacks
   const activeFirm = (Array.isArray(firms) && firms.length > 0)
@@ -1475,6 +1476,8 @@ export function JewelleryProvider({ children }) {
       setPreviewInvoice,
       previewEstimate,
       setPreviewEstimate,
+      pendingBillingItem,
+      setPendingBillingItem,
       resetToAuditData,
       exportDatabaseJson,
       importDatabaseJson,

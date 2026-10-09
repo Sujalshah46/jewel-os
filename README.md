@@ -71,6 +71,12 @@
 
 ## 🚀 How to Launch Jewellery OS
 
+### Operating modes
+
+- `npm run dev` and `npm run build` explicitly run the **synthetic demo**. Do not enter real customer records or provider credentials in it.
+- The first operational slice is the server-backed **Customer Directory** only. It requires PostgreSQL, a Better Auth secret, and an operator-provisioned account. Billing, stock, reports, rates, integrations, and administration are intentionally unavailable in operational mode.
+- See [`docs/operational-development.md`](docs/operational-development.md) for the isolated local setup, provisioning, migrations, and tests. The existing static Vercel configuration remains demo-only.
+
 ### Quick Launch on Mac:
 Run the start script directly from terminal:
 ```bash

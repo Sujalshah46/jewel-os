@@ -5,6 +5,7 @@ import {
   Send,
   Sparkles,
   CheckCircle,
+  AlertTriangle,
   Users,
   Share2,
   Image as ImageIcon,
@@ -342,14 +343,7 @@ export default function SmsWhatsappModule() {
       recipientCount = 1;
     }
 
-    setSentSuccess({
-      type: 'whatsapp_api',
-      title: 'WhatsApp Cloud API Broadcast Dispatched',
-      recipients: recipientCount,
-      hasImage: !!attachedImage,
-      imageName: attachedImage?.name,
-      mode: attachedImage ? 'Rich Media Template (Image + Caption)' : 'Standard Text Template'
-    });
+    setSentSuccess({ type: 'demo', recipients: recipientCount, mode: 'WhatsApp demo' });
     setTimeout(() => setSentSuccess(null), 5000);
   };
 
@@ -365,18 +359,7 @@ export default function SmsWhatsappModule() {
       recipientCount = 1;
     }
 
-    const creditsPerMsg = smsDeliveryMode === 'mms' ? 1 : smsCreditsNeeded;
-    const totalCreditsUsed = recipientCount * creditsPerMsg;
-
-    setSentSuccess({
-      type: 'sms',
-      title: smsDeliveryMode === 'mms' ? 'Carrier MMS Broadcast Dispatched' : 'SMS Broadcast Dispatched',
-      recipients: recipientCount,
-      creditsUsed: totalCreditsUsed,
-      hasImage: !!attachedImage && includeInSms,
-      shortlink: attachedImage?.shortlink,
-      mode: smsDeliveryMode === 'mms' ? 'Carrier MMS (Direct In-Inbox Multimedia)' : 'DLT SMS with Cloud Media Shortlink'
-    });
+    setSentSuccess({ type: 'demo', recipients: recipientCount, mode: 'SMS demo' });
     setTimeout(() => setSentSuccess(null), 5000);
   };
 
@@ -407,43 +390,30 @@ export default function SmsWhatsappModule() {
 
         <div className="flex flex-wrap items-center gap-2 text-xs">
           <span className="bg-slate-900 border border-slate-800 text-amber-400 px-3 py-1.5 rounded-xl font-mono font-bold flex items-center gap-1.5">
-            <Smartphone className="w-3.5 h-3.5" /> SMS CREDITS: 5,420
+            <Smartphone className="w-3.5 h-3.5" /> DEMO ONLY — NO SMS CREDITS
           </span>
-          <span className="bg-emerald-950/80 text-emerald-300 border border-emerald-600/50 px-3 py-1.5 rounded-xl font-bold flex items-center gap-1.5">
-            <CheckCircle className="w-3.5 h-3.5 text-emerald-400" /> WhatsApp Cloud API Active
+          <span className="bg-amber-950/80 text-amber-200 border border-amber-600/50 px-3 py-1.5 rounded-xl font-bold flex items-center gap-1.5">
+            <AlertTriangle className="w-3.5 h-3.5" /> No messaging provider connected
           </span>
-          <span className="bg-indigo-950/80 text-indigo-300 border border-indigo-700/50 px-3 py-1.5 rounded-xl font-bold flex items-center gap-1.5">
-            <ImageIcon className="w-3.5 h-3.5 text-indigo-400" /> Rich Media Engine Ready
+          <span className="bg-slate-900 text-slate-300 border border-slate-700 px-3 py-1.5 rounded-xl font-bold flex items-center gap-1.5">
+            <ImageIcon className="w-3.5 h-3.5" /> Preview assets only
           </span>
         </div>
       </div>
 
       {/* Success Notification Alert */}
       {sentSuccess && (
-        <div className="p-4 bg-emerald-950/90 border border-emerald-500/80 rounded-2xl text-emerald-200 text-xs shadow-xl animate-fade-in flex items-start justify-between gap-3">
+        <div className="p-4 bg-amber-950/90 border border-amber-500/80 rounded-2xl text-amber-100 text-xs shadow-xl animate-fade-in flex items-start justify-between gap-3">
           <div className="flex items-start space-x-3">
-            <CheckCircle className="w-5 h-5 text-emerald-400 shrink-0 mt-0.5" />
+            <AlertTriangle className="w-5 h-5 text-amber-300 shrink-0 mt-0.5" />
             <div className="space-y-1">
-              <p className="font-bold text-sm text-emerald-100">{sentSuccess.title}</p>
-              <p className="text-emerald-300/90">
-                Successfully queued for <strong>{sentSuccess.recipients} recipient(s)</strong> via {sentSuccess.mode}.
-              </p>
-              {sentSuccess.hasImage && (
-                <div className="flex items-center gap-2 pt-1 font-mono text-[11px] text-emerald-300">
-                  <ImageIcon className="w-3.5 h-3.5" />
-                  <span>Media Attached: {sentSuccess.imageName || sentSuccess.shortlink}</span>
-                </div>
-              )}
-              {sentSuccess.creditsUsed && (
-                <p className="text-emerald-400/80 text-[11px] font-mono">
-                  Deducted {sentSuccess.creditsUsed} credits from enterprise account.
-                </p>
-              )}
+              <p className="font-bold text-sm">Demo simulation only — no message sent</p>
+              <p className="text-amber-200/90">The {sentSuccess.mode} preview included {sentSuccess.recipients} synthetic recipient(s). Nothing was queued, delivered, or charged.</p>
             </div>
           </div>
           <button
             onClick={() => setSentSuccess(null)}
-            className="text-emerald-400 hover:text-white"
+            className="text-amber-300 hover:text-white"
           >
             <X className="w-4 h-4" />
           </button>

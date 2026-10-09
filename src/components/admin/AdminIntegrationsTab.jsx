@@ -29,9 +29,9 @@ export default function AdminIntegrationsTab() {
   const handleTestPing = (id, name) => {
     setTestingId(id);
     setTimeout(() => {
-      const res = testIntegrationConnection(id);
+      testIntegrationConnection(id);
       setTestingId(null);
-      setSuccessMsg(`Ping successful for "${name}": Latency ${res.latencyMs}ms (HTTP 200 OK).`);
+      setSuccessMsg(`Demo simulation for "${name}" completed. No provider request was sent.`);
       setTimeout(() => setSuccessMsg(''), 4000);
     }, 600);
   };
@@ -40,9 +40,6 @@ export default function AdminIntegrationsTab() {
     e.preventDefault();
     if (!editingIntegration) return;
     updateIntegration(editingIntegration.id, {
-      status: editingIntegration.status,
-      apiKeyMasked: editingIntegration.apiKeyMasked,
-      endpoint: editingIntegration.endpoint,
       description: editingIntegration.description
     });
     setEditingIntegration(null);
@@ -69,7 +66,7 @@ export default function AdminIntegrationsTab() {
             </h2>
           </div>
           <p className="text-xs text-slate-400 mt-0.5">
-            Configure payment gateways, DLT SMS routes, Meta WhatsApp Cloud API, GST E-Invoice portals, and thermal label printers.
+            Demo-only integration screens. This build sends no provider requests and must not be used to store credentials.
           </p>
         </div>
       </div>
@@ -101,7 +98,7 @@ export default function AdminIntegrationsTab() {
                     }`}
                   >
                     <span className="w-1.5 h-1.5 rounded-full bg-emerald-400"></span>
-                    <span>{item.status}</span>
+                    <span>Demo</span>
                   </span>
                 </div>
 
@@ -109,12 +106,8 @@ export default function AdminIntegrationsTab() {
                   <p className="text-[11px] text-slate-400">{item.description}</p>
                   <div className="bg-slate-950 p-2.5 rounded-xl border border-slate-800 space-y-1">
                     <div className="flex items-center justify-between text-[11px]">
-                      <span className="text-slate-400">Credential / Key:</span>
-                      <span className="font-mono text-slate-200">{item.apiKeyMasked}</span>
-                    </div>
-                    <div className="flex items-center justify-between text-[11px]">
-                      <span className="text-slate-400">Webhook Status:</span>
-                      <span className="text-emerald-400 font-semibold">{item.webhookStatus}</span>
+                      <span className="text-slate-400">Provider connection:</span>
+                      <span className="text-amber-300 font-semibold">Not configured</span>
                     </div>
                     <div className="flex items-center justify-between text-[11px]">
                       <span className="text-slate-400">Last Health Check:</span>
@@ -171,41 +164,9 @@ export default function AdminIntegrationsTab() {
             <form onSubmit={handleSaveEdit} className="space-y-3 text-xs">
               <div>
                 <label className="block text-[11px] font-semibold text-slate-300 mb-1">
-                  ENDPOINT URL
+                  DEMONSTRATION ONLY
                 </label>
-                <input
-                  type="text"
-                  value={editingIntegration.endpoint || ''}
-                  onChange={(e) => setEditingIntegration(prev => ({ ...prev, endpoint: e.target.value }))}
-                  className="w-full bg-slate-950 border border-slate-700 rounded-lg px-3 py-1.5 text-slate-100 font-mono"
-                />
-              </div>
-
-              <div>
-                <label className="block text-[11px] font-semibold text-slate-300 mb-1">
-                  API KEY (STORED SAFELY WITH SECRETS MASKING)
-                </label>
-                <input
-                  type="text"
-                  value={editingIntegration.apiKeyMasked || ''}
-                  onChange={(e) => setEditingIntegration(prev => ({ ...prev, apiKeyMasked: e.target.value }))}
-                  className="w-full bg-slate-950 border border-slate-700 rounded-lg px-3 py-1.5 text-slate-100 font-mono"
-                />
-              </div>
-
-              <div>
-                <label className="block text-[11px] font-semibold text-slate-300 mb-1">
-                  INTEGRATION STATUS
-                </label>
-                <select
-                  value={editingIntegration.status}
-                  onChange={(e) => setEditingIntegration(prev => ({ ...prev, status: e.target.value }))}
-                  className="w-full bg-slate-950 border border-slate-700 rounded-lg px-3 py-1.5 text-slate-100 font-bold"
-                >
-                  <option value="Connected">Connected</option>
-                  <option value="Ready">Ready / Standby</option>
-                  <option value="Disabled">Disabled</option>
-                </select>
+                <p className="rounded-lg border border-amber-700 bg-amber-950/40 p-3 text-slate-200">No real credentials, endpoints, or connection status can be configured here. Use a server-side secret manager when provider integrations are implemented.</p>
               </div>
 
               <div className="flex items-center justify-end space-x-3 pt-3 border-t border-slate-800">

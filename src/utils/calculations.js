@@ -53,9 +53,11 @@ export function calculateJewelleryItem({
   const taxableAmount = Math.max(0, baseAmount - (Number(itemDiscount) || 0));
 
   // GST Calculation (3% total: 1.5% CGST + 1.5% SGST)
-  const gstAmount = Number(((taxableAmount * (Number(gstRatePercent) || 3)) / 100).toFixed(2));
-  const cgst = Number((gstAmount / 2).toFixed(2));
-  const sgst = Number((gstAmount / 2).toFixed(2));
+  const configuredGstRate = Number(gstRatePercent);
+  const effectiveGstRate = Number.isFinite(configuredGstRate) ? configuredGstRate : 3.0;
+  const gstAmount = Number(((taxableAmount * effectiveGstRate) / 100).toFixed(2));
+  const cgst = Number((Math.round((gstAmount / 2) * 100) / 100).toFixed(2));
+  const sgst = Number((gstAmount - cgst).toFixed(2));
 
   // Final Value
   const finalValue = Number((taxableAmount + gstAmount).toFixed(2));

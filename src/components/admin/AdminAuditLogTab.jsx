@@ -40,14 +40,14 @@ export default function AdminAuditLogTab() {
             </h2>
           </div>
           <p className="text-xs text-slate-400 mt-0.5">
-            Immutable, append-only chronological log of all privileged SaaS operations, client provisioning, staff changes, and inventory movements.
+            Synthetic local demo entries. This log is editable and is not authoritative or append-only.
           </p>
         </div>
 
         <div className="flex items-center gap-2">
-          <span className="text-xs px-3 py-1 rounded-full font-bold bg-emerald-500/10 text-emerald-300 border border-emerald-500/30 flex items-center gap-1.5">
-            <ShieldCheck className="w-3.5 h-3.5 text-emerald-400" />
-            <span>Audit Integrity: Verified</span>
+          <span className="text-xs px-3 py-1 rounded-full font-bold bg-amber-500/10 text-amber-200 border border-amber-500/30 flex items-center gap-1.5">
+            <ShieldCheck className="w-3.5 h-3.5 text-amber-300" />
+            <span>Demo log — not verified</span>
           </span>
         </div>
       </div>

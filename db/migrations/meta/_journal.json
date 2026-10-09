@@ -1,0 +1,27 @@
+{
+  "version": "7",
+  "dialect": "postgresql",
+  "entries": [
+    {
+      "idx": 0,
+      "version": "7",
+      "when": 1791522633518,
+      "tag": "0000_operational_foundation",
+      "breakpoints": true
+    },
+    {
+      "idx": 1,
+      "version": "7",
+      "when": 1791522653858,
+      "tag": "0001_tenant_status_created_index",
+      "breakpoints": true
+    },
+    {
+      "idx": 2,
+      "version": "7",
+      "when": 1791522750108,
+      "tag": "0002_invoice_business_date_and_price_constraints",
+      "breakpoints": true
+    }
+  ]
+}

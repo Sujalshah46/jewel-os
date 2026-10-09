@@ -15,9 +15,10 @@ import {
   X
 } from 'lucide-react';
 import { formatCurrency, formatWeight } from '../../utils/numberToWords';
+import { createCatalogueEstimate } from '../../utils/billingCart';
 
 export default function ECommerceModule() {
-  const { stock, activeFirm, setActiveModule, setPreviewEstimate } = useJewellery();
+  const { stock, activeFirm, setActiveModule, setPreviewEstimate, setPendingBillingItem } = useJewellery();
   const [searchTerm, setSearchTerm] = useState('');
   const [selectedItemDetails, setSelectedItemDetails] = useState(null);
 
@@ -105,7 +106,10 @@ export default function ECommerceModule() {
                 MORE DETAILS
               </button>
               <button
-                onClick={() => setActiveModule('billing')}
+                onClick={() => {
+                  setPendingBillingItem(item.id);
+                  setActiveModule('billing');
+                }}
                 className="px-3 py-1.5 bg-amber-500 hover:bg-amber-400 text-slate-950 font-bold rounded-xl text-xs transition-colors flex items-center justify-center"
                 title="Bill this item in POS"
               >
@@ -180,8 +184,7 @@ export default function ECommerceModule() {
                     shopName: activeFirm.name,
                     customer: { fullName: 'Walk-in Customer' },
                     date: new Date().toISOString().split('T')[0],
-                    items: [selectedItemDetails],
-                    total: selectedItemDetails.totalPrice
+                    ...createCatalogueEstimate(selectedItemDetails)
                   });
                 }}
                 className="px-4 py-2 bg-slate-800 hover:bg-slate-700 text-amber-300 font-bold rounded-xl text-xs border border-amber-500/30 flex items-center gap-1"
@@ -192,6 +195,7 @@ export default function ECommerceModule() {
 
               <button
                 onClick={() => {
+                  setPendingBillingItem(selectedItemDetails.id);
                   setSelectedItemDetails(null);
                   setActiveModule('billing');
                 }}

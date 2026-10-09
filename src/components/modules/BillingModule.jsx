@@ -1,4 +1,4 @@
-import React, { useState } from 'react';
+import React, { useEffect, useState } from 'react';
 import { useJewellery } from '../../context/JewelleryContext';
 import {
   Receipt,
@@ -25,6 +25,7 @@ import {
 } from 'lucide-react';
 import { formatCurrency, formatWeight, numberToWordsIndian } from '../../utils/numberToWords';
 import { calculateJewelleryItem, calculateOldMetalExchange } from '../../utils/calculations';
+import { addStockItemToCart } from '../../utils/billingCart';
 
 export default function BillingModule() {
   const {
@@ -36,7 +37,9 @@ export default function BillingModule() {
     createInvoice,
     setPreviewInvoice,
     setPreviewEstimate,
-    setActiveModule
+    setActiveModule,
+    pendingBillingItem,
+    setPendingBillingItem
   } = useJewellery();
 
   // Invoice / POS Header state
@@ -52,6 +55,15 @@ export default function BillingModule() {
   const [cartItems, setCartItems] = useState([]);
   const [expandedItemIds, setExpandedItemIds] = useState({});
   const [showAllDetails, setShowAllDetails] = useState(false);
+
+  useEffect(() => {
+    if (!pendingBillingItem) return;
+    const selected = stock.find(item => item.id === pendingBillingItem);
+    if (selected && selected.status === 'In Stock' && (!selected.firmCode || selected.firmCode === activeFirm.code)) {
+      setCartItems(current => addStockItemToCart(current, selected));
+    }
+    setPendingBillingItem(null);
+  }, [pendingBillingItem, stock, activeFirm.code, setPendingBillingItem]);
 
   // Old Metal / Gold Exchange State
   const [hasOldGold, setHasOldGold] = useState(false);
@@ -256,53 +268,7 @@ export default function BillingModule() {
         alert(`Item "${found.itemCode}" is already in your billing cart.`);
         return;
       }
-      // Calculate exact item financials using domain calculation engine
-      const calc = calculateJewelleryItem({
-        grossWeight: found.grossWeight,
-        lessWeight: found.lessWeight,
-        purityPercent: found.purityPercent,
-        ratePerGram: found.ratePerGram,
-        makingChargeType: found.makingChargeType || 'per_gram',
-        makingChargeValue: found.makingChargeValue || 0,
-        stoneValue: found.stoneValue || 0,
-        hallmarkCharge: found.hallmarkCharge || 45,
-        otherCharges: found.otherCharges || 0,
-        itemDiscount: 0
-      });
-
-      const newItem = {
-        id: 'cart-' + Date.now(),
-        itemId: found.id,
-        metalType: found.metalType,
-        itemCode: found.itemCode,
-        description: `${found.category} - ${found.subCategory}`,
-        hsn: '7113',
-        qty: 1,
-        grossWeight: found.grossWeight,
-        lessWeight: found.lessWeight,
-        netWeight: calc.netWeight,
-        purityKarat: found.purityKarat,
-        purityPercent: found.purityPercent,
-        wastagePercent: found.wastagePercent || 5.0,
-        finePurityPercent: found.purityPercent,
-        customerWastagePercent: found.wastagePercent || 5.0,
-        fineWeight: calc.fineWeight,
-        ratePerGram: found.ratePerGram,
-        ratePer10Gm: found.ratePerGram * 10,
-        makingChargeType: found.makingChargeType,
-        makingChargeValue: found.makingChargeValue,
-        makingDiscountPercent: 0,
-        totalMakingCharges: calc.totalMakingCharges,
-        stoneValue: found.stoneValue || 0,
-        hallmarkCharge: found.hallmarkCharge || 45,
-        otherCharges: found.otherCharges || 0,
-        itemDiscount: 0,
-        taxableAmount: calc.taxableAmount,
-        cgst: calc.cgst,
-        sgst: calc.sgst,
-        finalValue: calc.finalValue || found.totalPrice,
-        status: 'Ready'
-      };
+      const newItem = createBillingCartItem(found, `cart-${Date.now()}`);
       setCartItems(prev => [...prev, newItem]);
       setBarcodeInput('');
     } else {

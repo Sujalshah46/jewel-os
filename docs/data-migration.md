@@ -1,0 +1,14 @@
+# Data migration and rollback notes
+
+The first operational schema intentionally starts empty. Existing browser `localStorage` values are not imported, reassigned, or used to create user grants. Customer KYC, role labels, provider settings, stock, invoices, payment assertions, journals, and backups remain local synthetic-demo data.
+
+Before any future import, build a separately reviewed reconciliation tool that:
+
+1. Reads an exported copy without modifying browser storage.
+2. Preserves an untouched archive and records a content hash.
+3. Quarantines rows whose tenant/firm ownership is missing, conflicting, duplicated, or not independently verified.
+4. Excludes KYC, role grants, and provider credentials until an approved privacy/identity/secret migration exists.
+5. Reconciles customer links and balances against independently verified source records; the current local records are not authoritative.
+6. Produces a dry-run report and requires explicit review before importing synthetic or verified customer records.
+
+Migrations in `db/migrations` are additive after the initial schema. Apply with `npm run db:migrate`; back up PostgreSQL first. A rollback should restore a verified database backup or use a reviewed forward migration. Do not drop tables or attempt to reverse identity/customer foreign keys during a live rollback. The initial migration is the first operational schema, not a conversion of local browser data.
