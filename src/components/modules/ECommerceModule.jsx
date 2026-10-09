@@ -60,7 +60,7 @@ export default function ECommerceModule() {
 
       {/* 4 Cards / Row Grid matching Audit 93 & 172 */}
       <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-4 gap-4">
-        {filteredStock.map(item => (
+        {filteredStock.map((item, index) => (
           <div
             key={item.id}
             className="bg-slate-900/90 border border-slate-800 hover:border-amber-500/50 rounded-2xl overflow-hidden shadow-xl flex flex-col justify-between group transition-all"
@@ -69,7 +69,7 @@ export default function ECommerceModule() {
               <img
                 src={getProductImage(item)}
                 alt={`${item.subCategory || item.category} product photograph`}
-                className="w-full h-full object-cover group-hover:scale-105 transition-transform duration-500"
+                loading={index < 4 ? "eager" : "lazy"} decoding="async" fetchPriority={index === 0 ? "high" : "low"} className="w-full h-full object-cover group-hover:scale-105 transition-transform duration-500"
               />
               <div className="absolute top-2 left-2 bg-slate-950/80 backdrop-blur-md px-2 py-0.5 rounded text-[10px] font-bold text-amber-300 border border-amber-500/30">
                 {item.purityKarat}
