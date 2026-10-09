@@ -1,4 +1,4 @@
-import React, { createContext, useContext, useState, useEffect } from 'react';
+import React, { createContext, useContext, useState, useEffect, useMemo, useCallback } from 'react';
 import {
   INITIAL_FIRMS,
   INITIAL_DAILY_RATES,
@@ -23,6 +23,14 @@ import {
   INITIAL_AUDIT_LOGS
 } from '../data/initialAdminData';
 import { calculateJewelleryItem, calculateOldMetalExchange } from '../utils/calculations';
+// Phase 3 strangler: API data source (no-ops in local mode)
+import { createApiClient } from '../lib/api.js';
+import { getToken, clearToken, login as apiLogin, signup as apiSignup, fetchMe, logout as apiLogout } from '../lib/auth.js';
+import { isApiMode, API_URL } from '../lib/dataSource.js';
+import { useRatesApi } from '../lib/adapters/ratesAdapter.js';
+import { useCustomersApi } from '../lib/adapters/customersAdapter.js';
+import { useStockApi } from '../lib/adapters/stockAdapter.js';
+import { useInvoicesApi } from '../lib/adapters/invoicesAdapter.js';
 
 // Business Date & Financial Year Helpers
 export function getTodayBusinessDate() {
@@ -1382,8 +1390,82 @@ export function JewelleryProvider({ children }) {
     .filter(u => u.status === 'Active')
     .reduce((acc, curr) => acc + (Number(curr.leftBalance) || 0), 0);
 
+  // ---- Phase 3: API data source (strangler). In local mode everything below
+  // is inert: apiClient is null and every adapter is disabled.
+  const apiMode = isApiMode();
+  const apiClient = useMemo(() => {
+    if (!apiMode) return null;
+    return createApiClient({
+      baseUrl: API_URL,
+      getToken,
+      onUnauthorized: () => { clearToken(); setSession(null); },
+    });
+  }, [apiMode]);
+
+  const [session, setSession] = useState(null);
+  const [sessionLoading, setSessionLoading] = useState(apiMode);
+  const [sessionError, setSessionError] = useState(null);
+
+  useEffect(() => {
+    if (!apiMode || !apiClient) return;
+    if (!getToken()) { setSessionLoading(false); return; }
+    fetchMe(apiClient)
+      .then((me) => { setSession(me && (me.user || me)); setSessionLoading(false); })
+      .catch(() => { clearToken(); setSession(null); setSessionLoading(false); });
+  }, [apiMode, apiClient]);
+
+  const doLogin = useCallback(async (email, password) => {
+    setSessionError(null);
+    try {
+      const res = await apiLogin(apiClient, { email, password });
+      const me = await fetchMe(apiClient).catch(() => null);
+      setSession((me && (me.user || me)) || { email });
+      return res;
+    } catch (err) {
+      setSessionError(err.message);
+      throw err;
+    }
+  }, [apiClient]);
+
+  const doSignup = useCallback(async (email, password, name, tenantName) => {
+    setSessionError(null);
+    try {
+      const res = await apiSignup(apiClient, { email, password, name, tenantName });
+      const me = await fetchMe(apiClient).catch(() => null);
+      setSession((me && (me.user || me)) || { email });
+      return res;
+    } catch (err) {
+      setSessionError(err.message);
+      throw err;
+    }
+  }, [apiClient]);
+
+  const doLogout = useCallback(async () => {
+    if (apiClient) await apiLogout(apiClient);
+    setSession(null);
+  }, [apiClient]);
+
+  const apiReady = apiMode && !!session;
+  const ratesApi = useRatesApi({ api: apiClient, enabled: apiReady });
+  const customersApi = useCustomersApi({ api: apiClient, enabled: apiReady });
+  const stockApi = useStockApi({ api: apiClient, enabled: apiReady, branchId: apiMode ? undefined : activeBranchId });
+  const invoicesApi = useInvoicesApi({
+    api: apiClient,
+    enabled: apiReady,
+    branchId: apiMode ? undefined : activeBranchId,
+    stock: apiMode ? stockApi.stock : stock,
+  });
+
   return (
     <JewelleryContext.Provider value={{
+      // Phase 3: data-source switch + session
+      apiMode,
+      session,
+      sessionLoading,
+      sessionError,
+      login: doLogin,
+      signup: doSignup,
+      logout: doLogout,
       firms,
       setFirms,
       activeFirm,
@@ -1435,27 +1517,36 @@ export function JewelleryProvider({ children }) {
       // Inventory Admin actions
       transferStockBetweenBranches,
       adjustStockItem,
-      // Standard ERP State & Actions
-      dailyRates,
+      // Standard ERP State & Actions (Phase 3: API-backed when apiMode)
+      dailyRates: apiMode ? ratesApi.dailyRates : dailyRates,
       setDailyRates,
-      updateDailyRate,
-      deleteAllRates,
-      resetDefaultRates,
+      updateDailyRate: apiMode ? ratesApi.updateDailyRate : updateDailyRate,
+      deleteAllRates: apiMode ? ratesApi.deleteAllRates : deleteAllRates,
+      resetDefaultRates: apiMode ? ratesApi.resetDefaultRates : resetDefaultRates,
+      ratesLoading: apiMode ? ratesApi.ratesLoading : false,
+      ratesError: apiMode ? ratesApi.ratesError : null,
       mcxData,
-      stock,
-      stockMovements,
-      addStockItem,
-      updateStockItem,
-      deleteStockItem,
-      customers,
-      addCustomer,
-      updateCustomer,
+      stock: apiMode ? stockApi.stock : stock,
+      stockMovements: apiMode ? stockApi.stockMovements : stockMovements,
+      fetchItemMovements: apiMode ? stockApi.fetchItemMovements : undefined,
+      addStockItem: apiMode ? stockApi.addStockItem : addStockItem,
+      updateStockItem: apiMode ? stockApi.updateStockItem : updateStockItem,
+      deleteStockItem: apiMode ? stockApi.deleteStockItem : deleteStockItem,
+      stockLoading: apiMode ? stockApi.stockLoading : false,
+      stockError: apiMode ? stockApi.stockError : null,
+      customers: apiMode ? customersApi.customers : customers,
+      addCustomer: apiMode ? customersApi.addCustomer : addCustomer,
+      updateCustomer: apiMode ? customersApi.updateCustomer : updateCustomer,
+      customersLoading: apiMode ? customersApi.customersLoading : false,
+      customersError: apiMode ? customersApi.customersError : null,
       karigars,
       karigarVouchers,
       issueMetalToKarigar,
       receiveOrnamentFromKarigar,
-      invoices,
-      createInvoice,
+      invoices: apiMode ? invoicesApi.invoices : invoices,
+      createInvoice: apiMode ? invoicesApi.createInvoice : createInvoice,
+      invoicesLoading: apiMode ? invoicesApi.invoicesLoading : false,
+      invoicesError: apiMode ? invoicesApi.invoicesError : null,
       udhaarList,
       udhaarRepayments,
       recordUdhaarDeposit,

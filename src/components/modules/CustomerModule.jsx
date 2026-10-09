@@ -109,7 +109,7 @@ export default function CustomerModule() {
     setShowAddModal(true);
   };
 
-  const handleAddSubmit = (e) => {
+  const handleAddSubmit = async (e) => {
     e.preventDefault();
     if (!newCust.firstName || !newCust.mobile) {
       alert('Name and Mobile Number are required.');
@@ -117,7 +117,7 @@ export default function CustomerModule() {
     }
     const targetType = getTargetUserType(activePartyTab);
     const fullName = `${newCust.firstName} ${newCust.lastName}`.trim();
-    addCustomer({
+    await addCustomer({
       ...newCust,
       userType: targetType,
       fullName: newCust.companyName ? `${newCust.companyName} (${fullName})` : fullName

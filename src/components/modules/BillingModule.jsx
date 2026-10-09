@@ -372,7 +372,7 @@ export default function BillingModule() {
   const excessReceived = paymentDifference > 0 ? paymentDifference : 0;
 
   // Submit Invoice Handler
-  const handleSubmitInvoice = (shouldPrint = false) => {
+  const handleSubmitInvoice = async (shouldPrint = false) => {
     if (isSubmitting) return;
 
     if (cartItems.length === 0) {
@@ -412,7 +412,7 @@ export default function BillingModule() {
     };
 
     try {
-      const newInv = createInvoice(invoicePayload);
+      const newInv = await createInvoice(invoicePayload);
       setIsSubmitting(false);
 
       if (shouldPrint) {
@@ -428,10 +428,10 @@ export default function BillingModule() {
   };
 
   // Add Customer Handler
-  const handleAddCustomerSubmit = (e) => {
+  const handleAddCustomerSubmit = async (e) => {
     e.preventDefault();
     if (!newCustForm.firstName || !newCustForm.mobile) return;
-    const added = addCustomer({
+    const added = await addCustomer({
       mr: newCustForm.mr,
       firstName: newCustForm.firstName,
       lastName: newCustForm.lastName,

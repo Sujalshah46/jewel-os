@@ -243,7 +243,7 @@ export default function StockModule() {
     setShowAddStockModal(true);
   };
 
-  const handleAddStockSubmit = (e) => {
+  const handleAddStockSubmit = async (e) => {
     e.preventDefault();
     const errors = {};
     if (!newItemForm.itemCode.trim()) errors.itemCode = 'Product Code is required';
@@ -255,7 +255,7 @@ export default function StockModule() {
       return;
     }
 
-    addStockItem(newItemForm);
+    await addStockItem(newItemForm);
     setShowAddStockModal(false);
   };
 

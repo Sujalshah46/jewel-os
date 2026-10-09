@@ -21,6 +21,7 @@ import InvoiceViewModal from './components/modules/InvoiceViewModal';
 import EstimateModal from './components/modules/EstimateModal';
 import AdminPanel from './components/admin/AdminPanel';
 import ErrorBoundary from './components/common/ErrorBoundary';
+import LoginScreen from './components/LoginScreen';
 import { Lock, ShieldAlert } from 'lucide-react';
 
 function MainApp() {
@@ -32,12 +33,28 @@ function MainApp() {
     previewEstimate,
     setPreviewEstimate,
     isModuleEnabled,
-    activeClient
+    activeClient,
+    // Phase 3: API-mode session gate
+    apiMode,
+    session,
+    sessionLoading,
   } = useJewellery();
   
   const [sidebarCollapsed, setSidebarCollapsed] = useState(false);
   const [mobileMenuOpen, setMobileMenuOpen] = useState(false);
   const [calculatorOpen, setCalculatorOpen] = useState(false);
+
+  // Phase 3: in API mode, require a server session before showing the app.
+  if (apiMode && sessionLoading) {
+    return (
+      <div className="min-h-screen flex items-center justify-center bg-[#FAF7F0]">
+        <div className="text-[#64748B]">Connecting to your workspace…</div>
+      </div>
+    );
+  }
+  if (apiMode && !session) {
+    return <LoginScreen />;
+  }
 
   // Dedicated Portal State: 'retail' vs 'admin'
   const [currentPortal, setCurrentPortal] = useState(() => {
