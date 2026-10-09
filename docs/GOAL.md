@@ -19,9 +19,9 @@ Close every repository-fixable finding in `jewelry-os-audit/REPORT.md`, or expli
 |---|---|---|
 | SEC-001 Authentication and roles | Partial | Better Auth sessions and server membership/role checks protect customer API. Staff, firm, stock, invoice, and other mutations still exist only in the untrusted demo provider; full identity lifecycle and server authorization remain. |
 | SEC-002 Tenant ownership | Partial | Customer API queries are tenant-scoped. Other business entities, references, exports, and firm/branch switching are not migrated or enforced server-side. |
-| SEC-003 KYC and provider secrets | Partial | New credential entry was removed and operational customer responses omit secrets. Legacy demo storage still contains KYC fields and may retain previously entered browser values; retention, redaction, deletion, and secure migration are unresolved. |
+| SEC-003 KYC and provider secrets | Partial | New credential entry was removed and operational customer responses omit secrets. Local demo snapshot exports/imports redact named KYC, bank, and provider credential fields, but existing browser storage may retain values; retention, deletion, secure migration, and full leakage tests remain unresolved. |
 | DB-001 Atomic/concurrent persistence | Partial | Tenant-scoped stock and sale APIs now use PostgreSQL transactions, row locks/conditional updates, idempotency, and an atomic journal. Returns, repayments, purchasing, transfers, and recovery do not have equivalent server transactions. API/database integration tests have not been rerun in this environment. |
-| DB-002 Backup and restore | Open | Legacy export/import defects remain; no complete, validated, atomic operational backup/restore drill is established. |
+| DB-002 Backup and restore | Partial | Local demo snapshots now use a versioned schema, include omitted histories, redact named sensitive fields, validate IDs/references before any state update, and upgrade the known legacy export shape. Restore/reset downloads a redacted pre-change snapshot; the generic error-boundary data wipe is removed. Operational database backup/restore, durable atomic replacement, migration fixtures, and a recovery drill remain unimplemented. |
 | DB-003 IDs and fiscal numbers | Partial | Operational invoices use database UUIDs and tenant/FY-scoped counters in the sale transaction. Repayment, return, and other numbering remain unimplemented. |
 | FIN-001 Server-derived finalization | Partial | An operational sale endpoint validates tenant references, recalculates amounts from persisted price inputs, and atomically commits sale, stock, invoice, payment, and ledger rows. Database behavior still needs integration verification; other settlement workflows are not implemented. |
 | FIN-002 Balanced journals | Partial | Finalization asserts balanced paise postings for cash, old metal, receivable, revenue, CGST, and SGST. This is a provisional demo-rule mapping; accountant approval and other settlement/account lifecycles remain open. |
@@ -77,8 +77,10 @@ Close every repository-fixable finding in `jewelry-os-audit/REPORT.md`, or expli
 
 ### Phase 4 — Complete recovery, imports, and legacy-data protections
 
-- [ ] Define versioned backup/export schemas and make validation complete before any restore mutation (DB-002).
-- [ ] Implement isolated restore/roundtrip and preserve pre-restore snapshots; remove generic destructive recovery actions.
+- [x] Define a versioned schema for local demo snapshots; include repayment, stock movement, general ledger, karigar voucher, and scheme enrollment histories; redact named KYC/bank/provider credential keys (DB-002/SEC-003).
+- [x] Validate the full snapshot, IDs, and supported firm/customer/stock/branch links before scheduling any restore state updates; migrate the known legacy export deterministically and test pure roundtrip/rejection behavior.
+- [x] Require a redacted pre-restore/pre-reset download and remove the error-boundary action that cleared all origin localStorage.
+- [ ] Implement durable isolated operational database restore/roundtrip, failure-atomic persistence, migration fixtures, and a verified recovery drill.
 - [ ] Preserve current browser data unchanged. Provide a separate reviewed dry-run reconciliation/import path; quarantine missing/conflicting ownership and exclude KYC, role grants, and credentials without approved policy (SEC-002/003).
 - [ ] Document forward migration/rollback compatibility and verify fresh plus populated upgrade paths.
 - **Acceptance:** export→fresh restore→export semantic equality; malformed imports and injected failures cause zero state changes; ambiguous rows are quarantined; database restore drill reconciles stock, balances, and journal history.
@@ -110,6 +112,7 @@ Some work cannot be truthfully completed from code alone: accountant approval of
 - [x] Read the complete audit report and its next-task scope before this plan.
 - [x] Audited the current worktree against all 27 findings and recorded status above.
 - [x] Re-ran `npm test`, `npm run build`, `npm run build:operational`, and `git diff --check` during remediation.
+- [x] Added a versioned/redacted local demo snapshot schema with known legacy-format upgrade and full preflight tests; removed generic error-boundary localStorage clearing.
 - [x] Phase 1 — standalone correctness and demo claims (source/tests/browser checks above).
 - [ ] Phase 2 — transactional inventory/sales boundary (implemented and standalone checks pass; PostgreSQL acceptance suite remains to run).
 - [ ] Phase 3 — pricing/accounting invariants (provisional sale/ledger path implemented; repayments, reports, and accountant review remain).

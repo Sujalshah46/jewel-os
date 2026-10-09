@@ -17,7 +17,7 @@
     "db:migrate": "node --env-file=.env.operational ./node_modules/drizzle-kit/bin.cjs migrate",
     "operator:provision": "node --env-file=.env.operational scripts/provision-operator.js",
     "test:operational": "node scripts/prepare-operational-tests.js && node --test tests/operational-api.test.js tests/config-mode.test.js",
-    "test": "node audit/calculation-tests.js && node audit/verify-fixes.js && node audit/admin-panel-tests.js && node audit/engineering-audit-tests.js && node --test tests/standalone-remediations.test.js tests/feature-gates.test.js tests/report-api.test.js",
+    "test": "node audit/calculation-tests.js && node audit/verify-fixes.js && node audit/admin-panel-tests.js && node audit/engineering-audit-tests.js && node --test tests/standalone-remediations.test.js tests/feature-gates.test.js tests/report-api.test.js tests/backup.test.js",
     "test:all": "npm test && npm run test:operational"
   },
   "dependencies": {

@@ -2,6 +2,8 @@
 
 The first operational schema intentionally starts empty. Existing browser `localStorage` values are not imported, reassigned, or used to create user grants. Customer KYC, role labels, provider settings, stock, invoices, payment assertions, journals, and backups remain local synthetic-demo data.
 
+The browser demo's JSON snapshot is versioned separately from the operational PostgreSQL schema. Version 1 includes the receipt, stock movement, general ledger, karigar voucher, and scheme enrollment histories; checks collection types, unique IDs, selected stable references, and active firm/client/branch links before state setters run; and redacts named customer KYC, firm bank/e-invoice, and provider key fields. The known pre-versioned `2.7.364 Pro` shape is upgraded deterministically; histories that the old export omitted become empty and the first firm/client/branch become active. Restore and demo reset offer a redacted pre-change snapshot first. These browser files are not complete database backups and do not establish durable or failure-atomic recovery.
+
 Before any future import, build a separately reviewed reconciliation tool that:
 
 1. Reads an exported copy without modifying browser storage.
