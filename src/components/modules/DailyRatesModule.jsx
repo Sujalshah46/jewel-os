@@ -385,7 +385,7 @@ export default function DailyRatesModule() {
                 <h1 className="text-3xl font-serif font-bold text-amber-300 uppercase tracking-widest">
                   KRISHNA JEWELLERS — DIGITAL RATE BOARD
                 </h1>
-                <p className="text-sm text-slate-400">TODAY'S OFFICIAL GOVERNMENT BIS CERTIFIED RATES (आज का भाव)</p>
+                <p className="text-sm text-slate-400">DEMO RATE DISPLAY — sample data, not official or provider-verified (आज का भाव)</p>
               </div>
             </div>
 

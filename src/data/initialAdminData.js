@@ -66,8 +66,8 @@ export const ALL_SYSTEM_MODULES = [
   },
   {
     key: 'tags',
-    name: 'Jewellery Barcode & Tag Studio',
-    description: 'Thermal tag designer for dumbbells and butterfly tags with barcode & HUID',
+    name: 'Jewellery Tag Layout Preview',
+    description: 'Demo tag layout preview; barcode/QR payloads, HUID checks, and printer output are not implemented',
     category: 'Printing',
     required: false
   },
@@ -381,7 +381,7 @@ export const SYSTEM_ROLES_PERMISSIONS = {
     ]
   },
   'Inventory Manager': {
-    description: 'Manages tag printing, stock transfers, barcoding, inward entries and stock counts',
+    description: 'Demo stock adjustments and tag layout previews; transfer custody and barcode generation are unavailable',
     permissions: [
       'manage_stock',
       'adjust_stock',

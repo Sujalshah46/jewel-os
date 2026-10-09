@@ -9,7 +9,6 @@ import {
   FileText,
   UserCheck,
   CreditCard,
-  QrCode,
   DollarSign,
   ArrowRight,
   Sparkles,
@@ -247,7 +246,7 @@ export default function BillingModule() {
     }));
   };
 
-  // Add Item via Barcode Scan
+  // Add demo inventory item by manually entered code
   const handleBarcodeScan = (e, explicitCode) => {
     if (e && e.preventDefault) e.preventDefault();
     const query = (explicitCode !== undefined && explicitCode !== null ? explicitCode : barcodeInput).trim();
@@ -272,7 +271,7 @@ export default function BillingModule() {
       setCartItems(prev => [...prev, newItem]);
       setBarcodeInput('');
     } else {
-      alert(`Product with barcode/code "${query}" not found in stock. Try 1201, 1150, or check Inventory.`);
+      alert(`Inventory item code "${query}" was not found. Try 1201, 1150, or check Inventory.`);
     }
   };
 
@@ -484,7 +483,7 @@ export default function BillingModule() {
         </div>
       </div>
 
-      {/* Customer Selection & Barcode Scan Strip */}
+      {/* Customer Selection & Item Code Search */}
       <div className="bg-slate-900 border border-slate-800 rounded-2xl p-4 md:p-5 shadow-xl grid grid-cols-1 md:grid-cols-4 gap-4">
         {/* Customer Select */}
         <div className="md:col-span-1">
@@ -524,10 +523,10 @@ export default function BillingModule() {
           )}
         </div>
 
-        {/* Barcode / RFID Fast Scanner Input */}
+        {/* Demo inventory item-code input; no RFID/hardware reader integration */}
         <div className="md:col-span-2">
           <label className="block text-xs font-semibold text-slate-300 mb-1">
-            Add Product Barcode / SKU Code (e.g. 1201 / 1150 / LRING33)
+            Find Inventory Item by Code (e.g. 1201 / 1150 / LRING33)
           </label>
           <form onSubmit={handleBarcodeScan} className="flex gap-2">
             <div className="relative flex-1">
@@ -535,10 +534,10 @@ export default function BillingModule() {
                 type="text"
                 value={barcodeInput}
                 onChange={(e) => setBarcodeInput(e.target.value)}
-                placeholder="Scan barcode or type code and press Enter..."
+                placeholder="Type an item code and press Enter..."
                 className="w-full bg-slate-950 border border-slate-700 focus:border-amber-400 rounded-xl pl-9 pr-3 py-2 text-sm text-slate-100 placeholder-slate-500 focus:outline-none font-mono"
               />
-              <QrCode className="w-4 h-4 text-amber-400 absolute left-3 top-2.5" />
+              <Search className="w-4 h-4 text-amber-400 absolute left-3 top-2.5" />
             </div>
             <button
               type="submit"
@@ -559,7 +558,7 @@ export default function BillingModule() {
                 }}
                 className="text-amber-400 hover:underline font-mono"
               >
-                {s.itemCode} ({s.barcode})
+                {s.itemCode}
               </button>
             ))}
           </div>
@@ -611,7 +610,7 @@ export default function BillingModule() {
           <div className="text-center py-10 bg-slate-950/40 rounded-xl border border-dashed border-slate-800">
             <Receipt className="w-10 h-10 text-slate-600 mx-auto mb-2" />
             <p className="text-sm font-semibold text-slate-300">No items in bill yet</p>
-            <p className="text-xs text-slate-500 mt-1">Scan a barcode above or click "Load Audit Sample (IS86)" to begin.</p>
+            <p className="text-xs text-slate-500 mt-1">Type an inventory item code above or click "Load Audit Sample (IS86)" to begin.</p>
           </div>
         ) : (
           <div className="overflow-x-auto rounded-xl border border-slate-800">

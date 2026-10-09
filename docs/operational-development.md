@@ -34,7 +34,7 @@ In another terminal, start the operational UI:
 npm run dev:operational -- --host 0.0.0.0
 ```
 
-Open the environment's supported preview for port 3000. The UI only contains authenticated tenant membership selection and server-backed customer list/read/create/update/archive actions. The API also provides tenant-scoped branch/stock endpoints and a provisional sale finalizer, but no inventory or billing screen is exposed in the UI. Returns, transfers, repayments, reports, purchasing, integrations, and the legacy admin console remain unavailable in this mode. Unsupported operational API paths return `FEATURE_UNAVAILABLE`. Stop only processes started for this local session when finished.
+Open the environment's supported preview for port 3000. The UI only contains authenticated tenant membership selection and server-backed customer list/read/create/update/archive actions. The API also provides tenant-scoped branch/stock endpoints and provisional sale/receipt/report operations, but no inventory or billing screen is exposed in the UI. Transfers, supplier purchases, returns, repayments, tag/RFID tools, schemes, Girvi, karigar, integrations, and the legacy admin console remain unavailable in this mode. Unsupported operational API paths return `FEATURE_UNAVAILABLE` across reads and mutations. Stop only processes started for this local session when finished.
 
 ## Inventory API foundation
 

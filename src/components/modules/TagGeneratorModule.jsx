@@ -24,11 +24,11 @@ export default function TagGeneratorModule() {
           <div className="flex items-center space-x-2">
             <Tag className="w-6 h-6 text-amber-400" />
             <h2 className="text-xl font-serif font-bold text-slate-100 uppercase tracking-wider">
-              JEWELLERY BARCODE & THERMAL TAG DESIGNER
+              JEWELLERY TAG LAYOUT PREVIEW
             </h2>
           </div>
           <p className="text-xs text-amber-400 font-medium mt-0.5">
-            Dumbbell / Rat-tail Thermal Jewellery Labels with QR Code, HUID & Purity Stamp
+            Demo print layout only. Codes and QR graphics are placeholders; no barcode payload, HUID, hallmark, or printer output is verified.
           </p>
         </div>
 
@@ -38,7 +38,7 @@ export default function TagGeneratorModule() {
           className="flex items-center space-x-1.5 bg-gradient-to-r from-amber-500 to-amber-600 hover:from-amber-400 text-slate-950 font-bold px-4 py-2 rounded-xl text-xs shadow-lg shadow-amber-500/20 transition-all cursor-pointer"
         >
           <Printer className="w-4 h-4" />
-          <span>PRINT TAG LABELS</span>
+          <span>PRINT LAYOUT PREVIEW</span>
         </button>
       </div>
 
@@ -46,7 +46,7 @@ export default function TagGeneratorModule() {
         {/* Left Column: Selector */}
         <div className="no-print bg-slate-900/80 border border-slate-800 rounded-2xl p-5 shadow-xl space-y-4">
           <h3 className="font-bold text-xs uppercase tracking-wider text-amber-300">
-            Select Ornament for Tag Printing
+            Select Demo Item for Preview
           </h3>
 
           <div>
@@ -58,7 +58,7 @@ export default function TagGeneratorModule() {
             >
               {stock.map(s => (
                 <option key={s.id} value={s.id}>
-                  {s.itemCode} - {s.category} ({s.grossWeight} GM, BCD: {s.barcode})
+                  {s.itemCode} - {s.category} ({s.grossWeight} GM, demo ref: {s.barcode})
                 </option>
               ))}
             </select>
@@ -121,8 +121,8 @@ export default function TagGeneratorModule() {
                   </span>
                 </div>
                 <p className="font-bold text-slate-900 text-[10px] leading-tight pt-0.5">{selectedItem.itemCode}</p>
-                <p className="text-slate-600 font-mono text-[8.5px]">BCD: {selectedItem.barcode}</p>
-                <p className="text-[8.5px] text-slate-500 truncate">HUID: {selectedItem.huid || 'HUID8834591'}</p>
+                <p className="text-slate-600 font-mono text-[8.5px]">ITEM REF: {selectedItem.barcode}</p>
+                <p className="text-[8.5px] text-slate-500 truncate">HUID (unverified): {selectedItem.huid || '—'}</p>
               </div>
 
               {/* Narrow Tail (Clear plastic string loop that wraps around the ring / chain) */}
@@ -143,7 +143,7 @@ export default function TagGeneratorModule() {
                   </p>
                 </div>
                 <div className="w-10 h-10 bg-slate-950 p-0.5 rounded flex items-center justify-center text-white flex-shrink-0">
-                  <QrCode className="w-9 h-9" />
+                  <QrCode aria-label="QR placeholder; no encoded data" className="w-9 h-9" />
                 </div>
               </div>
             </div>
@@ -164,10 +164,10 @@ export default function TagGeneratorModule() {
                     </span>
                   </div>
                   <p className="font-bold text-slate-900 text-[10px] mt-0.5">{selectedItem.itemCode} ({selectedItem.category})</p>
-                  <p className="text-slate-600 text-[8.5px]">BARCODE: {selectedItem.barcode} • HUID: {selectedItem.huid}</p>
+                  <p className="text-slate-600 text-[8.5px]">ITEM REF: {selectedItem.barcode} • HUID (unverified): {selectedItem.huid || '—'}</p>
                 </div>
                 <div className="text-right">
-                  <span className="text-[8px] text-slate-500 uppercase font-sans">BIS CERTIFIED</span>
+                    <span className="text-[8px] text-slate-500 uppercase font-sans">DEMO PRICE DISPLAY</span>
                   <p className="font-bold text-amber-900 text-xs mt-0.5">₹{Math.round(selectedItem.totalPrice).toLocaleString('en-IN')}</p>
                 </div>
               </div>
@@ -190,11 +190,11 @@ export default function TagGeneratorModule() {
                 </div>
                 <div className="flex items-center space-x-1.5 pl-2 border-l border-slate-300">
                   <div className="text-right">
-                    <p className="text-[7.5px] text-slate-500">SCAN POS</p>
+                    <p className="text-[7.5px] text-slate-500">SAMPLE ITEM CODE</p>
                     <p className="font-mono text-[8px] font-bold text-slate-800">{selectedItem.barcode}</p>
                   </div>
                   <div className="w-9 h-9 bg-slate-950 p-0.5 rounded flex items-center justify-center text-white flex-shrink-0">
-                    <QrCode className="w-8 h-8" />
+                    <QrCode aria-label="QR placeholder; no encoded data" className="w-8 h-8" />
                   </div>
                 </div>
               </div>
@@ -202,7 +202,7 @@ export default function TagGeneratorModule() {
           )}
 
           <p className="no-print text-[11px] text-slate-400 mt-4">
-            Compatible with TSC, TVS, Citizen, Zebra & ATPOS Jewelry Thermal Barcode Printers
+            Layout preview only: the QR artwork is not scannable. HUID, hallmark, RFID, barcode generation, and printer compatibility have not been verified.
           </p>
         </div>
       </div>

@@ -138,7 +138,7 @@ export default function OperationalApp() {
           {user && <div className="flex items-center gap-3"><span className="text-sm text-slate-300">{user.name}</span><button disabled={busy} onClick={signOut} className="rounded border border-slate-600 px-3 py-2 text-sm">Sign out</button></div>}
         </header>
         <aside className="rounded-lg border border-amber-700 bg-amber-950/50 p-4 text-sm text-amber-100">
-          This operational workspace serves authenticated server-backed customers only. Billing, stock, accounting, rates, integrations, and administration remain unavailable until separately migrated and validated.
+          This operational workspace serves authenticated server-backed customers only. Billing, stock, transfers, purchases, returns, accounting, rates, tag/RFID tools, schemes, Girvi, karigar, integrations, and administration remain unavailable until separately migrated and validated.
         </aside>
         {message && <p role="status" className="rounded bg-slate-800 p-3 text-sm">{message}</p>}
         {!user ? (

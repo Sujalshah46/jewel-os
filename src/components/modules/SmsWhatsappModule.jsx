@@ -64,7 +64,7 @@ export default function SmsWhatsappModule() {
       <rect width="600" height="380" fill="url(#bg)" rx="16"/>
       <rect x="12" y="12" width="576" height="356" fill="none" stroke="url(#gold)" stroke-width="2" rx="12" stroke-opacity="0.6"/>
       <text x="300" y="55" fill="url(#gold)" font-family="serif" font-size="22" font-weight="bold" text-anchor="middle" letter-spacing="3">${activeFirm.name || 'KRISHNA JEWELLERS'}</text>
-      <text x="300" y="78" fill="#94a3b8" font-family="sans-serif" font-size="11" text-anchor="middle" letter-spacing="1">BIS HALLMARK CERTIFIED • OFFICIAL DAILY BULLION RATE BOARD</text>
+      <text x="300" y="78" fill="#94a3b8" font-family="sans-serif" font-size="11" text-anchor="middle" letter-spacing="1">SYNTHETIC DEMO DATA • NOT OFFICIAL OR BIS CERTIFIED</text>
       <line x1="60" y1="95" x2="540" y2="95" stroke="#334155" stroke-width="1"/>
       
       <!-- Gold 22k Box -->

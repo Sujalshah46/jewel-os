@@ -31,11 +31,11 @@ Close every repository-fixable finding in `jewelry-os-audit/REPORT.md`, or expli
 | FIN-006 Immutable invoice issuer/zero values | Partial | Operational invoices store issuer and priced-line snapshots, including zero tax. Legacy invoice rendering/reprint immutability is not fully corrected. |
 | FIN-007 Pricing-field/product-type wiring | Partial | Operational stock pricing feeds the shared calculation helper; catalogue estimate/billing handoff preserves selected values. Product-specific strategies and UI migration remain. |
 | INV-001 Stock IDs, quantities, movements | Partial | Tenant/branch-owned stock, opening receipt, movement history, and optimistic adjustments are implemented in the operational API. Database/concurrency tests need to run; UI migration is incomplete. |
-| INV-002 Transfer custody/firm integrity | Open | No transactional dispatch/receipt transfer lifecycle. |
-| INV-003 Purchasing and returns | Open | No supplier payable/purchase workflow or linked sale reversal workflow. |
-| INV-004 Encoded tags/RFID claims | Open | Tag graphics and scan/RFID behavior have not been replaced with verified payloads or removed from claims. |
-| EXT-001 Schemes/Girvi/karigar accounting | Open | These workflows remain synthetic demo functionality and are absent from operational mode; no reconciled lifecycle exists. |
-| OPS-001 Honest simulations | Partial | Integration, MCX-rate, and messaging screens now label synthetic actions and do not claim a provider send/connection. Operational customer mode excludes them. A real provider and approved rate provenance remain unimplemented. |
+| INV-002 Transfer custody/firm integrity | Excluded from operational mode | Operational UI has no transfer workflow and transfer routes return `FEATURE_UNAVAILABLE` for read and mutation methods. The legacy demo's local branch transfer action is not transactional and is not approved for real inventory. |
+| INV-003 Purchasing and returns | Excluded from operational mode | Operational UI has no purchase/return screens or APIs; tested routes return `FEATURE_UNAVAILABLE`. Supplier payables and linked sale reversals remain unimplemented. |
+| INV-004 Encoded tags/RFID claims | Partial | The demo tag screen now calls itself a layout preview and discloses that QR art, barcodes, HUID/hallmark, RFID, and printer compatibility are unverified. Tag/RFID tools are absent from operational UI and routes; verified encoded payloads are still not implemented. |
+| EXT-001 Schemes/Girvi/karigar accounting | Excluded from operational mode | Operational UI has no screens and the corresponding routes return `FEATURE_UNAVAILABLE` for read and mutation methods. Legacy demo workflows remain synthetic and have no reconciled lifecycle. |
+| OPS-001 Honest simulations | Partial | Integration and messaging actions label synthetic activity and do not claim provider delivery. Market/rate-board copy now identifies sample data as non-official and non-BIS-certified; item lookup and tag layouts disclaim hardware/payload verification. Operational mode excludes these paths. Real providers and approved rate provenance remain unimplemented. |
 | OPS-002 Audit and policy enforcement | Partial | Customer archive stores attribution. Legacy audit and policy surfaces now disclose that they are synthetic/unverified/un-enforced; actual immutable audit records and policy enforcement remain. |
 | OPS-003 Behavioral tests and release gates | Partial | Actual HTTP tests cover the customer slice; legacy source-string/copy-function checks remain, broader business invariants and mandatory CI are absent. |
 | OPS-004 Recovery and operations | Partial | Local migration/startup instructions exist. Backup/restore, monitoring, alerting, RPO/RTO, support/offboarding, and deployed configuration are unverified. |
@@ -88,10 +88,10 @@ Close every repository-fixable finding in `jewelry-os-audit/REPORT.md`, or expli
 ### Phase 5 — Inventory lifecycle and optional workflow honesty
 
 - [ ] Enforce stock identity, exact quantities, movement history, and tenant-consistent references (INV-001).
-- [ ] Add dispatch/receipt custody state machine for transfers or keep transfers disabled (INV-002).
-- [ ] Add supplier purchase/payable/settlement and traceable partial/full returns/reversals or keep these operations disabled (INV-003).
-- [ ] Generate and independently decode barcode/QR payloads; remove RFID/payment claims until real integrations and lifecycle tests exist (INV-004).
-- [ ] Either implement balanced scheme/Girvi/karigar cash and metal lifecycles or keep those screens inaccessible in operational mode (EXT-001).
+- [x] Keep transfers unavailable in operational mode; exercise read and mutation methods and disclose that the legacy demo transfer is not authoritative (INV-002).
+- [x] Keep purchases and returns unavailable in operational mode; exercise read and mutation methods (INV-003).
+- [x] Label demo tags as layout previews, remove unverified scan/printer/certification claims, and keep tag/RFID workflows unavailable operationally (INV-004).
+- [x] Keep schemes, Girvi, and karigar workflows unavailable in operational mode; exercise their API feature gates (EXT-001).
 - **Acceptance:** stock/cash/metal conservation, tenant/branch invariants, retry safety, and disabled-route tests; encoded labels decode to the correct stable record.
 
 ### Phase 6 — Security, release tests, performance, and production evidence
@@ -113,11 +113,12 @@ Some work cannot be truthfully completed from code alone: accountant approval of
 - [x] Audited the current worktree against all 27 findings and recorded status above.
 - [x] Re-ran `npm test`, `npm run build`, `npm run build:operational`, and `git diff --check` during remediation.
 - [x] Added a versioned/redacted local demo snapshot schema with known legacy-format upgrade and full preflight tests; removed generic error-boundary localStorage clearing.
+- [x] Audited optional operational workflows; added HTTP-method feature-gate coverage and corrected demo tag preview claims.
 - [x] Phase 1 — standalone correctness and demo claims (source/tests/browser checks above).
 - [ ] Phase 2 — transactional inventory/sales boundary (implemented and standalone checks pass; PostgreSQL acceptance suite remains to run).
 - [ ] Phase 3 — pricing/accounting invariants (provisional sale/ledger path implemented; repayments, reports, and accountant review remain).
 - [ ] Phase 4 — recovery and data migration protections.
-- [ ] Phase 5 — inventory lifecycles and optional modules.
+- [ ] Phase 5 — operational exclusions for optional workflows are tested; INV-001 lifecycle/concurrency verification remains.
 - [ ] Phase 6 — release/security/operations/capacity gates.
 
 ## Result
