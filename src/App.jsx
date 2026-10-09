@@ -44,17 +44,8 @@ function MainApp() {
   const [mobileMenuOpen, setMobileMenuOpen] = useState(false);
   const [calculatorOpen, setCalculatorOpen] = useState(false);
 
-  // Phase 3: in API mode, require a server session before showing the app.
-  if (apiMode && sessionLoading) {
-    return (
-      <div className="min-h-screen flex items-center justify-center bg-[#FAF7F0]">
-        <div className="text-[#64748B]">Connecting to your workspace…</div>
-      </div>
-    );
-  }
-  if (apiMode && !session) {
-    return <LoginScreen />;
-  }
+  // NOTE: hooks must all run before any early return (Rules of Hooks) —
+  // the API-mode session gate lives after the last hook below.
 
   // Dedicated Portal State: 'retail' vs 'admin'
   const [currentPortal, setCurrentPortal] = useState(() => {
@@ -109,6 +100,21 @@ function MainApp() {
     window.addEventListener('keydown', handleKeyDown);
     return () => window.removeEventListener('keydown', handleKeyDown);
   }, [previewInvoice, previewEstimate, calculatorOpen, mobileMenuOpen, currentPortal, setActiveModule, setPreviewInvoice, setPreviewEstimate]);
+
+  // Phase 3: in API mode, require a server session before showing the app.
+  // Placed after every hook call (Rules of Hooks): early returns above the
+  // remaining hooks caused "Rendered more hooks than during the previous
+  // render" (#310) right after login.
+  if (apiMode && sessionLoading) {
+    return (
+      <div className="min-h-screen flex items-center justify-center bg-[#FAF7F0]">
+        <div className="text-[#64748B]">Connecting to your workspace…</div>
+      </div>
+    );
+  }
+  if (apiMode && !session) {
+    return <LoginScreen />;
+  }
 
   // =========================================================================
   // 1. DEDICATED SAAS PLATFORM ADMIN PORTAL VIEW (Independent Full-Screen UI)
