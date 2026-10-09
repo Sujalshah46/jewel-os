@@ -37,7 +37,7 @@ Close every repository-fixable finding in `jewelry-os-audit/REPORT.md`, or expli
 | EXT-001 Schemes/Girvi/karigar accounting | Excluded from operational mode | Operational UI has no screens and the corresponding routes return `FEATURE_UNAVAILABLE` for read and mutation methods. Legacy demo workflows remain synthetic and have no reconciled lifecycle. |
 | OPS-001 Honest simulations | Partial | Integration and messaging actions label synthetic activity and do not claim provider delivery. Market/rate-board copy now identifies sample data as non-official and non-BIS-certified; item lookup and tag layouts disclaim hardware/payload verification. Operational mode excludes these paths. Real providers and approved rate provenance remain unimplemented. |
 | OPS-002 Audit and policy enforcement | Partial | Customer archive stores attribution. Legacy audit and policy surfaces now disclose that they are synthetic/unverified/un-enforced; actual immutable audit records and policy enforcement remain. |
-| OPS-003 Behavioral tests and release gates | Partial | Actual HTTP tests cover the customer slice; legacy source-string/copy-function checks remain, broader business invariants and mandatory CI are absent. |
+| OPS-003 Behavioral tests and release gates | Partial | A GitHub Actions workflow now runs the standalone/API/migration suite and both builds on pull requests to `main`; the workflow has not yet produced a remote result. Legacy source-presence checks and broader business invariants remain, and repository branch protection must require the check. |
 | OPS-004 Recovery and operations | Partial | Local migration/startup instructions exist. Backup/restore, monitoring, alerting, RPO/RTO, support/offboarding, and deployed configuration are unverified. |
 | SEC-004 Dependency advisories | Partial | Removed unused Vercel CLI, pinned path-to-regexp/esbuild, and upgraded Vite to a patched compatible major. Clean install passes and `npm audit --omit=dev` reports zero advisories. Full audit still reports 7 development findings (6 high, 1 moderate), mainly Tailwind 3 dependencies; Tailwind 4 requires a reviewed framework migration. |
 | SEC-005 Spreadsheet-safe rate export | Fixed in demo export | Shared serializer quotes/escapes cells and neutralizes formula-leading text; numeric cells remain numeric. CSV and Excel-compatible CSV now use `.csv`. Added injection cases to regression tests. |
@@ -98,7 +98,9 @@ Close every repository-fixable finding in `jewelry-os-audit/REPORT.md`, or expli
 
 - [ ] Minimize/redact KYC, remove stale credential surfaces, establish retention/deletion/export rules, and test client/API/log/export/bundle leakage (SEC-003).
 - [ ] Re-audit dependency advisories and patch reachable vulnerable build/runtime paths without weakening package verification (SEC-004). Production-only audit reports zero; the current lockfile still reports 7 development findings.
-- [ ] Replace legacy source-presence assertions for critical claims with HTTP/database/browser behavior tests; every failing assertion exits nonzero; add required CI checks (OPS-003).
+- [ ] Replace remaining legacy source-presence assertions for critical claims with HTTP/database/browser behavior tests; every failing assertion exits nonzero (OPS-003).
+- [x] Add PR CI with isolated PostgreSQL fresh-install and populated-upgrade databases, full test suites, and demo/operational builds (OPS-003).
+- [ ] Require the new CI check through repository branch protection and review its first successful remote run.
 - [ ] Pin supported runtime/package versions; document environment validation, secret handling, health/readiness, migration and rollback, monitoring, backup retention, alerts, support, offboarding, and restore RPO/RTO (OPS-004).
 - [ ] Benchmark declared tenant/item/history scenarios and reduce full-store serialization/render bottlenecks; do not claim capacity before agreed budgets pass (PERF-001).
 - **Acceptance:** clean install, all required tests/builds, security review, isolated timed restore meeting agreed RPO/RTO, alert exercise, and agreed latency/error/storage budgets.
@@ -114,6 +116,7 @@ Some work cannot be truthfully completed from code alone: accountant approval of
 - [x] Re-ran `npm test`, `npm run build`, `npm run build:operational`, and `git diff --check` during remediation.
 - [x] Added a versioned/redacted local demo snapshot schema with known legacy-format upgrade and full preflight tests; removed generic error-boundary localStorage clearing.
 - [x] Audited optional operational workflows; added HTTP-method feature-gate coverage and corrected demo tag preview claims.
+- [x] Added GitHub Actions verification for full tests, disposable PostgreSQL migrations/API tests, and both builds; remote execution remains pending.
 - [x] Phase 1 — standalone correctness and demo claims (source/tests/browser checks above).
 - [ ] Phase 2 — transactional inventory/sales boundary (implemented and standalone checks pass; PostgreSQL acceptance suite remains to run).
 - [ ] Phase 3 — pricing/accounting invariants (provisional sale/ledger path implemented; repayments, reports, and accountant review remain).

@@ -55,6 +55,8 @@ npm run build
 
 Operational tests require two disposable loopback PostgreSQL databases named with `_test` and `_upgrade_test` suffixes. Create those databases before running the command and export `TEST_DATABASE_URL` and `UPGRADE_DATABASE_URL` to them. The preparation script refuses to reset non-loopback hosts or names without the test suffix. It runs Drizzle migrations in the fresh database, applies initial and follow-up migrations over a populated upgrade fixture, then exercises HTTP sessions, authorization, tenant isolation, strict schemas, inventory concurrency, sale finalization/replay, ledger balance, pagination, CSRF, logout, and session expiry.
 
+`.github/workflows/verify.yml` provisions disposable PostgreSQL 16 databases and runs `npm run test:all`, then builds both demo and operational modes on pull requests targeting `main`. The first remote run and any repository branch-protection requirement must still be verified in GitHub.
+
 ```bash
 npm run test:operational
 ```
