@@ -138,6 +138,9 @@ export default function ECommerceModule() {
                 <img
                   src={getProductImage(selectedItemDetails)}
                   alt={`${selectedItemDetails.subCategory || selectedItemDetails.category} product photograph`}
+                  loading="eager"
+                  decoding="async"
+                  fetchPriority="high"
                   className="w-full h-64 object-cover rounded-xl border border-slate-700 shadow-xl"
                 />
               </div>

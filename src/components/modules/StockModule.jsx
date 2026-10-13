@@ -774,6 +774,9 @@ export default function StockModule() {
                         <img
                           src={getProductImage(item)}
                           alt={`${item.subCategory || item.category} product photograph`}
+                          loading="lazy"
+                          decoding="async"
+                          fetchPriority="low"
                           className="w-10 h-10 object-cover rounded-lg border border-slate-700 shadow"
                         />
                       </td>
@@ -1203,6 +1206,9 @@ export default function StockModule() {
               <img
                 src={getProductImage(inspectItem)}
                 alt={`${inspectItem.subCategory || inspectItem.category} product photograph`}
+                loading="eager"
+                decoding="async"
+                fetchPriority="high"
                 className="w-24 h-24 object-cover rounded-xl border border-slate-700 shadow"
               />
               <div className="text-xs space-y-1">
