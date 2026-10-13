@@ -1,20 +1,21 @@
 // AI-generated illustrative catalogue photos, served locally so the showroom
-// does not depend on third-party image URLs. They are not photographs of the
-// exact pieces held in inventory; replace with item-specific photos as needed.
+// does not depend on third-party image URLs. The original PNGs are retained in
+// src/assets/product-photo-originals; the public JPEGs are resized derivatives
+// for faster catalogue and inventory rendering.
 const images = {
-  ring: '/product-photos/ring.png',
-  diamondRing: '/product-photos/diamond-ring.png',
-  traditionalRing: '/product-photos/traditional-ring.png',
-  mensRing: '/product-photos/mens-ring.png',
-  earrings: '/product-photos/earrings.png',
-  necklace: '/product-photos/bridal-necklace.png',
-  fashionNecklace: '/product-photos/fashion-necklace.png',
-  silverJewellery: '/product-photos/anklet.png',
-  goldBar: '/product-photos/gold-bar.png',
-  silverBar: '/product-photos/silver-bar.png',
-  kada: '/product-photos/kada.png',
-  diamond: '/product-photos/diamond.png',
-  gemstone: '/product-photos/emerald.png'
+  ring: '/product-photos/ring.jpg',
+  diamondRing: '/product-photos/diamond-ring.jpg',
+  traditionalRing: '/product-photos/traditional-ring.jpg',
+  mensRing: '/product-photos/mens-ring.jpg',
+  earrings: '/product-photos/earrings.jpg',
+  necklace: '/product-photos/bridal-necklace.jpg',
+  fashionNecklace: '/product-photos/fashion-necklace.jpg',
+  silverJewellery: '/product-photos/anklet.jpg',
+  goldBar: '/product-photos/gold-bar.jpg',
+  silverBar: '/product-photos/silver-bar.jpg',
+  kada: '/product-photos/kada.jpg',
+  diamond: '/product-photos/diamond.jpg',
+  gemstone: '/product-photos/emerald.jpg'
 };
 
 // Give every seeded showroom item its own suitable photograph, even when old
