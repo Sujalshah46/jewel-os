@@ -440,6 +440,31 @@ export function JewelleryProvider({ children }) {
     return () => clearInterval(interval);
   }, []);
 
+  // Multi-Terminal / Cross-Tab LocalStorage Real-Time Synchronization Guard
+  useEffect(() => {
+    const handleCrossTabSync = (e) => {
+      if (!e.key || !e.newValue || !e.key.startsWith(STORAGE_KEY)) return;
+      try {
+        const val = JSON.parse(e.newValue);
+        if (e.key === STORAGE_KEY + '_STOCK') setStock(val);
+        else if (e.key === STORAGE_KEY + '_INVOICES') setInvoices(val);
+        else if (e.key === STORAGE_KEY + '_RATES') setDailyRates(val);
+        else if (e.key === STORAGE_KEY + '_CUSTOMERS') setCustomers(val);
+        else if (e.key === STORAGE_KEY + '_UDHAAR') setUdhaarList(val);
+        else if (e.key === STORAGE_KEY + '_FIRMS') setFirms(val);
+        else if (e.key === STORAGE_KEY + '_AUDIT_LOGS') setAuditLogs(val);
+        else if (e.key === STORAGE_KEY + '_UDHAAR_REPAYMENTS') setUdhaarRepayments(val);
+        else if (e.key === STORAGE_KEY + '_STOCK_MOVEMENTS') setStockMovements(val);
+      } catch {
+        if (e.key === STORAGE_KEY + '_ACTIVE_FIRM_ID') {
+          setActiveFirmId(e.newValue);
+        }
+      }
+    };
+    window.addEventListener('storage', handleCrossTabSync);
+    return () => window.removeEventListener('storage', handleCrossTabSync);
+  }, []);
+
   // Audit Log Action
   const addAuditLog = (entry) => {
     const newLog = {

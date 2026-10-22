@@ -34,6 +34,7 @@ import {
 } from 'lucide-react';
 import { formatCurrency, formatWeight } from '../../utils/numberToWords';
 import { calculateJewelleryItem } from '../../utils/calculations';
+import WeighingScaleModal from '../common/WeighingScaleModal';
 
 export default function StockModule() {
   const {
@@ -52,6 +53,7 @@ export default function StockModule() {
   const [selectedCategory, setSelectedCategory] = useState('ALL');
   const [selectedMetal, setSelectedMetal] = useState('ALL');
   const [showAddStockModal, setShowAddStockModal] = useState(false);
+  const [showScaleModal, setShowScaleModal] = useState(false);
   const [inspectItem, setInspectItem] = useState(null);
   const [itemToDelete, setItemToDelete] = useState(null);
 
@@ -1030,7 +1032,17 @@ export default function StockModule() {
 
                 <div className="grid grid-cols-2 sm:grid-cols-4 gap-3.5">
                   <div>
-                    <label className="block text-slate-300 font-semibold mb-1">Gross Wt (g) *</label>
+                    <div className="flex items-center justify-between mb-1">
+                      <label className="block text-slate-300 font-semibold">Gross Wt (g) *</label>
+                      <button
+                        type="button"
+                        onClick={() => setShowScaleModal(true)}
+                        className="flex items-center space-x-1 text-[9px] text-amber-400 hover:text-amber-300 font-bold bg-amber-500/15 px-1.5 py-0.5 rounded border border-amber-500/30 transition cursor-pointer"
+                      >
+                        <Scale className="w-3 h-3" />
+                        <span>SCALE</span>
+                      </button>
+                    </div>
                     <input
                       type="number"
                       step="0.001"
@@ -1243,6 +1255,15 @@ export default function StockModule() {
           </div>
         </div>
       )}
+
+      {/* Electronic Weighing Scale Modal */}
+      <WeighingScaleModal
+        isOpen={showScaleModal}
+        onClose={() => setShowScaleModal(false)}
+        onCaptureWeight={(w) => handleFormChange('grossWeight', w)}
+        initialWeight={Number(newItemForm.grossWeight) || 0}
+        title="Capture Opening Stock Weight from Scale"
+      />
     </div>
   );
 }

@@ -16,6 +16,8 @@ import {
   MessageSquare
 } from 'lucide-react';
 import { formatCurrency, formatWeight, numberToWordsIndian } from '../../utils/numberToWords';
+import DynamicQrCode from '../common/DynamicQrCode';
+import { buildUpiPaymentUrl } from '../../utils/qrCode';
 
 export default function InvoiceViewModal() {
   const { previewInvoice, setPreviewInvoice, activeFirm } = useJewellery();
@@ -28,6 +30,9 @@ export default function InvoiceViewModal() {
   };
 
   const handleWhatsAppShare = () => {
+    const rawPhone = previewInvoice.customerMobile || previewInvoice.customerPhone || '';
+    const cleanPhone = String(rawPhone).replace(/\D/g, '').replace(/^91/, '').slice(-10);
+
     const text = `*Tax Invoice from ${activeFirm.name}*\n`
       + `Invoice No: ${previewInvoice.invoiceNo}\n`
       + `Date: ${previewInvoice.date}\n`
@@ -35,10 +40,14 @@ export default function InvoiceViewModal() {
       + `Total Amount: ${formatCurrency(previewInvoice.totalInvoiceAmount)}\n`
       + `Payment Received: ${formatCurrency(previewInvoice.payments?.totalReceived || 0)}\n`
       + (previewInvoice.payments?.balanceUdhaarDue > 0 ? `Balance Due: ${formatCurrency(previewInvoice.payments.balanceUdhaarDue)}\n` : '')
+      + (activeFirm.upiId ? `Pay Online UPI: upi://pay?pa=${activeFirm.upiId}&pn=${encodeURIComponent(activeFirm.name)}&am=${previewInvoice.totalInvoiceAmount}\n` : '')
       + `Thank you for shopping with ${activeFirm.name}! Contact: ${activeFirm.phone}`;
     
     const encoded = encodeURIComponent(text);
-    window.open(`https://wa.me/91${previewInvoice.customerPhone || ''}?text=${encoded}`, '_blank');
+    const targetUrl = cleanPhone.length === 10
+      ? `https://wa.me/91${cleanPhone}?text=${encoded}`
+      : `https://wa.me/?text=${encoded}`;
+    window.open(targetUrl, '_blank');
   };
 
   return (
@@ -268,10 +277,24 @@ export default function InvoiceViewModal() {
                 <p className="text-[10px] text-slate-500 mt-1">{activeFirm.footerInfo}</p>
               </div>
               <div className="text-right flex flex-col items-end justify-center">
-                <div className="w-16 h-16 bg-slate-950 p-1 rounded flex items-center justify-center text-white">
-                  <QrCode className="w-14 h-14" />
-                </div>
-                <p className="text-[9px] text-slate-500 mt-0.5">UPI ID: {activeFirm.upiId}</p>
+                {activeFirm.upiId ? (
+                  <DynamicQrCode
+                    text={buildUpiPaymentUrl({
+                      upiId: activeFirm.upiId,
+                      payeeName: activeFirm.name,
+                      amount: previewInvoice.totalInvoiceAmount,
+                      transactionRef: previewInvoice.invoiceNo
+                    })}
+                    size={72}
+                    className="border border-slate-300"
+                  />
+                ) : (
+                  <div className="w-16 h-16 bg-slate-950 p-1 rounded flex items-center justify-center text-white">
+                    <QrCode className="w-14 h-14" />
+                  </div>
+                )}
+                <p className="text-[9px] text-slate-700 font-mono font-bold mt-1">UPI: {activeFirm.upiId}</p>
+                <p className="text-[8px] text-slate-500">Scan with GPay / PhonePe</p>
               </div>
             </div>
 

@@ -3,22 +3,107 @@ import { useJewellery } from '../../context/JewelleryContext';
 import {
   Tag,
   Printer,
-  QrCode,
+  FileCode,
+  Copy,
+  Download,
+  Check,
+  Building2,
   Sparkles,
   CheckCircle,
-  Building2
+  X
 } from 'lucide-react';
 import { formatCurrency, formatWeight } from '../../utils/numberToWords';
+import DynamicQrCode from '../common/DynamicQrCode';
+import { generateDumbbellZpl, generateButterflyZpl, downloadZplFile } from '../../utils/zplGenerator';
 
 export default function TagGeneratorModule() {
   const { stock, activeFirm } = useJewellery();
   const [selectedStockId, setSelectedStockId] = useState(stock[0]?.id || '');
   const [tagFormat, setTagFormat] = useState('Dumbbell'); // 'Dumbbell' or 'Butterfly'
+  const [showZplModal, setShowZplModal] = useState(false);
+  const [copiedZpl, setCopiedZpl] = useState(false);
 
   const selectedItem = stock.find(s => s.id === selectedStockId) || stock[0];
 
+  const zplPayload = selectedItem
+    ? (tagFormat === 'Dumbbell'
+        ? generateDumbbellZpl({
+            firmCode: activeFirm.code || 'KJJ',
+            itemCode: selectedItem.itemCode,
+            barcode: selectedItem.barcode,
+            huid: selectedItem.huid,
+            purityKarat: selectedItem.purityKarat || '22K916',
+            grossWeight: selectedItem.grossWeight,
+            netWeight: selectedItem.netWeight,
+            makingCharge: selectedItem.makingChargeValue || 0,
+            totalPrice: selectedItem.totalPrice || 0
+          })
+        : generateButterflyZpl({
+            firmName: activeFirm.name || 'Krishna Jewellers',
+            itemCode: selectedItem.itemCode,
+            category: selectedItem.category,
+            barcode: selectedItem.barcode,
+            huid: selectedItem.huid,
+            purityKarat: selectedItem.purityKarat || '22K916',
+            grossWeight: selectedItem.grossWeight,
+            netWeight: selectedItem.netWeight,
+            lessWeight: selectedItem.lessWeight || 0,
+            makingCharge: selectedItem.makingChargeValue || 0,
+            totalPrice: selectedItem.totalPrice || 0
+          }))
+    : '';
+
+  const handleCopyZpl = async () => {
+    try {
+      await navigator.clipboard.writeText(zplPayload);
+      setCopiedZpl(true);
+      setTimeout(() => setCopiedZpl(false), 2500);
+    } catch {
+      alert('Failed to copy ZPL code.');
+    }
+  };
+
+  const handleDownloadZpl = () => {
+    const filename = `${selectedItem?.barcode || 'tag'}-${tagFormat.toLowerCase()}.zpl`;
+    downloadZplFile(zplPayload, filename);
+  };
+
   return (
     <div className="space-y-6">
+      {/* Precision Print Styling for Jewellery Thermal Tags */}
+      <style>{`
+        @media print {
+          @page {
+            size: auto;
+            margin: 0mm;
+          }
+          body {
+            margin: 0 !important;
+            padding: 0 !important;
+            background: #ffffff !important;
+          }
+          .no-print {
+            display: none !important;
+          }
+          .print-tag-dumbbell {
+            width: 86mm !important;
+            height: 14mm !important;
+            max-width: none !important;
+            border: none !important;
+            box-shadow: none !important;
+            page-break-after: always;
+          }
+          .print-tag-butterfly {
+            width: 60mm !important;
+            height: 28mm !important;
+            max-width: none !important;
+            border: none !important;
+            box-shadow: none !important;
+            page-break-after: always;
+          }
+        }
+      `}</style>
+
       <div className="no-print flex flex-wrap items-center justify-between gap-4 pb-4 border-b border-slate-800">
         <div>
           <div className="flex items-center space-x-2">
@@ -28,18 +113,29 @@ export default function TagGeneratorModule() {
             </h2>
           </div>
           <p className="text-xs text-amber-400 font-medium mt-0.5">
-            Dumbbell / Rat-tail Thermal Jewellery Labels with QR Code, HUID & Purity Stamp
+            Dumbbell / Rat-tail & Butterfly Thermal Jewellery Labels with Dynamic QR Code, HUID & ZPL Driver
           </p>
         </div>
 
-        <button
-          type="button"
-          onClick={() => window.print()}
-          className="flex items-center space-x-1.5 bg-gradient-to-r from-amber-500 to-amber-600 hover:from-amber-400 text-slate-950 font-bold px-4 py-2 rounded-xl text-xs shadow-lg shadow-amber-500/20 transition-all cursor-pointer"
-        >
-          <Printer className="w-4 h-4" />
-          <span>PRINT TAG LABELS</span>
-        </button>
+        <div className="flex items-center space-x-2">
+          <button
+            type="button"
+            onClick={() => setShowZplModal(true)}
+            className="flex items-center space-x-1.5 bg-slate-800 hover:bg-slate-700 text-slate-200 border border-slate-700 font-bold px-3 py-2 rounded-xl text-xs shadow transition-all cursor-pointer"
+          >
+            <FileCode className="w-4 h-4 text-amber-400" />
+            <span>ZPL THERMAL CODE</span>
+          </button>
+
+          <button
+            type="button"
+            onClick={() => window.print()}
+            className="flex items-center space-x-1.5 bg-gradient-to-r from-amber-500 to-amber-600 hover:from-amber-400 text-slate-950 font-bold px-4 py-2 rounded-xl text-xs shadow-lg shadow-amber-500/20 transition-all cursor-pointer"
+          >
+            <Printer className="w-4 h-4" />
+            <span>PRINT TAG LABELS</span>
+          </button>
+        </div>
       </div>
 
       <div className="grid grid-cols-1 md:grid-cols-3 gap-6">
@@ -68,21 +164,42 @@ export default function TagGeneratorModule() {
             <label className="block text-[11px] font-semibold text-slate-300 mb-1">TAG SHAPE / TEMPLATE</label>
             <div className="grid grid-cols-2 gap-2">
               <button
+                type="button"
                 onClick={() => setTagFormat('Dumbbell')}
-                className={`py-2 text-xs font-bold rounded-xl border ${
-                  tagFormat === 'Dumbbell' ? 'bg-amber-500 text-slate-950 border-amber-400' : 'bg-slate-950 text-slate-300 border-slate-800'
+                className={`py-2 text-xs font-bold rounded-xl border transition-all cursor-pointer ${
+                  tagFormat === 'Dumbbell' ? 'bg-amber-500 text-slate-950 border-amber-400 shadow-md' : 'bg-slate-950 text-slate-300 border-slate-800'
                 }`}
               >
                 Dumbbell (Tail)
               </button>
               <button
+                type="button"
                 onClick={() => setTagFormat('Butterfly')}
-                className={`py-2 text-xs font-bold rounded-xl border ${
-                  tagFormat === 'Butterfly' ? 'bg-amber-500 text-slate-950 border-amber-400' : 'bg-slate-950 text-slate-300 border-slate-800'
+                className={`py-2 text-xs font-bold rounded-xl border transition-all cursor-pointer ${
+                  tagFormat === 'Butterfly' ? 'bg-amber-500 text-slate-950 border-amber-400 shadow-md' : 'bg-slate-950 text-slate-300 border-slate-800'
                 }`}
               >
                 Butterfly Tag
               </button>
+            </div>
+          </div>
+
+          <div className="pt-2 border-t border-slate-800 text-[11px] text-slate-400 space-y-2">
+            <div className="flex justify-between">
+              <span>Barcode / SKU:</span>
+              <strong className="text-slate-200 font-mono">{selectedItem?.barcode}</strong>
+            </div>
+            <div className="flex justify-between">
+              <span>HUID:</span>
+              <strong className="text-amber-400 font-mono">{selectedItem?.huid || 'BIS-VERIFIED'}</strong>
+            </div>
+            <div className="flex justify-between">
+              <span>Net Weight:</span>
+              <strong className="text-slate-200">{selectedItem?.netWeight?.toFixed(3)}g</strong>
+            </div>
+            <div className="flex justify-between">
+              <span>Purity Stamp:</span>
+              <strong className="text-slate-200">{selectedItem?.purityKarat || '22K916'}</strong>
             </div>
           </div>
         </div>
@@ -142,8 +259,8 @@ export default function TagGeneratorModule() {
                     ₹{Math.round(selectedItem.totalPrice).toLocaleString('en-IN')}
                   </p>
                 </div>
-                <div className="w-10 h-10 bg-slate-950 p-0.5 rounded flex items-center justify-center text-white flex-shrink-0">
-                  <QrCode className="w-9 h-9" />
+                <div className="w-10 h-10 bg-white p-0.5 rounded flex items-center justify-center flex-shrink-0">
+                  <DynamicQrCode text={selectedItem.barcode} size={36} />
                 </div>
               </div>
             </div>
@@ -193,8 +310,8 @@ export default function TagGeneratorModule() {
                     <p className="text-[7.5px] text-slate-500">SCAN POS</p>
                     <p className="font-mono text-[8px] font-bold text-slate-800">{selectedItem.barcode}</p>
                   </div>
-                  <div className="w-9 h-9 bg-slate-950 p-0.5 rounded flex items-center justify-center text-white flex-shrink-0">
-                    <QrCode className="w-8 h-8" />
+                  <div className="w-9 h-9 bg-white p-0.5 rounded flex items-center justify-center flex-shrink-0">
+                    <DynamicQrCode text={selectedItem.barcode} size={32} />
                   </div>
                 </div>
               </div>
@@ -202,10 +319,63 @@ export default function TagGeneratorModule() {
           )}
 
           <p className="no-print text-[11px] text-slate-400 mt-4">
-            Compatible with TSC, TVS, Citizen, Zebra & ATPOS Jewelry Thermal Barcode Printers
+            Compatible with Zebra, TSC, Citizen, Godex, TVS & ATPOS Thermal Tag Printers
           </p>
         </div>
       </div>
+
+      {/* ZPL RAW THERMAL CODE MODAL */}
+      {showZplModal && (
+        <div className="fixed inset-0 z-50 bg-black/80 backdrop-blur-sm flex items-center justify-center p-4">
+          <div className="bg-slate-900 border border-amber-500/40 rounded-2xl max-w-2xl w-full p-6 shadow-2xl space-y-4">
+            <div className="flex items-center justify-between pb-3 border-b border-slate-800">
+              <div className="flex items-center space-x-2">
+                <FileCode className="w-5 h-5 text-amber-400" />
+                <h3 className="text-base font-bold text-slate-100 uppercase tracking-wider">
+                  Raw ZPL-II Thermal Tag Code ({tagFormat})
+                </h3>
+              </div>
+              <button
+                type="button"
+                onClick={() => setShowZplModal(false)}
+                className="text-slate-400 hover:text-slate-100 cursor-pointer"
+              >
+                <X className="w-5 h-5" />
+              </button>
+            </div>
+
+            <p className="text-xs text-slate-300">
+              Send this code directly to your thermal barcode printer (via USB / RAW spooler / Zebra Designer / CUPS) to print exact jewelry tags without browser print margins.
+            </p>
+
+            <div className="relative">
+              <pre className="bg-slate-950 p-4 rounded-xl border border-slate-800 text-amber-300 font-mono text-xs overflow-x-auto max-h-64">
+                {zplPayload}
+              </pre>
+            </div>
+
+            <div className="flex items-center justify-end space-x-3 pt-2">
+              <button
+                type="button"
+                onClick={handleCopyZpl}
+                className="flex items-center space-x-1.5 px-4 py-2 bg-slate-800 hover:bg-slate-700 text-slate-200 font-bold text-xs rounded-xl transition cursor-pointer"
+              >
+                {copiedZpl ? <Check className="w-4 h-4 text-emerald-400" /> : <Copy className="w-4 h-4 text-amber-400" />}
+                <span>{copiedZpl ? 'COPIED TO CLIPBOARD!' : 'COPY ZPL CODE'}</span>
+              </button>
+
+              <button
+                type="button"
+                onClick={handleDownloadZpl}
+                className="flex items-center space-x-1.5 px-4 py-2 bg-gradient-to-r from-amber-500 to-amber-600 hover:from-amber-400 text-slate-950 font-bold text-xs rounded-xl shadow-lg shadow-amber-500/20 transition cursor-pointer"
+              >
+                <Download className="w-4 h-4" />
+                <span>DOWNLOAD .ZPL FILE</span>
+              </button>
+            </div>
+          </div>
+        </div>
+      )}
     </div>
   );
 }

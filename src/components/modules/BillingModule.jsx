@@ -21,10 +21,12 @@ import {
   ChevronDown,
   ChevronUp,
   X,
-  UserPlus
+  UserPlus,
+  Scale
 } from 'lucide-react';
 import { formatCurrency, formatWeight, numberToWordsIndian } from '../../utils/numberToWords';
 import { calculateJewelleryItem, calculateOldMetalExchange } from '../../utils/calculations';
+import WeighingScaleModal from '../common/WeighingScaleModal';
 
 export default function BillingModule() {
   const {
@@ -55,6 +57,7 @@ export default function BillingModule() {
 
   // Old Metal / Gold Exchange State
   const [hasOldGold, setHasOldGold] = useState(false);
+  const [showScaleModal, setShowScaleModal] = useState(false);
   const [oldGoldData, setOldGoldData] = useState({
     metalType: 'Gold',
     description: 'Old 22K Gold Bangle scrap exchange',
@@ -818,7 +821,17 @@ export default function BillingModule() {
             {hasOldGold && (
               <div className="grid grid-cols-2 md:grid-cols-4 gap-3 pt-2">
                 <div>
-                  <label className="block text-[10px] text-slate-400 uppercase mb-1">GROSS WT (g)</label>
+                  <div className="flex items-center justify-between mb-1">
+                    <label className="block text-[10px] text-slate-400 uppercase">GROSS WT (g)</label>
+                    <button
+                      type="button"
+                      onClick={() => setShowScaleModal(true)}
+                      className="flex items-center space-x-1 text-[9px] text-amber-400 hover:text-amber-300 font-bold bg-amber-500/15 px-1.5 py-0.5 rounded border border-amber-500/30 transition cursor-pointer"
+                    >
+                      <Scale className="w-3 h-3" />
+                      <span>SCALE</span>
+                    </button>
+                  </div>
                   <input
                     type="number"
                     step="0.001"
@@ -1208,6 +1221,15 @@ export default function BillingModule() {
           </div>
         </div>
       )}
+
+      {/* Electronic Weighing Scale Modal */}
+      <WeighingScaleModal
+        isOpen={showScaleModal}
+        onClose={() => setShowScaleModal(false)}
+        onCaptureWeight={(w) => handleOldGoldChange('grossWeight', w)}
+        initialWeight={Number(oldGoldData.grossWeight) || 0}
+        title="Capture Old Gold Weight from Scale"
+      />
     </div>
   );
 }
